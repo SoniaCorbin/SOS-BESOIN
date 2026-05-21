@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
-class InvoiceListScreen extends StatelessWidget {
-  const InvoiceListScreen({super.key});
+class ChatScreen extends StatelessWidget {
+  final String chatId;
+  const ChatScreen({super.key, required this.chatId});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('Factures'),
+        title: const Text('Messages'),
         backgroundColor: AppColors.bg,
       ),
       body: const Center(
