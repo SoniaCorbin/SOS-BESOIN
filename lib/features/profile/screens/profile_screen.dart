@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
-class InvoiceListScreen extends StatelessWidget {
-  const InvoiceListScreen({super.key});
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
-        title: const Text('Factures'),
+        title: const Text('Profil'),
         backgroundColor: AppColors.bg,
       ),
       body: const Center(
