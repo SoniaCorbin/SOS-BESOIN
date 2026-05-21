@@ -1,0 +1,31 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+*.g.dart
+*.freezed.dart
+
+# Android
+android/local.properties
+android/.gradle/
+android/captures/
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+
+# Env — NE JAMAIS COMMITER !
+.env
+*.env
+.dart_defines
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
