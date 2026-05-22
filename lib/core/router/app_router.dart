@@ -14,6 +14,7 @@ import '../../features/profile/screens/profile_screen.dart';
 import '../../features/history/screens/history_screen.dart';
 import '../../features/invoices/screens/invoice_list_screen.dart';
 import '../../features/invoices/screens/invoice_detail_screen.dart';
+import '../../features/auth/providers/auth_provider.dart';
 
 // ── Routes nommées ───────────────────────────────────────
 class AppRoutes {
@@ -33,17 +34,23 @@ class AppRoutes {
 
 // ── Provider ─────────────────────────────────────────────
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authProvider);
+
   return GoRouter(
     initialLocation: AppRoutes.splash,
     redirect: (context, state) {
-      final session = Supabase.instance.client.auth.currentSession;
-      final isAuth  = session != null;
-      final isOnAuth = state.matchedLocation == AppRoutes.login ||
+      final isAuth     = authState.user != null ||
+          Supabase.instance.client.auth.currentSession != null;
+      final isLoading  = authState.loading;
+      final isOnAuth   = state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register ||
           state.matchedLocation == AppRoutes.splash;
 
+      if (isLoading) return null;
       if (!isAuth && !isOnAuth) return AppRoutes.login;
-      if (isAuth && state.matchedLocation == AppRoutes.login) return AppRoutes.home;
+      if (isAuth && state.matchedLocation == AppRoutes.login) {
+        return AppRoutes.home;
+      }
       return null;
     },
     routes: [

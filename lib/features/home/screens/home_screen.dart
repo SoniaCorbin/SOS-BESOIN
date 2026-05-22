@@ -5,6 +5,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/router/app_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
+import '../../requests/providers/request_provider.dart';
+import '../../requests/models/request_model.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -136,7 +138,6 @@ class _HomeAppBar extends ConsumerWidget {
             ),
           ),
           const Spacer(),
-
           GestureDetector(
             onTap: onSwitchRole,
             child: Container(
@@ -199,7 +200,6 @@ class _HomeAppBar extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Bouton déconnexion temporaire
           IconButton(
             onPressed: onSignOut,
             icon: const Icon(
@@ -362,25 +362,7 @@ class _ClientDashboard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.line2),
-            ),
-            child: const Column(
-              children: [
-                Icon(Icons.inbox_outlined, size: 40, color: AppColors.textMute),
-                SizedBox(height: 12),
-                Text(
-                  'Aucune demande pour l\'instant',
-                  style: TextStyle(color: AppColors.textMute, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
+          const _MyRequestsList(),
           const SizedBox(height: 100),
         ],
       ),
@@ -453,28 +435,247 @@ class _ProviderDashboard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(32),
+          const _OpenRequestsList(),
+          const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Liste demandes client ─────────────────────────────────
+class _MyRequestsList extends ConsumerWidget {
+  const _MyRequestsList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final requestsAsync = ref.watch(myRequestsProvider);
+
+    return requestsAsync.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: CircularProgressIndicator(
+            color: AppColors.amber, strokeWidth: 2,
+          ),
+        ),
+      ),
+      error: (e, _) => Text('Erreur: $e',
+          style: const TextStyle(color: AppColors.red)),
+      data: (requests) => requests.isEmpty
+          ? Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.line2),
+        ),
+        child: const Column(
+          children: [
+            Icon(Icons.inbox_outlined,
+                size: 40, color: AppColors.textMute),
+            SizedBox(height: 12),
+            Text(
+              'Aucune demande pour l\'instant',
+              style: TextStyle(
+                  color: AppColors.textMute, fontSize: 14),
+            ),
+          ],
+        ),
+      )
+          : Column(
+        children: requests.map((r) => GestureDetector(
+          onTap: () => context.push('/request/${r.id}'),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppColors.line2),
             ),
-            child: const Column(
+            child: Row(
               children: [
-                Icon(Icons.search_off_rounded,
-                    size: 40, color: AppColors.textMute),
-                SizedBox(height: 12),
-                Text(
-                  'Aucune mission disponible pour l\'instant',
-                  style: TextStyle(color: AppColors.textMute, fontSize: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.amberSoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    r.category.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.amber,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        r.title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.text,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        r.location,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMute,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: r.status == 'open'
+                        ? AppColors.greenSoft
+                        : AppColors.surface2,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    r.status == 'open' ? 'Ouvert' : r.status,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: r.status == 'open'
+                          ? AppColors.green
+                          : AppColors.textMute,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 100),
-        ],
+        )).toList(),
+      ),
+    );
+  }
+}
+
+// ── Liste missions ouvertes (prestataire) ─────────────────
+class _OpenRequestsList extends ConsumerWidget {
+  const _OpenRequestsList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final requestsAsync = ref.watch(openRequestsProvider);
+
+    return requestsAsync.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: CircularProgressIndicator(
+            color: AppColors.cyan, strokeWidth: 2,
+          ),
+        ),
+      ),
+      error: (e, _) => Text('Erreur: $e',
+          style: const TextStyle(color: AppColors.red)),
+      data: (requests) => requests.isEmpty
+          ? Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.line2),
+        ),
+        child: const Column(
+          children: [
+            Icon(Icons.search_off_rounded,
+                size: 40, color: AppColors.textMute),
+            SizedBox(height: 12),
+            Text(
+              'Aucune mission disponible pour l\'instant',
+              style: TextStyle(
+                  color: AppColors.textMute, fontSize: 14),
+            ),
+          ],
+        ),
+      )
+          : Column(
+        children: requests.map((r) => GestureDetector(
+          onTap: () => context.push('/request/${r.id}'),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.line2),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.cyanSoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    r.category.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.cyan,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        r.title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.text,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        r.location,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMute,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (r.budget != null)
+                  Text(
+                    '${r.budget!.toStringAsFixed(0)}\$',
+                    style: const TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.amber,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        )).toList(),
       ),
     );
   }
@@ -521,7 +722,8 @@ class _StatChip extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(fontSize: 11, color: AppColors.textMute),
+              style: const TextStyle(
+                  fontSize: 11, color: AppColors.textMute),
             ),
           ],
         ),
