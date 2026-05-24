@@ -8,6 +8,7 @@ import '../../../../core/router/app_router.dart';
 import '../models/request_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
+import '../../../../core/services/payment_service.dart';
 
 // ── Providers ─────────────────────────────────────────────
 final _client = Supabase.instance.client;
@@ -579,16 +580,18 @@ class _OfferCard extends StatelessWidget {
               width: double.infinity,
               height: 44,
               child: ElevatedButton(
-                onPressed: () => _acceptOffer(context),
+                onPressed: () => _payAndAccept(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.green,
+                  backgroundColor: AppColors.amber,
+                  foregroundColor: AppColors.bg,
                 ),
-                child: const Text(
-                  'Accepter cette offre',
-                  style: TextStyle(
-                    color: AppColors.bg,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.lock_rounded, size: 16),
+                    const SizedBox(width: 8),
+                    Text('Payer ${price.toStringAsFixed(0)}\$ et accepter.'),
+                  ],
                 ),
               ),
             ),
@@ -631,6 +634,35 @@ class _OfferCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _payAndAccept(BuildContext context) async {
+    final result = await PaymentService.processPayment(
+      amount:     (offer['price'] as num).toDouble(),
+      offerId:    offer['id'] as String,
+      requestId:  requestId,
+      providerId: offer['provider_id'] as String,
+    );
+
+    if (!context.mounted) return;
+
+    if (result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ Paiement réussi ! Facture ${result.invoiceNumber}'),
+          backgroundColor: AppColors.green,
+        ),
+      );
+      onAccepted();
+    } else if (result.cancelled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Paiement annulé.')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: ${result.error}')),
+      );
+    }
   }
 
   Future<void> _acceptOffer(BuildContext context) async {

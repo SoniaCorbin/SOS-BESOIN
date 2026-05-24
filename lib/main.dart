@@ -7,6 +7,7 @@ import 'core/router/app_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:firebase_core/firebase_core.dart';
 import 'core/notifications/notification_service.dart';
+import 'core/services/payment_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,10 @@ Future<void> main() async {
   );
   await Firebase.initializeApp();
   await NotificationService.init();
+
+  PaymentService.init(
+    const String.fromEnvironment('STRIPE_PUBLISHABLE_KEY'),
+  );
 
   timeago.setLocaleMessages('fr', timeago.FrMessages());
 

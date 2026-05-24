@@ -428,6 +428,18 @@ class _ProviderDashboard extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           const Text(
+            'Nouvelles demandes disponibles',
+            style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const _OpenRequestsList(),
+          const SizedBox(height: 32),
+          const Text(
             'Missions disponibles',
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
