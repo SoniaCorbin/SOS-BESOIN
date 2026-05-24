@@ -24,12 +24,38 @@ FutureProvider.family<RequestModel, String>((ref, id) async {
 
 final requestOffersProvider =
 FutureProvider.family<List<Map<String, dynamic>>, String>((ref, id) async {
-  final data = await _client
-      .from('offers')
-      .select('*, profiles(full_name, rating, total_missions, is_kyc_verified)')
-      .eq('request_id', id)
-      .order('created_at', ascending: false);
-  return List<Map<String, dynamic>>.from(data);
+  print('FETCHING OFFERS FOR: $id');
+  try {
+    // 1. Récupérer les offres
+    final offersData = await _client
+        .from('offers')
+        .select()
+        .eq('request_id', id)
+        .order('created_at', ascending: false);
+
+    final offers = List<Map<String, dynamic>>.from(offersData);
+
+    // 2. Pour chaque offre, récupérer le profil du prestataire
+    for (int i = 0; i < offers.length; i++) {
+      final providerId = offers[i]['provider_id'] as String;
+      try {
+        final profile = await _client
+            .from('profiles')
+            .select('full_name, rating, total_missions, is_kyc_verified')
+            .eq('id', providerId)
+            .single();
+        offers[i] = {...offers[i], 'profiles': profile};
+      } catch (_) {
+        offers[i] = {...offers[i], 'profiles': null};
+      }
+    }
+
+    print('OFFRES RESULT: $offers');
+    return offers;
+  } catch (e) {
+    print('OFFRES ERROR: $e');
+    rethrow;
+  }
 });
 
 // ── Screen ────────────────────────────────────────────────
@@ -40,6 +66,7 @@ class RequestDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    print('REQUEST ID: $requestId');
     final requestAsync = ref.watch(requestDetailProvider(requestId));
     final offersAsync  = ref.watch(requestOffersProvider(requestId));
     final authState    = ref.watch(authProvider);
@@ -566,7 +593,7 @@ class _OfferCard extends StatelessWidget {
               ),
             ),
           ],
-          if (status == 'accepted')
+          if (status == 'accepted') ...[
             const Padding(
               padding: EdgeInsets.only(top: 8),
               child: Row(
@@ -585,6 +612,22 @@ class _OfferCard extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/chat/${offer['id']}'),
+                icon: const Icon(Icons.chat_bubble_outline_rounded,
+                    size: 16),
+                label: const Text('Ouvrir le chat'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.cyan,
+                  side: const BorderSide(color: AppColors.cyan),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -595,6 +638,8 @@ class _OfferCard extends StatelessWidget {
       await _client.from('offers').update(
         {'status': 'accepted'},
       ).eq('id', offer['id'] as String);
+
+      print('OFFRE ACCEPTEE: ${offer['id']}');
 
       await _client.from('requests').update(
         {'status': 'in_progress'},
