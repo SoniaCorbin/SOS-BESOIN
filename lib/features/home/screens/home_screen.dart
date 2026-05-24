@@ -271,13 +271,15 @@ class _ModeBadge extends StatelessWidget {
 }
 
 // ── Dashboard Client ──────────────────────────────────────
-class _ClientDashboard extends StatelessWidget {
+class _ClientDashboard extends ConsumerWidget {
   final dynamic user;
 
   const _ClientDashboard({required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(authProvider).user;
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -285,7 +287,7 @@ class _ClientDashboard extends StatelessWidget {
         children: [
           const SizedBox(height: 8),
           Text(
-            'Bonjour, ${user?.fullName.split(' ').first ?? 'là'} 👋',
+            'Bonjour, ${currentUser?.fullName.split(' ').first ?? 'là'} 👋',
             style: const TextStyle(
               fontFamily: 'SpaceGrotesk',
               fontSize: 26,

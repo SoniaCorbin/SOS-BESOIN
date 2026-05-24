@@ -30,12 +30,12 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier() : super(const AuthState()) {
-    _init();
+    init();
   }
 
   final _client = Supabase.instance.client;
 
-  Future<void> _init() async {
+  Future<void> init() async {
     final session = _client.auth.currentSession;
     if (session == null) return;
 
@@ -46,7 +46,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         : UserRole.client;
 
     final user = await _fetchUser(session.user.id);
-    state = state.copyWith(user: user, activeRole: role);
+
+    state = const AuthState();
+    state = AuthState(user: user, activeRole: role);
   }
 
   Future<String?> signIn({
@@ -124,13 +126,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<AppUser?> _fetchUser(String id) async {
     try {
+      print('FETCHING USER: $id');
       final data = await _client
           .from('profiles')
           .select()
           .eq('id', id)
           .single();
+      print('USER dATA: $data');
       return AppUser.fromMap(data);
-    } catch (_) {
+    } catch (e) {
+      print('FETCH USER ERROR: $e');
       return null;
     }
   }
