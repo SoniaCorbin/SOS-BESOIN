@@ -20,7 +20,6 @@ final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
 
 // ── Provider demandes du client connecté ──────────────────
 final myRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
-  // Watch authProvider pour se rafraichir au changement d'utilisateur
   ref.watch(authProvider);
 
   final userId = _client.auth.currentUser?.id;
@@ -39,10 +38,16 @@ final myRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
 
 // ── Provider demandes ouvertes (live feed) ────────────────
 final openRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
+  ref.watch(authProvider);
+
+  final userId = _client.auth.currentUser?.id;
+  if (userId == null) return [];
+
   final data = await _client
       .from('requests')
       .select()
       .eq('status', 'open')
+      .neq('client_id', userId) // exclure ses propres demandes
       .order('created_at', ascending: false)
       .limit(20);
 
@@ -51,38 +56,29 @@ final openRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
       .toList();
 });
 
-// ── Provider demandes ouvertes + en cours (live feed) ───────
+// ── Provider missions du prestataire ─────────────────────
 final myProviderRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
   ref.watch(authProvider);
 
   final userId = _client.auth.currentUser?.id;
-  print('PROVIDER USER ID: $userId');
   if (userId == null) return [];
 
-  // Recuperer les request_ids des offres du prestataire
   final offersData = await _client
       .from('offers')
       .select('request_id')
       .eq('provider_id', userId);
 
-  print('PROVIDER OFFERS: $offersData');
-
   final requestIds = (offersData as List)
       .map((o) => o['request_id'] as String)
       .toList();
 
-  print('PROVIDER REQUEST IDS: $requestIds');
-
   if (requestIds.isEmpty) return [];
 
-  // Recuperer ces demandes
   final data = await _client
       .from('requests')
       .select()
       .inFilter('id', requestIds)
       .order('created_at', ascending: false);
-
-  print('PROVIDER REQUESTS: $data');
 
   return (data as List)
       .map((e) => RequestModel.fromMap(e))
