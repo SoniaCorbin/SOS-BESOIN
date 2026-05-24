@@ -921,6 +921,25 @@ class _BottomNav extends StatelessWidget {
         ),
         unselectedLabelStyle: const TextStyle(fontSize: 11),
         currentIndex: 0,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              context.go(AppRoutes.home);
+              break;
+            case 1:
+              context.push(AppRoutes.history);
+              break;
+            case 2:
+              // Chat - à implémenter
+              break;
+            case 3:
+              context.push(AppRoutes.invoices);
+              break;
+            case 4:
+              context.push(AppRoutes.profile);
+              break;
+          }
+        },
         items: [
           const BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
