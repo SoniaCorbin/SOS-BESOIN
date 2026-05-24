@@ -435,9 +435,138 @@ class _ProviderDashboard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const _OpenRequestsList(),
+          const _ProviderMissionsList(),
           const SizedBox(height: 100),
         ],
+      ),
+    );
+  }
+}
+
+class _ProviderMissionsList extends ConsumerWidget {
+  const _ProviderMissionsList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final requestsAsync = ref.watch(myProviderRequestsProvider);
+
+    return requestsAsync.when(
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: CircularProgressIndicator(
+            color: AppColors.cyan, strokeWidth: 2,
+          ),
+        ),
+      ),
+      error: (e, _) => Text('Erreur: $e',
+          style: const TextStyle(color: AppColors.red)),
+      data: (requests) => requests.isEmpty
+          ? Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.line2),
+        ),
+        child: const Column(
+          children: [
+            Icon(Icons.search_off_rounded,
+                size: 40, color: AppColors.textMute),
+            SizedBox(height: 12),
+            Text(
+              'Aucune mission pour l\'instant',
+              style: TextStyle(
+                  color: AppColors.textMute, fontSize: 14),
+            ),
+          ],
+        ),
+      )
+          : Column(
+        children: requests.map((r) => GestureDetector(
+          onTap: () => context.push('/request/${r.id}'),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: r.status == 'in_progress'
+                    ? AppColors.cyan
+                    : AppColors.line2,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.cyanSoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    r.category.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.cyan,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        r.title,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.text,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        r.location,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textMute,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: r.status == 'in_progress'
+                        ? AppColors.cyanSoft
+                        : AppColors.greenSoft,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    r.status == 'in_progress'
+                        ? 'En cours'
+                        : 'Ouvert',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: r.status == 'in_progress'
+                          ? AppColors.cyan
+                          : AppColors.green,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )).toList(),
       ),
     );
   }

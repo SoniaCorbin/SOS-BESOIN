@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/request_model.dart';
+import '../../auth/providers/auth_provider.dart';
 
 final _client = Supabase.instance.client;
 
@@ -19,6 +20,9 @@ final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
 
 // ── Provider demandes du client connecté ──────────────────
 final myRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
+  // Watch authProvider pour se rafraichir au changement d'utilisateur
+  ref.watch(authProvider);
+
   final userId = _client.auth.currentUser?.id;
   if (userId == null) return [];
 
@@ -41,6 +45,44 @@ final openRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
       .eq('status', 'open')
       .order('created_at', ascending: false)
       .limit(20);
+
+  return (data as List)
+      .map((e) => RequestModel.fromMap(e))
+      .toList();
+});
+
+// ── Provider demandes ouvertes + en cours (live feed) ───────
+final myProviderRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
+  ref.watch(authProvider);
+
+  final userId = _client.auth.currentUser?.id;
+  print('PROVIDER USER ID: $userId');
+  if (userId == null) return [];
+
+  // Recuperer les request_ids des offres du prestataire
+  final offersData = await _client
+      .from('offers')
+      .select('request_id')
+      .eq('provider_id', userId);
+
+  print('PROVIDER OFFERS: $offersData');
+
+  final requestIds = (offersData as List)
+      .map((o) => o['request_id'] as String)
+      .toList();
+
+  print('PROVIDER REQUEST IDS: $requestIds');
+
+  if (requestIds.isEmpty) return [];
+
+  // Recuperer ces demandes
+  final data = await _client
+      .from('requests')
+      .select()
+      .inFilter('id', requestIds)
+      .order('created_at', ascending: false);
+
+  print('PROVIDER REQUESTS: $data');
 
   return (data as List)
       .map((e) => RequestModel.fromMap(e))
