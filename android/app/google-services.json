@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "379256786062",
+    "project_id": "sos-besoin",
+    "storage_bucket": "sos-besoin.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:379256786062:android:bd8d91a053ef13cb310ddf",
+        "android_client_info": {
+          "package_name": "com.example.sos_besoin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtp2uCDdLerqbuUi-78LNwYC_WybiS2zk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
