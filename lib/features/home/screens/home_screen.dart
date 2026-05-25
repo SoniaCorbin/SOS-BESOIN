@@ -942,7 +942,7 @@ class _BottomNav extends StatelessWidget {
               context.push(AppRoutes.history);
               break;
             case 2:
-              // Chat - à implémenter
+              context.push('/conversations');
               break;
             case 3:
               context.push(AppRoutes.invoices);

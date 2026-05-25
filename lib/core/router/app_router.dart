@@ -15,6 +15,7 @@ import '../../features/history/screens/history_screen.dart';
 import '../../features/invoices/screens/invoice_list_screen.dart';
 import '../../features/invoices/screens/invoice_detail_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
+import '../../features/chat/screens/conversations_screen.dart';
 
 // ── Routes nommées ───────────────────────────────────────
 class AppRoutes {
@@ -107,6 +108,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => InvoiceDetailScreen(
           invoiceId: state.pathParameters['id']!,
         ),
+      ),
+      GoRoute(
+        path: '/conversations',
+        builder: (_, __) => const ConversationsScreen(),
       ),
     ],
   );
