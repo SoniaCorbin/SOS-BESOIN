@@ -42,21 +42,21 @@ class TransactionModel {
   factory TransactionModel.fromMap(Map<String, dynamic> map) =>
       TransactionModel(
         id:               map['id'] as String,
-        requestId:        map['request_id'] as String,
-        offerId:          map['offer_id'] as String,
-        clientId:         map['client_id'] as String,
-        providerId:       map['provider_id'] as String,
+        requestId:        map['request_id'] as String? ?? '',
+        offerId:          map['offer_id'] as String? ?? '',
+        clientId:         map['client_id'] as String? ?? '',
+        providerId:       map['provider_id'] as String? ?? '',
         amount:           (map['amount'] as num).toDouble(),
         platformFee:      (map['platform_fee'] as num).toDouble(),
         providerAmount:   (map['provider_amount'] as num).toDouble(),
-        status:           _statusFromString(map['status'] as String),
+        status:           _statusFromString(map['status'] as String? ?? 'pending'),
         type:             map['type'] == 'refund'
             ? TransactionType.refund
             : TransactionType.payment,
-        requestTitle:     map['request_title'] as String,
-        requestCategory:  map['request_category'] as String,
-        providerName:     map['provider_name'] as String,
-        clientName:       map['client_name'] as String,
+        requestTitle:     map['request_title'] as String? ?? '',
+        requestCategory:  map['request_category'] as String? ?? '',
+        providerName:     map['provider_name'] as String? ?? '',
+        clientName:       map['client_name'] as String? ?? '',
         createdAt:        DateTime.parse(map['created_at'] as String),
         completedAt:      map['completed_at'] != null
             ? DateTime.parse(map['completed_at'] as String)

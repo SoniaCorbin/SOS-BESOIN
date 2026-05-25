@@ -8,6 +8,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:firebase_core/firebase_core.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/services/payment_service.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,8 @@ Future<void> main() async {
   );
 
   timeago.setLocaleMessages('fr', timeago.FrMessages());
+
+  await initializeDateFormatting('fr_CA', null);
 
   runApp(const ProviderScope(child: SosBesoinApp()));
 }

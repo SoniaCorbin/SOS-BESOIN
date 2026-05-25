@@ -31,6 +31,8 @@ final myRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
       .eq('client_id', userId)
       .order('created_at', ascending: false);
 
+  print('MY REQUESTS DATA: $data');
+
   return (data as List)
       .map((e) => RequestModel.fromMap(e))
       .toList();
