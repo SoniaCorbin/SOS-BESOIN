@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:379256786062:android:bd8d91a053ef13cb310ddf",
+        "mobilesdk_app_id": "1:379256786062:android:b3324067df5bf097310ddf",
         "android_client_info": {
-          "package_name": "com.example.sos_besoin"
+          "package_name": "com.sosbesoin.app"
         }
       },
       "oauth_client": [],
