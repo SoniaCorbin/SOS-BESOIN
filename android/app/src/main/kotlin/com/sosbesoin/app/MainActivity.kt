@@ -1,5 +1,5 @@
 
-package com.example.sos_besoin
+package com.sosbesoin.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
