@@ -691,7 +691,7 @@ class _MyRequestsList extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    r.status == 'open' ? 'Ouvert' : r.status,
+                    r.status == 'open' ? 'Ouvert' : (r.status ?? 'Inconnu'),
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
