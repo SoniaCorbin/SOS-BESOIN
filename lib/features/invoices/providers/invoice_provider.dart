@@ -18,6 +18,8 @@ final clientInvoicesProvider = FutureProvider<List<InvoiceModel>>((ref) async {
       .eq('client_id', userId)
       .order('created_at', ascending: false);
 
+  print('INVOICES DATA: $data');
+
   return (data as List)
       .map((e) => InvoiceModel.fromMap(e))
       .toList();
