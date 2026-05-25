@@ -760,6 +760,9 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
       }
     } catch (e) {
       if (mounted) {
+        final message = e.toString().contains('unique_offer')
+            ? 'Vous avez déjà soumis une offre pour cette demande.'
+            : 'Erreur: $e';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur: $e')),
         );

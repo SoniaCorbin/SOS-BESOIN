@@ -9,7 +9,45 @@ serve(async (req) => {
   try {
     const { paymentIntentId, offerId, requestId } = await req.json();
 
-    // 1. Capturer le paiement Stripe
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    // 1. Récupérer l'offre
+    const { data: offer, error: offerError } = await supabase
+      .from("offers")
+      .select("*")
+      .eq("id", offerId)
+      .single();
+
+    if (offerError || !offer) {
+      throw new Error(`Offer not found: ${offerError?.message}`);
+    }
+
+    // 2. Récupérer la demande
+    const { data: request, error: requestError } = await supabase
+      .from("requests")
+      .select("*")
+      .eq("id", requestId)
+      .single();
+
+    if (requestError || !request) {
+      throw new Error(`Request not found: ${requestError?.message}`);
+    }
+
+    // 3. Récupérer le profil du prestataire
+    const { data: providerProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", offer.provider_id)
+      .single();
+
+    // 4. Récupérer le profil du client
+    const { data: clientProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", request.client_id)
+      .single();
+
+    // 5. Capturer le paiement Stripe
     const captureResponse = await fetch(
       `https://api.stripe.com/v1/payment_intents/${paymentIntentId}/capture`,
       {
@@ -27,76 +65,71 @@ serve(async (req) => {
       throw new Error(paymentIntent.error.message);
     }
 
-    // 2. Calculer les montants
-    const amount         = paymentIntent.amount / 100; // convertir de centimes
-    const platformFee    = Math.round(amount * 0.10 * 100) / 100; // 10%
-    const providerAmount = Math.round(amount * 0.90 * 100) / 100; // 90%
+    // 6. Calculer les montants
+    const amount         = paymentIntent.amount / 100;
+    const platformFee    = Math.round(amount * 0.10 * 100) / 100;
+    const providerAmount = Math.round(amount * 0.90 * 100) / 100;
 
-    // 3. Récupérer les infos de l'offre
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-
-    const { data: offer } = await supabase
-      .from("offers")
-      .select("*, requests(title, category, client_id), profiles!provider_id(full_name)")
-      .eq("id", offerId)
-      .single();
-
-    const { data: clientProfile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", offer.requests.client_id)
-      .single();
-
-    // 4. Créer la transaction
-    const { data: transaction } = await supabase
+    // 7. Créer la transaction
+    const { data: transaction, error: transError } = await supabase
       .from("transactions")
       .insert({
         request_id:       requestId,
         offer_id:         offerId,
-        client_id:        offer.requests.client_id,
+        client_id:        request.client_id,
         provider_id:      offer.provider_id,
         amount:           amount,
         platform_fee:     platformFee,
         provider_amount:  providerAmount,
         status:           "completed",
         type:             "payment",
-        request_title:    offer.requests.title,
-        request_category: offer.requests.category,
-        provider_name:    offer.profiles.full_name,
-        client_name:      clientProfile.full_name,
+        request_title:    request.title,
+        request_category: request.category,
+        provider_name:    providerProfile?.full_name ?? "Prestataire",
+        client_name:      clientProfile?.full_name ?? "Client",
         completed_at:     new Date().toISOString(),
       })
       .select()
       .single();
 
-    // 5. Créer la facture
+    if (transError) {
+      throw new Error(`Transaction error: ${transError.message}`);
+    }
+
+    // 8. Créer la facture
     const invoiceNumber = `INV-${Date.now()}`;
     await supabase.from("invoices").insert({
       transaction_id:   transaction.id,
       request_id:       requestId,
-      client_id:        offer.requests.client_id,
+      client_id:        request.client_id,
       provider_id:      offer.provider_id,
       invoice_number:   invoiceNumber,
       amount:           amount,
       platform_fee:     platformFee,
       provider_amount:  providerAmount,
-      request_title:    offer.requests.title,
-      request_category: offer.requests.category,
-      provider_name:    offer.profiles.full_name,
-      client_name:      clientProfile.full_name,
+      request_title:    request.title,
+      request_category: request.category,
+      provider_name:    providerProfile?.full_name ?? "Prestataire",
+      client_name:      clientProfile?.full_name ?? "Client",
       status:           "paid",
       paid_at:          new Date().toISOString(),
     });
 
-    // 6. Mettre à jour le statut de la demande
+    // 9. Mettre à jour le statut de la demande
     await supabase
       .from("requests")
       .update({ status: "completed" })
       .eq("id", requestId);
 
+    // 10. Mettre à jour le statut de l'offre
+    await supabase
+      .from("offers")
+      .update({ status: "accepted" })
+      .eq("id", offerId);
+
     return new Response(
       JSON.stringify({
-        success: true,
+        success:        true,
         amount,
         platformFee,
         providerAmount,
