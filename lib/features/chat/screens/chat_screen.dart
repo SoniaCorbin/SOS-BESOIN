@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../../core/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
 
 // ── Providers ─────────────────────────────────────────────
 final _client = Supabase.instance.client;
@@ -136,6 +137,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           },
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.flag_outlined,
+                color: AppColors.textDim),
+            onPressed: () => context.push(
+              '/report?offerId=${widget.chatId}',
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline_rounded,
                 color: AppColors.textDim),
