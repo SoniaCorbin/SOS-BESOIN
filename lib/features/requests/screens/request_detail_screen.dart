@@ -573,6 +573,24 @@ class _OfferCard extends StatelessWidget {
               ),
             ],
           ),
+          // Bouton signaler
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () => context.push(
+                '/report?userId=${offer['provider_id']}&offerId=${offer['id']}',
+              ),
+              icon: const Icon(Icons.flag_outlined,
+                  size: 14, color: AppColors.textMute),
+              label: const Text(
+                'Signaler',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textMute,
+                ),
+              ),
+            ),
+          ),
           // Bouton accepter (client seulement)
           if (isClient && status == 'pending') ...[
             const SizedBox(height: 12),
