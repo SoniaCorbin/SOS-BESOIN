@@ -84,6 +84,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         password: password,
         data: {'full_name': fullName},
+        emailRedirectTo: 'io.sosbesoin://login-callback'
       );
       if (res.user == null) {
         state = state.copyWith(loading: false);
