@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../models/invoice_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
+import '../../../../core/services/pdf_service.dart';
 
 // ── Provider ──────────────────────────────────────────────
 final invoiceDetailProvider =
@@ -54,11 +55,10 @@ class InvoiceDetailScreen extends ConsumerWidget {
             icon: const Icon(Icons.share_outlined,
                 color: AppColors.textDim),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Export PDF — à venir !'),
-                ),
-              );
+              final invoiceData = ref.read(invoiceDetailProvider(invoiceId)).value;
+              if (invoiceData != null) {
+                PdfService.generateAndShareInvoice(invoiceData);
+              }
             },
           ),
         ],

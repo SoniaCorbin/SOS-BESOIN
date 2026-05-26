@@ -11,10 +11,6 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
 
-  #PDF
-  pdf: ^3.11.1
-  printing: ^5.13.1
-
   # Backend
   supabase_flutter: ^2.5.0
 
@@ -45,6 +41,11 @@ dependencies:
   # Stockage local
   shared_preferences: ^2.3.1
   flutter_secure_storage: ^9.2.2
+
+  # PDF
+  pdf: ^3.11.1
+  printing: ^5.13.1
+  path_provider: ^2.1.3
 
 dev_dependencies:
   flutter_test:
