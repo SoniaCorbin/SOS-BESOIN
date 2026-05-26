@@ -2,6 +2,9 @@
 
 > La marketplace d'urgence qui connecte clients et prestataires vérifiés en moins de 30 minutes.
 
+**COMING SOON on GOOGLE PLAY**
+Contact: soniacorbin4@gmail.com
+
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-blue?logo=flutter)
 ![Supabase](https://img.shields.io/badge/Supabase-Backend-green?logo=supabase)
 ![Stripe](https://img.shields.io/badge/Stripe-Paiement-purple?logo=stripe)
