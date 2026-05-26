@@ -370,6 +370,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
               ),
             ),
+            // ── Pages légales ────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.line2),
+              ),
+              child: Column(
+                children: [
+                  _LegalButton(
+                    icon: Icons.description_outlined,
+                    label: 'Conditions d\'utilisation',
+                    onTap: () => context.push('/terms'),
+                  ),
+                  const Divider(color: AppColors.line, height: 1),
+                  _LegalButton(
+                    icon: Icons.privacy_tip_outlined,
+                    label: 'Politique de confidentialité',
+                    onTap: () => context.push('/privacy'),
+                  ),
+                  const Divider(color: AppColors.line, height: 1),
+                  _LegalButton(
+                    icon: Icons.replay_outlined,
+                    label: 'Politique de remboursement',
+                    onTap: () => context.push('/refund')
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 20),
             // ── Déconnexion ──────────────────────────────
             SizedBox(
@@ -533,6 +562,49 @@ class _RoleButton extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: isActive ? color : AppColors.textMute,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+class _LegalButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _LegalButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: AppColors.textDim),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textDim,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: AppColors.textMute,
             ),
           ],
         ),
