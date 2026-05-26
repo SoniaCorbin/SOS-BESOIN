@@ -18,6 +18,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/chat/screens/conversations_screen.dart';
 import '../../features/reports/screens/report_screen.dart';
 import '../../features/legal/screens/legal_screen.dart';
+import '../../features/admin/screens/admin_screen.dart';
 
 // ── Routes nommées ───────────────────────────────────────
 class AppRoutes {
@@ -144,6 +145,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           title: 'Politique de remboursement',
           content: LegalContent.refundPolicy,
         ),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (_, __) => const AdminScreen(),
       ),
     ],
   );
