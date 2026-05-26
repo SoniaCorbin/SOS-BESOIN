@@ -17,6 +17,7 @@ import '../../features/invoices/screens/invoice_detail_screen.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/chat/screens/conversations_screen.dart';
 import '../../features/reports/screens/report_screen.dart';
+import '../../features/legal/screens/legal_screen.dart';
 
 // ── Routes nommées ───────────────────────────────────────
 class AppRoutes {
@@ -121,6 +122,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           requestId:      state.uri.queryParameters['requestId'],
           offerId:        state.uri.queryParameters['offerId'],
           messageId:      state.uri.queryParameters['messageId'],
+        ),
+      ),
+      GoRoute(
+        path: '/terms',
+        builder: (_, __) => const LegalScreen(
+          title: 'Conditions générales d\'utilisation',
+          content: LegalContent.termsOfService,
+        ),
+      ),
+      GoRoute(
+        path: '/privacy',
+        builder: (_, __) => const LegalScreen(
+          title: 'Politique de confidentialité',
+          content: LegalContent.privacyPolicy,
+        ),
+      ),
+      GoRoute(
+        path: '/refund',
+        builder: (_, __) => const LegalScreen(
+          title: 'Politique de remboursement',
+          content: LegalContent.refundPolicy,
         ),
       ),
     ],
