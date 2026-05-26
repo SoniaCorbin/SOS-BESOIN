@@ -370,6 +370,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 20),
+            // ── Bouton admin ────────────────────
+            if (user?.isAdmin == true) ...[
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.amberSoft,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.amber),
+                ),
+                child: GestureDetector(
+                  onTap: () => context.push('/admin'),
+                  child: const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(Icons.admin_panel_settings_rounded,
+                            color: AppColors.amber, size: 22),
+                        SizedBox(width: 12),
+                        Text(
+                          'Panel Administration',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.amber,
+                          ),
+                        ),
+                        Spacer(),
+                        Icon(Icons.arrow_forward_ios_rounded,
+                            size: 14, color: AppColors.amber),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+
             // ── Pages légales ────────────────────
             Container(
               decoration: BoxDecoration(

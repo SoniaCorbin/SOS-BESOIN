@@ -8,6 +8,7 @@ class AppUser {
   final String? phone;
   final UserRole role;
   final bool isKycVerified;
+  final bool isAdmin;
   final double rating;
   final int totalMissions;
   final DateTime createdAt;
@@ -20,6 +21,7 @@ class AppUser {
     this.phone,
     this.role = UserRole.client,
     this.isKycVerified = false,
+    this.isAdmin = false,
     this.rating = 0.0,
     this.totalMissions = 0,
     required this.createdAt,
@@ -36,6 +38,7 @@ class AppUser {
         ? UserRole.provider
         : UserRole.client,
     isKycVerified:  map['is_kyc_verified'] as bool? ?? false,
+    isAdmin: map['is_admin'] as bool? ?? false,
     rating:         (map['rating'] as num?)?.toDouble() ?? 0.0,
     totalMissions:  map['total_missions'] as int? ?? 0,
     createdAt:      DateTime.parse(map['created_at'] as String),
@@ -50,6 +53,7 @@ class AppUser {
     'phone':            phone,
     'role':             role == UserRole.provider ? 'provider' : 'client',
     'is_kyc_verified':  isKycVerified,
+    'is_admin': isAdmin,
     'rating':           rating,
     'total_missions':   totalMissions,
     'created_at':       createdAt.toIso8601String(),
