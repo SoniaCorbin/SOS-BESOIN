@@ -62,6 +62,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
       );
       final user = await _fetchUser(res.user!.id);
+
+      // —— Verifier si le compte est suspendu ————————————————————
+      if (user?.isSuspended == true) {
+        await _client.auth.signOut();
+        state = state.copyWith(loading: false);
+        return 'Votre compte a été suspendu. Veuillez contacter le support: support@sosbesoin.app';
+      }
+      // —— Fin de la vérification —————————————————————————————————
       state = state.copyWith(user: user, loading: false);
       return null;
     } on AuthException catch (e) {
