@@ -66,9 +66,11 @@ serve(async (req) => {
     }
 
     // 6. Calculer les montants
-    const amount         = paymentIntent.amount / 100;
-    const platformFee    = Math.round(amount * 0.10 * 100) / 100;
-    const providerAmount = Math.round(amount * 0.90 * 100) / 100;
+    const totalAmount    = paymentIntent.amount / 100;
+    const baseAmount     = parseFloat(paymentIntent.metadata?.base_amount ?? totalAmount.toString());
+    const clientFee      = parseFloat(paymentIntent.metadata?.client_fee ?? '0');
+    const platformFee    = Math.round(baseAmount * 0.10 * 100) / 100; // 10% du montant de base
+    const providerAmount = Math.round(baseAmount * 0.90 * 100) / 100; // 90% du montant de base
 
     // 7. Créer la transaction
     const { data: transaction, error: transError } = await supabase
@@ -78,7 +80,7 @@ serve(async (req) => {
         offer_id:         offerId,
         client_id:        request.client_id,
         provider_id:      offer.provider_id,
-        amount:           amount,
+        amount:           totalAmount,
         platform_fee:     platformFee,
         provider_amount:  providerAmount,
         status:           "completed",
@@ -86,6 +88,7 @@ serve(async (req) => {
         request_title:    request.title,
         request_category: request.category,
         provider_name:    providerProfile?.full_name ?? "Prestataire",
+        client_fee:       clientFee,
         client_name:      clientProfile?.full_name ?? "Client",
         completed_at:     new Date().toISOString(),
       })
@@ -104,12 +107,13 @@ serve(async (req) => {
       client_id:        request.client_id,
       provider_id:      offer.provider_id,
       invoice_number:   invoiceNumber,
-      amount:           amount,
+      amount:           totalAmount,
       platform_fee:     platformFee,
       provider_amount:  providerAmount,
       request_title:    request.title,
       request_category: request.category,
       provider_name:    providerProfile?.full_name ?? "Prestataire",
+      client_fee:       clientFee,
       client_name:      clientProfile?.full_name ?? "Client",
       status:           "paid",
       paid_at:          new Date().toISOString(),
@@ -139,11 +143,15 @@ serve(async (req) => {
     );
   } catch (error) {
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      }
+      JSON.stringify({
+          success:         true,
+          amount:          totalAmount,
+          baseAmount:      baseAmount,
+          clientformFee,
+          providerAmount,
+          invoiceNumber,
+      }),
+      { headers: { "Content-Type": "application/json" } }
     );
   }
 });

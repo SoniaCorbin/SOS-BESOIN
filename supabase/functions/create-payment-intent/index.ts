@@ -6,6 +6,10 @@ serve(async (req) => {
   try {
     const { amount, currency, offerId, clientId, providerId } = await req.json();
 
+    // Calculer les frais client (3%)
+    const clientFee    = Math.round(amount * 0.03 * 100) / 100;
+    const totalAmount  = Math.round((amount + clientFee) * 100); // en centimes
+
     // Créer un Payment Intent Stripe
     const response = await fetch("https://api.stripe.com/v1/payment_intents", {
       method: "POST",
@@ -14,12 +18,14 @@ serve(async (req) => {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        amount: Math.round(amount * 100).toString(), // en centimes
-        currency: currency || "cad",
-        "metadata[offer_id]":    offerId,
-        "metadata[client_id]":   clientId,
-        "metadata[provider_id]": providerId,
-        "capture_method":        "manual", // paiement séquestré
+        amount:                    totalAmount.toString(),
+        currency:                  currency || "cad",
+        "metadata[offer_id]":      offerId,
+        "metadata[client_id]":     clientId,
+        "metadata[provider_id]":   providerId,
+        "metadata[base_amount]":   amount.toString(),
+        "metadata[client_fee]":    clientFee.toString(),
+        "capture_method":          "manual",
       }),
     });
 
@@ -33,6 +39,8 @@ serve(async (req) => {
       JSON.stringify({
         clientSecret:     paymentIntent.client_secret,
         paymentIntentId:  paymentIntent.id,
+        totalAmount:      totalAmount / 100,
+        clientFee:        clientFee,
       }),
       { headers: { "Content-Type": "application/json" } }
     );
