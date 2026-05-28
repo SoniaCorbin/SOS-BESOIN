@@ -29,3 +29,5 @@ ios/.symlinks/
 # OS
 .DS_Store
 Thumbs.db
+landing/node_modules/
+landing/node_modules/
