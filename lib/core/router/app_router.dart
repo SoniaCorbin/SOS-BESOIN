@@ -19,6 +19,7 @@ import '../../features/chat/screens/conversations_screen.dart';
 import '../../features/reports/screens/report_screen.dart';
 import '../../features/legal/screens/legal_screen.dart';
 import '../../features/admin/screens/admin_screen.dart';
+import '../../features/profile/screens/stripe_onboarding_screen.dart';
 
 // ── Routes nommées ───────────────────────────────────────
 class AppRoutes {
@@ -149,6 +150,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin',
         builder: (_, __) => const AdminScreen(),
+      ),
+      GoRoute(
+        path: '/stripe-onboarding',
+        builder: (_, __) => const StripeOnboardingScreen(),
       ),
     ],
   );

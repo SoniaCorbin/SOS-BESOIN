@@ -125,7 +125,34 @@ serve(async (req) => {
       .update({ status: "completed" })
       .eq("id", requestId);
 
-    // 10. Mettre à jour le statut de l'offre
+    // 10. Transférer au prestataire
+    try {
+      const transferResponse = await fetch(
+        `${SUPABASE_URL}/functions/v1/transfer-to-provider`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":  "application/json",
+            "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
+          },
+          body: JSON.stringify({ transactionId: transaction.id }),
+        }
+      );
+
+      const transferData = await transferResponse.json();
+
+      if (transferData.error) {
+        console.error("Transfer error:", transferData.error);
+        // On ne bloque pas le paiement si le transfert échoue
+        // Le transfert peut être fait manuellement depuis le panel admin
+      }
+    } catch (transferError) {
+      console.error("Transfer failed:", transferError);
+      // On continue même si le transfert échoue
+    }
+
+
+    // 11. Mettre à jour le statut de l'offre
     await supabase
       .from("offers")
       .update({ status: "accepted" })
