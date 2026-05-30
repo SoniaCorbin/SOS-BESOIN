@@ -15,29 +15,37 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageCtrl = PageController();
   int _currentPage = 0;
 
-  final List<_OnboardingPage> _pages = const [
-    _OnboardingPage(
+  final List<_OnboardingData> _pages = const [
+    _OnboardingData(
+      tag: '·URGENCE·',
+      title: 'Un besoin\nurgent ?',
+      accent: 'Posté en 90 secondes.',
+      subtitle: 'Décrivez votre besoin. Des prestataires disponibles près de chez vous répondent en direct.',
       emoji: '🚨',
-      title: 'Un besoin urgent ?',
-      subtitle: 'Publiez votre demande en moins de 90 secondes et recevez des offres de pros vérifiés.',
       color: AppColors.amber,
     ),
-    _OnboardingPage(
-      emoji: '💼',
-      title: 'Des prestataires vérifiés',
-      subtitle: 'Tous nos prestataires passent une vérification d\'identité (KYC) avant de pouvoir soumettre des offres. SOS-BESOIN ne garantit pas leurs qualifications professionnelles.',
+    _OnboardingData(
+      tag: '·CONFIANCE·',
+      title: 'Prestataires\nvérifiés.',
+      accent: 'Identité confirmée.',
+      subtitle: 'Chaque prestataire passe une vérification d\'identité (KYC) avant de pouvoir soumettre des offres.',
+      emoji: '🛡️',
       color: AppColors.cyan,
     ),
-    _OnboardingPage(
+    _OnboardingData(
+      tag: '·SÉCURITÉ·',
+      title: 'Paiement\nséquestré.',
+      accent: 'Vous ne payez qu\'après.',
+      subtitle: 'Votre argent est bloqué chez Stripe jusqu\'à votre validation. Aucune mauvaise surprise.',
       emoji: '🔒',
-      title: 'Paiement sécurisé',
-      subtitle: 'Votre argent est séquestré jusqu\'à validation de la mission. Aucune mauvaise surprise.',
       color: AppColors.green,
     ),
-    _OnboardingPage(
+    _OnboardingData(
+      tag: '·RAPIDITÉ·',
+      title: 'Réponse en\n30 minutes.',
+      accent: 'Délai médian : 28 min.',
+      subtitle: 'Sur les catégories Tech, Musique et Transport, la majorité des demandes reçoivent une offre en moins de 15 minutes.',
       emoji: '⚡',
-      title: 'Réponse en 30 min',
-      subtitle: 'Le délai médian pour recevoir une première offre est de 28 minutes.',
       color: AppColors.amber,
     ),
   ];
@@ -60,11 +68,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: AppColors.bg,
       body: Stack(
         children: [
-          // Glow background
+          // ── Grille de fond ───────────────────────────
+          Positioned.fill(
+            child: CustomPaint(painter: _GridPainter()),
+          ),
+          // ── Glow amber ───────────────────────────────
           Positioned(
-            top: -100, left: -100,
+            top: -150, left: -100,
             child: Container(
-              width: 400, height: 400,
+              width: 500, height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(colors: [
@@ -74,21 +86,64 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
           ),
+          // ── Glow cyan ────────────────────────────────
+          Positioned(
+            bottom: -100, right: -150,
+            child: Container(
+              width: 400, height: 400,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [
+                  AppColors.cyan.withValues(alpha: 0.10),
+                  Colors.transparent,
+                ]),
+              ),
+            ),
+          ),
+          // ── Contenu ──────────────────────────────────
           SafeArea(
             child: Column(
               children: [
-                // Skip
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: _finish,
-                    child: const Text(
-                      'Passer',
-                      style: TextStyle(
-                        color: AppColors.textMute,
-                        fontSize: 14,
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                  child: Row(
+                    children: [
+                      // Logo
+                      Container(
+                        width: 32, height: 32,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          gradient: AppColors.gradientAmber,
+                        ),
+                        child: const Icon(
+                          Icons.warning_amber_rounded,
+                          color: AppColors.bg,
+                          size: 18,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'SOS·BESOIN',
+                        style: TextStyle(
+                          fontFamily: 'SpaceGrotesk',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.text,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: _finish,
+                        child: const Text(
+                          'Passer',
+                          style: TextStyle(
+                            color: AppColors.textMute,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 // Pages
@@ -97,7 +152,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     controller: _pageCtrl,
                     onPageChanged: (i) => setState(() => _currentPage = i),
                     itemCount: _pages.length,
-                    itemBuilder: (context, i) => _pages[i],
+                    itemBuilder: (context, i) => _OnboardingPage(
+                      data: _pages[i],
+                    ),
                   ),
                 ),
                 // Indicateurs
@@ -108,18 +165,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         (i) => AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
                       margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: _currentPage == i ? 24 : 8,
-                      height: 8,
+                      width: _currentPage == i ? 28 : 8,
+                      height: 4,
                       decoration: BoxDecoration(
                         color: _currentPage == i
-                            ? AppColors.amber
+                            ? _pages[_currentPage].color
                             : AppColors.line2,
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 // Bouton
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -137,14 +194,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           _finish();
                         }
                       },
-                      child: Text(
-                        _currentPage < _pages.length - 1
-                            ? 'Suivant'
-                            : 'Commencer',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _pages[_currentPage].color,
+                        foregroundColor: AppColors.bg,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _currentPage < _pages.length - 1
+                                ? 'Suivant'
+                                : 'Commencer',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'SpaceGrotesk',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            _currentPage < _pages.length - 1
+                                ? Icons.arrow_forward_rounded
+                                : Icons.check_rounded,
+                            size: 18,
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -159,19 +236,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-// ── Page d'onboarding ─────────────────────────────────────
-class _OnboardingPage extends StatelessWidget {
-  final String emoji;
+// ── Données onboarding ────────────────────────────────────
+class _OnboardingData {
+  final String tag;
   final String title;
+  final String accent;
   final String subtitle;
+  final String emoji;
   final Color color;
 
-  const _OnboardingPage({
-    required this.emoji,
+  const _OnboardingData({
+    required this.tag,
     required this.title,
+    required this.accent,
     required this.subtitle,
+    required this.emoji,
     required this.color,
   });
+}
+
+// ── Page onboarding ───────────────────────────────────────
+class _OnboardingPage extends StatelessWidget {
+  final _OnboardingData data;
+
+  const _OnboardingPage({required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -179,51 +267,94 @@ class _OnboardingPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Emoji
+          // Tag
           Container(
-            width: 120, height: 120,
+            padding: const EdgeInsets.symmetric(
+                horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color.withValues(alpha: 0.12),
+              color: data.color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: color.withValues(alpha: 0.3),
-                width: 2,
+                color: data.color.withValues(alpha: 0.3),
               ),
             ),
-            child: Center(
-              child: Text(
-                emoji,
-                style: const TextStyle(fontSize: 56),
+            child: Text(
+              data.tag,
+              style: TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: data.color,
+                letterSpacing: 1,
               ),
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 24),
+          // Emoji
+          Text(
+            data.emoji,
+            style: const TextStyle(fontSize: 64),
+          ),
+          const SizedBox(height: 24),
           // Titre
           Text(
-            title,
+            data.title,
+            style: const TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              fontSize: 40,
+              fontWeight: FontWeight.w700,
+              color: AppColors.text,
+              height: 1.1,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Accent
+          Text(
+            data.accent,
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: color,
-              letterSpacing: -0.5,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: data.color,
             ),
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           // Sous-titre
           Text(
-            subtitle,
+            data.subtitle,
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 15,
               color: AppColors.textDim,
               height: 1.6,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
+}
+
+// ── Grid painter ──────────────────────────────────────────
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF1E293B).withValues(alpha: 0.5)
+      ..strokeWidth = 0.5;
+
+    const spacing = 40.0;
+
+    for (double x = 0; x < size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_) => false;
 }
