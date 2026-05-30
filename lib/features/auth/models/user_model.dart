@@ -6,6 +6,7 @@ class AppUser {
   final String email;
   final String? avatarUrl;
   final String? phone;
+  final String? stripeAccountId;
   final UserRole role;
   final bool isKycVerified;
   final bool isAdmin;
@@ -20,6 +21,7 @@ class AppUser {
     required this.email,
     this.avatarUrl,
     this.phone,
+    this.stripeAccountId,
     this.role = UserRole.client,
     this.isKycVerified = false,
     this.isAdmin = false,
@@ -36,6 +38,7 @@ class AppUser {
     email:          map['email'] as String,
     avatarUrl:      map['avatar_url'] as String?,
     phone:          map['phone'] as String?,
+    stripeAccountId: map['stripe_account_id'] as String?,
     role:           map['role'] == 'provider'
         ? UserRole.provider
         : UserRole.client,
@@ -54,6 +57,7 @@ class AppUser {
     'email':            email,
     'avatar_url':       avatarUrl,
     'phone':            phone,
+    'stripe_account_id': stripeAccountId,
     'role':             role == UserRole.provider ? 'provider' : 'client',
     'is_kyc_verified':  isKycVerified,
     'is_admin':         isAdmin,
