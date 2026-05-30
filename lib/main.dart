@@ -9,6 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/services/payment_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,9 @@ Future<void> main() async {
   timeago.setLocaleMessages('fr', timeago.FrMessages());
 
   await initializeDateFormatting('fr_CA', null);
+
+  final prefs = await SharedPreferences.getInstance();
+  final onboardingDone = prefs.getBool('onboarding_done') ?? false;
 
   runApp(const ProviderScope(child: SosBesoinApp()));
 }

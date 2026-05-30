@@ -64,7 +64,7 @@ Dernière mise à jour : mai 2026
 En utilisant l'application SOS-BESOIN, vous acceptez les présentes conditions générales d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser l'application.
 
 2. DESCRIPTION DU SERVICE
-SOS-BESOIN est une marketplace qui met en relation des clients ayant des besoins urgents avec des prestataires professionnels vérifiés. Nous agissons en tant qu'intermédiaire et ne sommes pas responsables de la qualité des services fournis.
+SOS-BESOIN est une marketplace qui met en relation des clients ayant des besoins urgents avec des prestataires vérifiés. Nous agissons en tant qu'intermédiaire et ne sommes pas responsables de la qualité des services fournis. La vérification KYC confirme l'identité du prestataire uniquement — SOS-BESOIN ne garantit pas les qualifications, compétences ou certifications professionnelles des prestataires.
 
 3. INSCRIPTION ET COMPTE
 - Vous devez avoir au moins 18 ans pour utiliser SOS-BESOIN.
