@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
@@ -20,6 +21,7 @@ import '../../features/reports/screens/report_screen.dart';
 import '../../features/legal/screens/legal_screen.dart';
 import '../../features/admin/screens/admin_screen.dart';
 import '../../features/profile/screens/stripe_onboarding_screen.dart';
+import '../../features/auth/screens/onboarding_screen.dart';
 
 // ── Routes nommées ───────────────────────────────────────
 class AppRoutes {
@@ -37,19 +39,27 @@ class AppRoutes {
   static const invoiceDetail  = '/invoices/:id';
 }
 
-// ── Provider ─────────────────────────────────────────────
+// ── Provider onboarding ──────────────────────────────────
+final onboardingDoneProvider = FutureProvider<bool>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getBool('onboarding_done') ?? false;
+});
+
+// ── Provider router ──────────────────────────────────────
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final authState      = ref.watch(authProvider);
+  final onboardingDone = ref.watch(onboardingDoneProvider).value ?? true;
 
   return GoRouter(
-    initialLocation: AppRoutes.splash,
+    initialLocation: onboardingDone ? AppRoutes.splash : '/onboarding',
     redirect: (context, state) {
-      final isAuth     = authState.user != null ||
+      final isAuth    = authState.user != null ||
           Supabase.instance.client.auth.currentSession != null;
-      final isLoading  = authState.loading;
-      final isOnAuth   = state.matchedLocation == AppRoutes.login ||
+      final isLoading = authState.loading;
+      final isOnAuth  = state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.register ||
-          state.matchedLocation == AppRoutes.splash;
+          state.matchedLocation == AppRoutes.splash ||
+          state.matchedLocation == '/onboarding';
 
       if (isLoading) return null;
       if (!isAuth && !isOnAuth) return AppRoutes.login;
@@ -154,6 +164,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/stripe-onboarding',
         builder: (_, __) => const StripeOnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding',
+        builder: (_, __) => const OnboardingScreen(),
       ),
     ],
   );
