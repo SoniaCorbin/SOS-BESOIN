@@ -39,19 +39,24 @@ class AppRoutes {
   static const invoiceDetail  = '/invoices/:id';
 }
 
-// ── Provider onboarding ──────────────────────────────────
-final onboardingDoneProvider = FutureProvider<bool>((ref) async {
+// ── Variable statique onboarding ─────────────────────────
+bool _onboardingChecked = false;
+bool _onboardingDone    = true;
+
+Future<void> initOnboarding() async {
   final prefs = await SharedPreferences.getInstance();
-  return prefs.getBool('onboarding_done') ?? false;
-});
+  _onboardingDone    = prefs.getBool('onboarding_done') ?? false;
+  _onboardingChecked = true;
+}
 
 // ── Provider router ──────────────────────────────────────
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState      = ref.watch(authProvider);
-  final onboardingDone = ref.watch(onboardingDoneProvider).value ?? true;
+  final authState = ref.watch(authProvider);
 
   return GoRouter(
-    initialLocation: onboardingDone ? AppRoutes.splash : '/onboarding',
+    initialLocation: (_onboardingChecked && !_onboardingDone)
+        ? '/onboarding'
+        : AppRoutes.splash,
     redirect: (context, state) {
       final isAuth    = authState.user != null ||
           Supabase.instance.client.auth.currentSession != null;
@@ -62,6 +67,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == '/onboarding';
 
       if (isLoading) return null;
+
+      // Si connecté, ne jamais rediriger vers onboarding
+      if (isAuth && state.matchedLocation == '/onboarding') {
+        return AppRoutes.home;
+      }
+
       if (!isAuth && !isOnAuth) return AppRoutes.login;
       if (isAuth && state.matchedLocation == AppRoutes.login) {
         return AppRoutes.home;

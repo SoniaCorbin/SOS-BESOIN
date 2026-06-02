@@ -32,6 +32,7 @@ Future<void> main() async {
   );
   await Firebase.initializeApp();
   await NotificationService.init();
+  await initOnboarding();
 
   PaymentService.init(
     const String.fromEnvironment('STRIPE_PUBLISHABLE_KEY'),
