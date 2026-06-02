@@ -297,6 +297,7 @@ function App() {
       <Testimonials />
       <FAQSection />
       <FinalCTA />
+      <WaitlistSection />
       <Footer />
 
       {typeof TweaksPanel === 'function' && (
