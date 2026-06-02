@@ -498,3 +498,4 @@ window.Stats = Stats;
 window.Categories = Categories;
 window.HowItWorks = HowItWorks;
 window.LiveBoard = LiveBoard;
+window.WaitlistSection = WaitlistSection;
