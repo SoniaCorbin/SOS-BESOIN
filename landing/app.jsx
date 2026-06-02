@@ -1,6 +1,6 @@
 // Main App — composes all sections
 const { useState: _useState } = React;
-const { Nav, Hero, Stats, Categories, HowItWorks, LiveBoard } = window;
+const { Nav, Hero, Stats, Categories, HowItWorks, LiveBoard, WaitlistSection } = window;
 
 /* ===================== PROVIDERS ===================== */
 function ProvidersSection() {
@@ -297,6 +297,7 @@ function App() {
       <Testimonials />
       <FAQSection />
       <FinalCTA />
+      <WaitlistSection />
       <Footer />
 
       {typeof TweaksPanel === 'function' && (

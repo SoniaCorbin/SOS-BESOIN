@@ -334,7 +334,164 @@ function LiveBoard() {
     </section>
   );
 }
+/* ===================== WAITLIST ===================== */
+function WaitlistSection() {
+  const [email, setEmail] = React.useState('');
+  const [name, setName]   = React.useState('');
+  const [role, setRole]   = React.useState('client');
+  const [status, setStatus] = React.useState('idle'); // idle | loading | success | error
 
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (!email) return;
+    setStatus('loading');
+
+    try {
+      const res = await fetch('https://dxnsfsqbgywssjloievn.supabase.co/rest/v1/waitlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4bnNmc3FiZ3l3c3NqbG9pZXZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODcwNDYsImV4cCI6MjA5NDg2MzA0Nn0.A71jh1_8F9GhwwQeaT6PEr_ojCqNftfizxy1pBIpStU',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4bnNmc3FiZ3l3c3NqbG9pZXZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODcwNDYsImV4cCI6MjA5NDg2MzA0Nn0.A71jh1_8F9GhwwQeaT6PEr_ojCqNftfizxy1pBIpStU',
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({ email, name, role }),
+      });
+
+      if (res.ok) {
+        setStatus('success');
+        setEmail('');
+        setName('');
+      } else if (res.status === 409) {
+        setStatus('duplicate');
+      } else {
+        setStatus('error');
+      }
+    } catch {
+      setStatus('error');
+    }
+  }
+
+  return (
+    <section className="section" id="waitlist" style={{ paddingBottom: 60 }}>
+      <div className="shell">
+        <div style={{
+          maxWidth: 560,
+          margin: '0 auto',
+          background: 'var(--surface)',
+          border: '1px solid var(--line-2)',
+          borderRadius: 20,
+          padding: '48px 40px',
+          textAlign: 'center',
+        }}>
+          <span className="section-tag" style={{ marginBottom: 16 }}>·LISTE_D_ATTENTE·</span>
+          <h2 style={{ fontSize: 32, marginBottom: 12 }}>
+            Soyez parmi les <span style={{ color: 'var(--amber)' }}>premiers.</span>
+          </h2>
+          <p style={{ color: 'var(--text-dim)', marginBottom: 32, lineHeight: 1.6 }}>
+            L'app arrive bientôt. Inscrivez-vous pour être notifié en priorité et obtenir un accès anticipé.
+          </p>
+
+          {status === 'success' ? (
+            <div style={{
+              background: 'rgba(34,197,94,0.1)',
+              border: '1px solid rgba(34,197,94,0.3)',
+              borderRadius: 12,
+              padding: '20px 24px',
+              color: '#22c55e',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 14,
+            }}>
+              ✅ Vous êtes sur la liste ! On vous contacte dès le lancement.
+            </div>
+          ) : status === 'duplicate' ? (
+            <div style={{
+              background: 'rgba(245,158,11,0.1)',
+              border: '1px solid rgba(245,158,11,0.3)',
+              borderRadius: 12,
+              padding: '20px 24px',
+              color: 'var(--amber)',
+              fontSize: 14,
+            }}>
+              ⚠️ Ce courriel est déjà inscrit !
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <input
+                type="text"
+                placeholder="Votre prénom"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                style={{
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--line-2)',
+                  borderRadius: 10,
+                  padding: '12px 16px',
+                  color: 'var(--text)',
+                  fontSize: 15,
+                  outline: 'none',
+                }}
+              />
+              <input
+                type="email"
+                placeholder="Votre courriel"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                style={{
+                  background: 'var(--surface-2)',
+                  border: '1px solid var(--line-2)',
+                  borderRadius: 10,
+                  padding: '12px 16px',
+                  color: 'var(--text)',
+                  fontSize: 15,
+                  outline: 'none',
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                {['client', 'prestataire'].map(r => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRole(r)}
+                    style={{
+                      flex: 1,
+                      padding: '10px 16px',
+                      borderRadius: 10,
+                      border: `1px solid ${role === r ? 'var(--amber)' : 'var(--line-2)'}`,
+                      background: role === r ? 'var(--amber-soft)' : 'var(--surface-2)',
+                      color: role === r ? 'var(--amber)' : 'var(--text-dim)',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {r === 'client' ? '🔍 Je cherche un pro' : '💼 Je suis prestataire'}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="submit"
+                disabled={status === 'loading'}
+                className="btn btn-primary"
+                style={{ marginTop: 8, height: 48, fontSize: 15, fontWeight: 700 }}
+              >
+                {status === 'loading' ? 'Inscription...' : "M'inscrire sur la liste d'attente →"}
+              </button>
+              {status === 'error' && (
+                <p style={{ color: 'var(--red)', fontSize: 13 }}>
+                  Une erreur est survenue. Réessayez.
+                </p>
+              )}
+            </form>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+window.WaitlistSection = WaitlistSection;
 window.Nav = Nav;
 window.Hero = Hero;
 window.Stats = Stats;
