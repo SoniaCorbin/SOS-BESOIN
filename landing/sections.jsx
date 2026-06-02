@@ -336,16 +336,31 @@ function LiveBoard() {
 }
 /* ===================== WAITLIST ===================== */
 function WaitlistSection() {
-  const [email, setEmail] = React.useState('');
-  const [name, setName]   = React.useState('');
-  const [role, setRole]   = React.useState('client');
-  const [status, setStatus] = React.useState('idle'); // idle | loading | success | error
+  const [email, setEmail]   = React.useState('');
+  const [name, setName]     = React.useState('');
+  const [role, setRole]     = React.useState('client');
+  const [status, setStatus] = React.useState('idle');
+  const [count, setCount]   = React.useState(null);
+
+  React.useEffect(() => {
+    fetch('https://dxnsfsqbgywssjloievn.supabase.co/rest/v1/waitlist?select=id', {
+      headers: {
+        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4bnNmc3FiZ3l3c3NqbG9pZXZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODcwNDYsImV4cCI6MjA5NDg2MzA0Nn0.A71jh1_8F9GhwwQeaT6PEr_ojCqNftfizxy1pBIpStU',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4bnNmc3FiZ3l3c3NqbG9pZXZuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODcwNDYsImV4cCI6MjA5NDg2MzA0Nn0.A71jh1_8F9GhwwQeaT6PEr_ojCqNftfizxy1pBIpStU',
+        'Prefer': 'count=exact',
+      },
+    })
+    .then(res => {
+      const range = res.headers.get('content-range');
+      if (range) setCount(parseInt(range.split('/')[1]));
+    })
+    .catch(() => {});
+  }, [status]);
 
   async function handleSubmit(e) {
     e.preventDefault();
     if (!email) return;
     setStatus('loading');
-
     try {
       const res = await fetch('https://dxnsfsqbgywssjloievn.supabase.co/rest/v1/waitlist', {
         method: 'POST',
@@ -357,7 +372,6 @@ function WaitlistSection() {
         },
         body: JSON.stringify({ email, name, role }),
       });
-
       if (res.ok) {
         setStatus('success');
         setEmail('');
@@ -391,6 +405,31 @@ function WaitlistSection() {
           <p style={{ color: 'var(--text-dim)', marginBottom: 32, lineHeight: 1.6 }}>
             L'app arrive bientôt. Inscrivez-vous pour être notifié en priorité et obtenir un accès anticipé.
           </p>
+
+          {count !== null && count > 0 && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              marginBottom: 24,
+              padding: '10px 16px',
+              background: 'rgba(245,158,11,0.08)',
+              border: '1px solid rgba(245,158,11,0.2)',
+              borderRadius: 10,
+            }}>
+              <span style={{ fontSize: 18 }}>🔥</span>
+              <span style={{
+                color: 'var(--amber)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 14,
+                fontWeight: 600,
+              }}>
+                {count} personne{count > 1 ? 's' : ''} déjà inscrite{count > 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
+
 
           {status === 'success' ? (
             <div style={{
