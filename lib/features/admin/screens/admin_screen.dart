@@ -79,7 +79,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 3, vsync: this);
+    _tabCtrl = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -119,6 +119,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
             Tab(text: 'Stats'),
             Tab(text: 'Utilisateurs'),
             Tab(text: 'Signalements'),
+            Tab(text: 'Waitlist'),
           ],
         ),
       ),
@@ -131,6 +132,8 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
           const _UsersTab(),
           // ── Signalements ───────────────────────────
           const _ReportsTab(),
+          // — Waitlist ————————————————————————————————
+          const _WaitlistTab(),
         ],
       ),
     );
@@ -613,6 +616,207 @@ class _StatCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Provider waitlist ─────────────────────────────────────
+final adminWaitlistProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final data = await _client
+      .from('waitlist')
+      .select()
+      .order('created_at', ascending: false);
+  return List<Map<String, dynamic>>.from(data);
+});
+
+// ── Onglet Waitlist ───────────────────────────────────────
+class _WaitlistTab extends ConsumerWidget {
+  const _WaitlistTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final waitlistAsync = ref.watch(adminWaitlistProvider);
+
+    return waitlistAsync.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: AppColors.amber),
+      ),
+      error: (e, _) => Center(
+        child: Text('Erreur: $e',
+            style: const TextStyle(color: AppColors.red)),
+      ),
+      data: (waitlist) => waitlist.isEmpty
+          ? const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.people_outline_rounded,
+                size: 48, color: AppColors.textMute),
+            SizedBox(height: 16),
+            Text(
+              'Aucune inscription pour l\'instant',
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.textDim,
+              ),
+            ),
+          ],
+        ),
+      )
+          : Column(
+        children: [
+          // Compteur
+          Container(
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.amberSoft,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.amber),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.people_rounded,
+                    color: AppColors.amber, size: 24),
+                const SizedBox(width: 12),
+                Text(
+                  '${waitlist.length} inscrit${waitlist.length > 1 ? 's' : ''}',
+                  style: const TextStyle(
+                    fontFamily: 'SpaceGrotesk',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.amber,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${waitlist.where((w) => w['role'] == 'prestataire').length} pros · ${waitlist.where((w) => w['role'] == 'client').length} clients',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.amber,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Liste
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: waitlist.length,
+              itemBuilder: (context, i) {
+                final w          = waitlist[i];
+                final name       = w['name'] as String? ?? 'Sans nom';
+                final email      = w['email'] as String? ?? '';
+                final role       = w['role'] as String? ?? 'client';
+                final createdAt  = w['created_at'] != null
+                    ? DateTime.parse(w['created_at'] as String)
+                    : DateTime.now();
+                final isProvider = role == 'prestataire';
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.line2),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40, height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isProvider
+                              ? AppColors.cyanSoft
+                              : AppColors.amberSoft,
+                          border: Border.all(
+                            color: isProvider
+                                ? AppColors.cyan
+                                : AppColors.amber,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            name.isNotEmpty
+                                ? name[0].toUpperCase()
+                                : '?',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: isProvider
+                                  ? AppColors.cyan
+                                  : AppColors.amber,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.text,
+                              ),
+                            ),
+                            Text(
+                              email,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textMute,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isProvider
+                                  ? AppColors.cyanSoft
+                                  : AppColors.amberSoft,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              isProvider ? 'Pro' : 'Client',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: isProvider
+                                    ? AppColors.cyan
+                                    : AppColors.amber,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat('d MMM', 'fr_CA')
+                                .format(createdAt),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: AppColors.textMute,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
