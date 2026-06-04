@@ -141,7 +141,7 @@ class _HomeAppBar extends ConsumerWidget {
           GestureDetector(
             onTap: onSwitchRole,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
                 color: isProvider ? AppColors.cyanSoft : AppColors.amberSoft,
                 borderRadius: BorderRadius.circular(20),
@@ -150,38 +150,37 @@ class _HomeAppBar extends ConsumerWidget {
                 ),
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isProvider
-                        ? Icons.handyman_rounded
-                        : Icons.search_rounded,
-                    size: 14,
+                    isProvider ? Icons.handyman_rounded : Icons.search_rounded,
+                    size: 13,
                     color: isProvider ? AppColors.cyan : AppColors.amber,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Text(
-                    isProvider ? 'Mode Pro' : 'Mode Client',
+                    isProvider ? 'Pro' : 'Client',
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: isProvider ? AppColors.cyan : AppColors.amber,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 3),
                   Icon(
                     Icons.swap_horiz_rounded,
-                    size: 14,
+                    size: 13,
                     color: isProvider ? AppColors.cyan : AppColors.amber,
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: () => context.push(AppRoutes.profile),
             child: Container(
-              width: 36, height: 36,
+              width: 32, height: 32,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.surface2,
@@ -191,7 +190,7 @@ class _HomeAppBar extends ConsumerWidget {
                 child: Text(
                   user?.initials ?? '?',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.text,
                   ),
@@ -199,13 +198,18 @@ class _HomeAppBar extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           IconButton(
             onPressed: onSignOut,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(
+              minWidth: 32,
+              minHeight: 32,
+            ),
             icon: const Icon(
               Icons.logout_rounded,
               color: AppColors.textMute,
-              size: 20,
+              size: 18,
             ),
           ),
         ],
@@ -253,14 +257,17 @@ class _ModeBadge extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            Text(
-              isProvider
-                  ? 'Mode Prestataire — Vous recevez des missions'
-                  : 'Mode Client — Trouvez un pro rapidement',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: isProvider ? AppColors.cyan2 : AppColors.amber2,
+            Expanded(
+              child: Text(
+                isProvider
+                    ? 'Mode Prestataire — Vous recevez des missions'
+                    : 'Mode Client — Trouvez un pro rapidement',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: isProvider ? AppColors.cyan2 : AppColors.amber2,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -440,7 +447,7 @@ class _ProviderDashboard extends StatelessWidget {
           const _OpenRequestsList(),
           const SizedBox(height: 32),
           const Text(
-            'Missions disponibles',
+            'Mes missions',
             style: TextStyle(
               fontFamily: 'SpaceGrotesk',
               fontSize: 17,
@@ -457,6 +464,7 @@ class _ProviderDashboard extends StatelessWidget {
   }
 }
 
+// ── Liste missions prestataire ────────────────────────────
 class _ProviderMissionsList extends ConsumerWidget {
   const _ProviderMissionsList();
 
@@ -565,9 +573,7 @@ class _ProviderMissionsList extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    r.status == 'in_progress'
-                        ? 'En cours'
-                        : 'Ouvert',
+                    r.status == 'in_progress' ? 'En cours' : 'Ouvert',
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,

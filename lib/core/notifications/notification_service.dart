@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 // ── Handler background ────────────────────────────────────
 @pragma('vm:entry-point')
@@ -12,8 +13,10 @@ class NotificationService {
   static final _messaging = FirebaseMessaging.instance;
   static final _client    = Supabase.instance.client;
 
-  // ── Initialisation ────────────────────────────────────
+// ── Initialisation ────────────────────────────────────
   static Future<void> init() async {
+    if (kIsWeb) return; // notifications pas supportées sur web
+
     // Handler background
     FirebaseMessaging.onBackgroundMessage(
         firebaseMessagingBackgroundHandler);
@@ -46,21 +49,6 @@ class NotificationService {
     });
   }
 
-  // ── Sauvegarder token FCM ────────────────────────────
-  static Future<void> _saveToken(String token) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) return;
-
-    try {
-      await _client.from('profiles').update({
-        'fcm_token': token,
-      }).eq('id', userId);
-      debugPrint('FCM token sauvegardé !');
-    } catch (e) {
-      debugPrint('Erreur sauvegarde token: $e');
-    }
-  }
-
   // ── Envoyer une notification ─────────────────────────
   static Future<void> sendNotification({
     required String userId,
@@ -88,6 +76,20 @@ class NotificationService {
       });
     } catch (e) {
       debugPrint('Erreur envoi notification: $e');
+    }
+  }
+  // ── Sauvegarder token FCM ────────────────────────────
+  static Future<void> _saveToken(String token) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    try {
+      await _client.from('profiles').update({
+        'fcm_token': token,
+      }).eq('id', userId);
+      debugPrint('FCM token sauvegardé !');
+    } catch (e) {
+      debugPrint('Erreur sauvegarde token: $e');
     }
   }
 }

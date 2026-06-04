@@ -22,6 +22,7 @@ import '../../features/legal/screens/legal_screen.dart';
 import '../../features/admin/screens/admin_screen.dart';
 import '../../features/profile/screens/stripe_onboarding_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
+import 'package:flutter/foundation.dart';
 
 // ── Routes nommées ───────────────────────────────────────
 class AppRoutes {
@@ -44,6 +45,11 @@ bool _onboardingChecked = false;
 bool _onboardingDone    = true;
 
 Future<void> initOnboarding() async {
+  if (kIsWeb) {
+    _onboardingDone    = true;
+    _onboardingChecked = true;
+    return;
+  }
   final prefs = await SharedPreferences.getInstance();
   _onboardingDone    = prefs.getBool('onboarding_done') ?? false;
   _onboardingChecked = true;
