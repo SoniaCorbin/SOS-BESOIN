@@ -129,7 +129,7 @@ const FAQ = [
   { q: "Que se passe-t-il si je dois annuler ma demande ?", a: "Tant qu'aucune offre n'est acceptée, vous pouvez annuler sans frais. Une fois une offre acceptée, des conditions s'appliquent selon le délai et la catégorie." },
   { q: "Les pros sont-ils vérifiés ?", a: "Tous les prestataires passent un KYC (identité + adresse) avant de pouvoir soumettre des offres. Les pros notés moins de 3,5/5 après 10 missions sont suspendus automatiquement." },
   { q: "Quelle est la commission de la plateforme ?", a: "10 % du montant de la mission, retenue automatiquement sur le paiement du prestataire. Aucun frais caché côté client : le prix affiché par le pro est le prix que vous payez." },
-  { q: "Puis-je utiliser un code promo ?", a: "Oui — un code promo valide peut être appliqué à l'étape du paiement avant d'accepter l'offre." },
+  { q: "Puis-je utiliser un code promo ?", a: "Les codes promo arrivent bientôt ! Inscrivez-vous sur la liste d'attente pour être notifié en priorité." },
 ];
 
 function FAQSection() {
