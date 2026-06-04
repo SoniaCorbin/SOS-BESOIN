@@ -209,11 +209,10 @@ class InvoiceDetailScreen extends ConsumerWidget {
                 height: 52,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Export PDF — à venir !'),
-                      ),
-                    );
+                    final invoiceData = ref.read(invoiceDetailProvider(invoiceId)).value;
+                    if (invoiceData != null) {
+                      PdfService.generateAndShareInvoice(invoiceData);
+                    }
                   },
                   icon: const Icon(Icons.picture_as_pdf_outlined),
                   label: const Text('Télécharger en PDF'),
