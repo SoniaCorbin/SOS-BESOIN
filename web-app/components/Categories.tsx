@@ -10,6 +10,7 @@ const CATEGORIES = [
   { icon: '🌐', label: 'Web & Développement' },
   { icon: '⚖️', label: 'Juridique & Admin' },
   { icon: '❤️', label: 'Santé & Bien-être' },
+  { icon: '✨', label: 'Autres' },
 ]
 
 export default function Categories() {
