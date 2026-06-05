@@ -1,5 +1,9 @@
 import Nav from '@/components/Nav'
 import Stats from '@/components/Stats'
+import Categories from '@/components/Categories'
+import LiveBoard from '@/components/LiveBoard'
+import Footer from '@/components/Footer'
+import HowItWorks from '@/components/HowItWorks'
 
 export default function Home() {
   return (
@@ -44,6 +48,10 @@ export default function Home() {
           </div>
         </section>
         <Stats />
+        <Categories />
+        <HowItWorks />
+        <LiveBoard />
+        <Footer />
       </main>
     </>
   )
