@@ -29,7 +29,7 @@ export default function Footer() {
               </span>
             </div>
             <p style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.6 }}>
-              La place de marché pour vos besoins urgents. Prestataires vérifiés. Paiement séquestré.
+              La place de marché pour vos besoins urgents. Prestaires vérifiés. Paiement séquestré.
             </p>
           </div>
 
