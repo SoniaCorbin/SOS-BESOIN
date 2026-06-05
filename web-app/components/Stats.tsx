@@ -13,7 +13,7 @@ export default function Stats() {
     async function fetchStats() {
       const [{ count: providers }, { count: requests }] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'provider'),
-        supabase.from('service_requests').select('*', { count: 'exact', head: true }).eq('status', 'open'),
+        supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'open'),
       ])
       setStats(s => ({ ...s, providers: providers ?? 0, requests: requests ?? 0 }))
     }
@@ -21,7 +21,7 @@ export default function Stats() {
 
     // Temps réel
     const channel = supabase.channel('stats')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_requests' }, fetchStats)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, fetchStats)
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }

@@ -23,7 +23,7 @@ export default function LiveBoard() {
   useEffect(() => {
     async function fetchRequests() {
       const { data } = await supabase
-        .from('service_requests')
+        .from('requests')
         .select('id, title, category, budget, created_at, status')
         .in('status', ['open', 'in_progress'])
         .order('created_at', { ascending: false })
@@ -33,7 +33,7 @@ export default function LiveBoard() {
     fetchRequests()
 
     const channel = supabase.channel('liveboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_requests' }, fetchRequests)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, fetchRequests)
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
