@@ -53,6 +53,15 @@ export default function Nav() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {user ? (
           <>
+            <Link href="/explore" style={{
+                  padding: '8px 18px',
+                  border: '1px solid var(--line-2)',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  color: 'var(--text-dim)',
+                }}>
+                  Explorer
+            </Link>
             <Link href="/dashboard" style={{
               padding: '8px 18px',
               border: '1px solid var(--line-2)',

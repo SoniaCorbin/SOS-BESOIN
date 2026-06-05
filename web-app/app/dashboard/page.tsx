@@ -15,32 +15,29 @@ type Profile = {
   is_kyc_verified: boolean
 }
 
-type Request = {
-  id: string
-  title: string
-  category: string
-  status: string
-  budget: number
-  created_at: string
-}
-
 const STATUS_LABELS: Record<string, { label: string, color: string }> = {
   open:        { label: 'Ouvert', color: 'var(--amber)' },
   in_progress: { label: 'En cours', color: 'var(--cyan)' },
   completed:   { label: 'Complété', color: 'var(--green)' },
   cancelled:   { label: 'Annulé', color: 'var(--red)' },
+  pending:     { label: 'En attente', color: 'var(--text-dim)' },
+  accepted:    { label: 'Acceptée', color: 'var(--green)' },
 }
 
 export default function DashboardPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [requests, setRequests] = useState<Request[]>([])
+  const [activeRole, setActiveRole] = useState<'client' | 'provider'>('client')
+  const [requests, setRequests] = useState<any[]>([])
+  const [offers, setOffers] = useState<any[]>([])
+  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
+      setUserId(session.user.id)
 
       const { data: prof } = await supabase
         .from('profiles')
@@ -49,6 +46,7 @@ export default function DashboardPage() {
         .single()
       setProfile(prof)
 
+      // Demandes client
       const { data: reqs } = await supabase
         .from('requests')
         .select('id, title, category, status, budget, created_at')
@@ -56,13 +54,23 @@ export default function DashboardPage() {
         .order('created_at', { ascending: false })
         .limit(10)
       setRequests(reqs ?? [])
+
+      // Offres prestataire
+      const { data: offs } = await supabase
+        .from('offers')
+        .select('*, requests(title, category, status, budget)')
+        .eq('provider_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(10)
+      setOffers(offs ?? [])
+
       setLoading(false)
     }
     load()
 
-    // Temps réel
     const channel = supabase.channel('dashboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, load)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, load)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [])
@@ -80,95 +88,159 @@ export default function DashboardPage() {
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
 
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 40 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
             <div>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>·DASHBOARD·</span>
               <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 8, letterSpacing: '-0.02em' }}>
                 Bonjour, {profile?.full_name?.split(' ')[0]} 👋
               </h1>
             </div>
-            <Link href="/requests/new" style={{
-              padding: '12px 24px',
-              background: 'var(--amber)',
-              color: '#000',
-              borderRadius: 10,
-              fontWeight: 600,
-              fontSize: 14,
-            }}>
-              + Lancer un SOS
-            </Link>
+            {activeRole === 'client' && (
+              <Link href="/requests/new" style={{
+                padding: '12px 24px', background: 'var(--amber)',
+                color: '#000', borderRadius: 10, fontWeight: 600, fontSize: 14,
+              }}>
+                + Lancer un SOS
+              </Link>
+            )}
           </div>
 
-          {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 40 }}>
-            {[
-              { label: 'Demandes totales', value: requests.length },
-              { label: 'En cours', value: requests.filter(r => r.status === 'in_progress').length },
-              { label: 'Complétées', value: requests.filter(r => r.status === 'completed').length },
-              { label: 'Ouvertes', value: requests.filter(r => r.status === 'open').length },
-            ].map((s, i) => (
-              <div key={i} style={{
-                background: 'var(--bg-2)',
-                border: '1px solid var(--line)',
-                borderRadius: 12,
-                padding: '20px',
-              }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 700, color: 'var(--amber)' }}>{s.value}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-mute)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.label}</div>
-              </div>
+          {/* Switcher */}
+          <div style={{
+            display: 'inline-flex',
+            background: 'var(--bg-2)',
+            border: '1px solid var(--line)',
+            borderRadius: 10,
+            padding: 4,
+            marginBottom: 32,
+          }}>
+            {(['client', 'provider'] as const).map(r => (
+              <button
+                key={r}
+                onClick={() => setActiveRole(r)}
+                style={{
+                  padding: '8px 20px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: activeRole === r ? 'var(--amber)' : 'transparent',
+                  color: activeRole === r ? '#000' : 'var(--text-dim)',
+                  fontWeight: activeRole === r ? 600 : 400,
+                  fontSize: 14,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-sans)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {r === 'client' ? '🙋 Client' : '🔧 Prestataire'}
+              </button>
             ))}
           </div>
 
-          {/* Demandes */}
-          <div>
-            <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Mes demandes</h2>
-            {requests.length === 0 ? (
-              <div style={{
-                background: 'var(--bg-2)', border: '1px solid var(--line)',
-                borderRadius: 12, padding: '48px', textAlign: 'center',
-              }}>
-                <div style={{ fontSize: 32, marginBottom: 12 }}>📭</div>
-                <p style={{ color: 'var(--text-mute)', marginBottom: 16 }}>Aucune demande pour l'instant.</p>
-                <Link href="/requests/new" style={{
-                  padding: '10px 20px', background: 'var(--amber)',
-                  color: '#000', borderRadius: 8, fontWeight: 600, fontSize: 14,
-                }}>
-                  Créer ma première demande
-                </Link>
+          {/* Vue Client */}
+          {activeRole === 'client' && (
+            <>
+              {/* Stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
+                {[
+                  { label: 'Demandes totales', value: requests.length },
+                  { label: 'En cours', value: requests.filter(r => r.status === 'in_progress').length },
+                  { label: 'Complétées', value: requests.filter(r => r.status === 'completed').length },
+                  { label: 'Ouvertes', value: requests.filter(r => r.status === 'open').length },
+                ].map((s, i) => (
+                  <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '20px' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 700, color: 'var(--amber)' }}>{s.value}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-mute)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.label}</div>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {requests.map(req => {
-                  const status = STATUS_LABELS[req.status] ?? { label: req.status, color: 'var(--text-dim)' }
-                  return (
-                    <Link key={req.id} href={`/requests/${req.id}`} style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      background: 'var(--bg-2)', border: '1px solid var(--line)',
-                      borderRadius: 12, padding: '16px 20px',
-                    }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 500, fontSize: 15, marginBottom: 4 }}>{req.title}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-mute)' }}>{req.category}</div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        {req.budget && (
-                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--amber)' }}>
-                            {req.budget}$
-                          </span>
-                        )}
-                        <span style={{
-                          fontFamily: 'var(--font-mono)', fontSize: 11,
-                          padding: '3px 10px', borderRadius: 6,
-                          border: `1px solid ${status.color}`,
-                          color: status.color,
-                        }}>{status.label}</span>
-                      </div>
-                    </Link>
-                  )
-                })}
+
+              {/* Demandes */}
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Mes demandes</h2>
+              {requests.length === 0 ? (
+                <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '48px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>📭</div>
+                  <p style={{ color: 'var(--text-mute)', marginBottom: 16 }}>Aucune demande pour l'instant.</p>
+                  <Link href="/requests/new" style={{ padding: '10px 20px', background: 'var(--amber)', color: '#000', borderRadius: 8, fontWeight: 600, fontSize: 14 }}>
+                    Créer ma première demande
+                  </Link>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {requests.map(req => {
+                    const status = STATUS_LABELS[req.status] ?? { label: req.status, color: 'var(--text-dim)' }
+                    return (
+                      <Link key={req.id} href={`/requests/${req.id}`} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        background: 'var(--bg-2)', border: '1px solid var(--line)',
+                        borderRadius: 12, padding: '16px 20px',
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 500, fontSize: 15, marginBottom: 4 }}>{req.title}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-mute)' }}>{req.category}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                          {req.budget && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--amber)' }}>{req.budget}$</span>}
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: `1px solid ${status.color}`, color: status.color }}>{status.label}</span>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Vue Prestataire */}
+          {activeRole === 'provider' && (
+            <>
+              {/* Stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
+                {[
+                  { label: 'Offres soumises', value: offers.length },
+                  { label: 'Acceptées', value: offers.filter(o => o.status === 'accepted').length },
+                  { label: 'Complétées', value: offers.filter(o => o.status === 'completed').length },
+                  { label: 'Note moyenne', value: profile?.rating ? `${profile.rating.toFixed(1)} ★` : '—' },
+                ].map((s, i) => (
+                  <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '20px' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 700, color: 'var(--green)' }}>{s.value}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-mute)', marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{s.label}</div>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+
+              {/* Offres */}
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Mes offres</h2>
+              {offers.length === 0 ? (
+                <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '48px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+                  <p style={{ color: 'var(--text-mute)' }}>Aucune offre soumise pour l'instant.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {offers.map(offer => {
+                    const req = offer.requests
+                    const offerStatus = STATUS_LABELS[offer.status] ?? { label: offer.status, color: 'var(--text-dim)' }
+                    return (
+                      <Link key={offer.id} href={`/requests/${offer.request_id}`} style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        background: 'var(--bg-2)', border: '1px solid var(--line)',
+                        borderRadius: 12, padding: '16px 20px',
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 500, fontSize: 15, marginBottom: 4 }}>{req?.title ?? 'Demande'}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-mute)' }}>{req?.category}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--green)' }}>{offer.price}$</span>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: `1px solid ${offerStatus.color}`, color: offerStatus.color }}>{offerStatus.label}</span>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </main>
     </>
