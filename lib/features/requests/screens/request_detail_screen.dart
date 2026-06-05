@@ -639,8 +639,7 @@ class _OfferCard extends StatelessWidget {
               height: 44,
               child: OutlinedButton.icon(
                 onPressed: () => context.push('/chat/${offer['id']}'),
-                icon: const Icon(Icons.chat_bubble_outline_rounded,
-                    size: 16),
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
                 label: const Text('Ouvrir le chat'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.cyan,
@@ -648,6 +647,22 @@ class _OfferCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (isClient) ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: () => _validateMission(context),
+                  icon: const Icon(Icons.verified_rounded, size: 16),
+                  label: const Text('Valider la mission — libérer le paiement'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.green,
+                    foregroundColor: AppColors.bg,
+                  ),
+                ),
+              ),
+            ],
           ],
         ],
       ),
@@ -701,6 +716,63 @@ class _OfferCard extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('✅ Offre acceptée ! Le pro a été notifié.'),
+            backgroundColor: AppColors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _validateMission(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text(
+          'Valider la mission ?',
+          style: TextStyle(color: AppColors.text, fontFamily: 'SpaceGrotesk'),
+        ),
+        content: const Text(
+          'Le paiement sera libéré au prestataire. Cette action est irréversible.',
+          style: TextStyle(color: AppColors.textDim),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler', style: TextStyle(color: AppColors.textMute)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.green),
+            child: const Text('Confirmer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await _client.from('offers').update(
+        {'status': 'completed'},
+      ).eq('id', offer['id'] as String);
+
+      await _client.from('requests').update(
+        {'status': 'completed'},
+      ).eq('id', requestId);
+
+      onAccepted();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Mission validée ! Le prestataire sera payé sous 24h.'),
             backgroundColor: AppColors.green,
           ),
         );
