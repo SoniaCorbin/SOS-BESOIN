@@ -50,7 +50,7 @@ export default function DashboardPage() {
       setProfile(prof)
 
       const { data: reqs } = await supabase
-        .from('service_requests')
+        .from('requests')
         .select('id, title, category, status, budget, created_at')
         .eq('client_id', session.user.id)
         .order('created_at', { ascending: false })
@@ -62,7 +62,7 @@ export default function DashboardPage() {
 
     // Temps réel
     const channel = supabase.channel('dashboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_requests' }, () => load())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, () => load())
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [])
