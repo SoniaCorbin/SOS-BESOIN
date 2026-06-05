@@ -1,5 +1,10 @@
 import Nav from '@/components/Nav'
 import Stats from '@/components/Stats'
+import Categories from '@/components/Categories'
+import HowItWorks from '@/components/HowItWorks'
+import Providers from '@/components/Providers'
+import LiveBoard from '@/components/LiveBoard'
+import Footer from '@/components/Footer'
 
 export default function Home() {
   return (
@@ -44,6 +49,11 @@ export default function Home() {
           </div>
         </section>
         <Stats />
+        <Categories />
+        <HowItWorks />
+        <Providers />
+        <LiveBoard />
+        <Footer />
       </main>
     </>
   )

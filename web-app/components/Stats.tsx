@@ -6,7 +6,7 @@ export default function Stats() {
   const [stats, setStats] = useState({
     providers: 0,
     requests: 0,
-    avgMinutes: 28,
+    avgMinutes: 0,
   })
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function Stats() {
   const items = [
     { label: 'Prestataires en ligne', value: stats.providers.toLocaleString('fr') },
     { label: 'Demandes ouvertes', value: stats.requests.toLocaleString('fr') },
-    { label: 'Délai médian', value: `${stats.avgMinutes} min` },
+    { label: 'Délai médian', value: stats.avgMinutes ? `${stats.avgMinutes} min` : '—' },
   ]
 
   return (
