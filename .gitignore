@@ -33,3 +33,6 @@ landing/node_modules/
 landing/node_modules/
 android/app/keystore.jks
 android/key.properties
+
+.vercel
+.env*
