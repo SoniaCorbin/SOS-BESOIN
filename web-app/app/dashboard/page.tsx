@@ -20,6 +20,8 @@ const STATUS_LABELS: Record<string, { label: string, color: string }> = {
   in_progress: { label: 'En cours', color: 'var(--cyan)' },
   completed:   { label: 'Complété', color: 'var(--green)' },
   cancelled:   { label: 'Annulé', color: 'var(--red)' },
+  pending:     { label: 'En attente', color: 'var(--text-dim)' },
+  accepted:    { label: 'Acceptée', color: 'var(--green)' },
 }
 
 export default function DashboardPage() {
