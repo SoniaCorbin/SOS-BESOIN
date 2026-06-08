@@ -54,13 +54,13 @@ export default function Nav() {
         {user ? (
           <>
             <Link href="/explore" style={{
-                  padding: '8px 18px',
-                  border: '1px solid var(--line-2)',
-                  borderRadius: 8,
-                  fontSize: 14,
-                  color: 'var(--text-dim)',
-                }}>
-                  Explorer
+              padding: '8px 18px',
+              border: '1px solid var(--line-2)',
+              borderRadius: 8,
+              fontSize: 14,
+              color: 'var(--text-dim)',
+            }}>
+              Explorer
             </Link>
             <Link href="/dashboard" style={{
               padding: '8px 18px',
@@ -70,6 +70,15 @@ export default function Nav() {
               color: 'var(--text-dim)',
             }}>
               Dashboard
+            </Link>
+            <Link href="/profile" style={{
+              padding: '8px 18px',
+              border: '1px solid var(--line-2)',
+              borderRadius: 8,
+              fontSize: 14,
+              color: 'var(--text-dim)',
+            }}>
+              Profil
             </Link>
             <Link href="/requests/new" style={{
               padding: '8px 18px',
