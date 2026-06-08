@@ -33,3 +33,8 @@ body {
 }
 
 a { color: inherit; text-decoration: none; }
+
+@media (max-width: 640px) {
+  .nav-desktop { display: none !important; }
+  .nav-mobile-btn { display: block !important; }
+}
