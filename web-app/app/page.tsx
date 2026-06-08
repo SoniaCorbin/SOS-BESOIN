@@ -5,6 +5,8 @@ import HowItWorks from '@/components/HowItWorks'
 import Providers from '@/components/Providers'
 import LiveBoard from '@/components/LiveBoard'
 import Footer from '@/components/Footer'
+import Testimonials from '@/components/Testimonials'
+import FAQ from '@/components/FAQ'
 
 export default function Home() {
   return (
@@ -52,6 +54,8 @@ export default function Home() {
         <Categories />
         <HowItWorks />
         <Providers />
+        <Testimonials />
+        <FAQ />
         <LiveBoard />
         <Footer />
       </main>
