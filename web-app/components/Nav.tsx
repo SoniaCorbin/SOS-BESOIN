@@ -3,17 +3,22 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { useNotifications } from '@/lib/useNotifications'
 
 export default function Nav() {
   const router = useRouter()
   const [user, setUser] = useState<any>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const notifCount = useNotifications(userId)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null)
+      setUserId(data.session?.user?.id ?? null)
     })
     const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null)
+      setUserId(session?.user?.id ?? null)
     })
     return () => listener.subscription.unsubscribe()
   }, [])
@@ -68,8 +73,21 @@ export default function Nav() {
               borderRadius: 8,
               fontSize: 14,
               color: 'var(--text-dim)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
             }}>
               Dashboard
+              {notifCount > 0 && (
+                <span style={{
+                  background: 'var(--red)',
+                  color: '#fff',
+                  borderRadius: '50%',
+                  width: 18, height: 18,
+                  fontSize: 11, fontWeight: 700,
+                  display: 'grid', placeItems: 'center',
+                }}>{notifCount}</span>
+              )}
             </Link>
             <Link href="/profile" style={{
               padding: '8px 18px',
