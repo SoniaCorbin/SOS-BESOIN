@@ -11,8 +11,8 @@ export default function Providers() {
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 64,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: 32,
           alignItems: 'center',
         }}>
           {/* Texte */}
