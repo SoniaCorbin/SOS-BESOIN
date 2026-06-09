@@ -203,13 +203,17 @@ function Footer() {
               <div className="brand-mark"><Icon.Alert size={20} /></div>
               <span className="brand-name">SOS<b>·BESOIN</b></span>
             </div>
-            <p>La place de marché pour vos besoins urgents. Pros vérifiés. Paiement séquestré. Aucune mauvaise surprise.</p>
+            <p>La place de marché pour vos besoins urgents. Prestataires vérifiés. Paiement séquestré. Aucune mauvaise surprise.</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
-              {[Icon.Twitter, Icon.Linked, Icon.Insta].map((I, i) => (
-                <a key={i} href="#" style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--line-2)', display: 'grid', placeItems: 'center', color: 'var(--text-dim)' }}>
-                  <I size={16} />
-                </a>
-              ))}
+              <a href="https://www.tiktok.com/@sosbesoin.ca" target="_blank" style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--line-2)', display: 'grid', placeItems: 'center', color: 'var(--text-dim)' }}>
+                <Icon.Twitter size={16} />
+              </a>
+              <a href="https://www.linkedin.com/company/sosbesoinapp" target="_blank" style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--line-2)', display: 'grid', placeItems: 'center', color: 'var(--text-dim)' }}>
+                <Icon.Linked size={16} />
+              </a>
+              <a href="https://www.instagram.com/sosbesoinapp" target="_blank" style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--line-2)', display: 'grid', placeItems: 'center', color: 'var(--text-dim)' }}>
+                <Icon.Insta size={16} />
+              </a>
             </div>
           </div>
           <div>
@@ -219,16 +223,15 @@ function Footer() {
               <li><a href="#categories">Catégories</a></li>
               <li><a href="#live">Demandes en direct</a></li>
               <li><a href="#pros">Devenir prestataire</a></li>
-              <li><a href="#">Tarifs & commission</a></li>
+              <li><a href="https://app.sosbesoin.ca">Lancer un SOS</a></li>
             </ul>
           </div>
           <div>
             <h5>Support</h5>
             <ul>
-              <li><a href="#">Centre d'aide</a></li>
-              <li><a href="#">Contacter le support</a></li>
+              <li><a href="mailto:support@sosbesoin.ca">Contacter le support</a></li>
               <li><a href="#faq">FAQ</a></li>
-              <li><a href="#">Statut système</a></li>
+              <li><a href="https://app.sosbesoin.ca">Accéder à l'app</a></li>
             </ul>
           </div>
           <div>
@@ -236,14 +239,14 @@ function Footer() {
             <ul>
               <li><a href="#">Conditions générales</a></li>
               <li><a href="#">Politique de confidentialité</a></li>
-              <li><a href="#">Mentions légales</a></li>
+              <li><a href="#">Politique de remboursement</a></li>
               <li><a href="#">Cookies</a></li>
             </ul>
           </div>
         </div>
         <div className="footer-bottom">
           <span>© 2026 SOS-BESOIN · Tous droits réservés</span>
-          <span>v3.2 · build 20260519 · status: ALL SYSTEMS OK</span>
+          <span>support@sosbesoin.ca · app.sosbesoin.ca</span>
         </div>
       </div>
     </footer>
