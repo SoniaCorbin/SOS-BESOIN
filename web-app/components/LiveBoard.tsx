@@ -95,7 +95,7 @@ export default function LiveBoard() {
         </div>
 
         {/* Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
 
           {/* Sidebar filtres */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

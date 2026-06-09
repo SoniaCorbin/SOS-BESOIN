@@ -38,3 +38,8 @@ a { color: inherit; text-decoration: none; }
   .nav-desktop { display: none !important; }
   .nav-mobile-btn { display: block !important; }
 }
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
