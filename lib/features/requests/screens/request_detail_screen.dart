@@ -770,12 +770,8 @@ class _OfferCard extends StatelessWidget {
       onAccepted();
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Mission validée ! Le prestataire sera payé sous 24h.'),
-            backgroundColor: AppColors.green,
-          ),
-        );
+        // Afficher le dialog de notation
+        await _showRatingDialog(context);
       }
     } catch (e) {
       if (context.mounted) {
@@ -783,6 +779,120 @@ class _OfferCard extends StatelessWidget {
           SnackBar(content: Text('Erreur: $e')),
         );
       }
+    }
+  }
+
+  Future<void> _showRatingDialog(BuildContext context) async {
+    int selectedRating = 0;
+    final commentCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          title: const Text(
+            '⭐ Évaluer le prestataire',
+            style: TextStyle(color: AppColors.text, fontFamily: 'SpaceGrotesk'),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Comment s\'est passée la mission ?',
+                style: TextStyle(color: AppColors.textDim, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              // Étoiles
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (i) {
+                  final star = i + 1;
+                  return GestureDetector(
+                    onTap: () => setState(() => selectedRating = star),
+                    child: Icon(
+                      Icons.star_rounded,
+                      size: 40,
+                      color: star <= selectedRating
+                          ? AppColors.amber
+                          : AppColors.line2,
+                    ),
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: commentCtrl,
+                style: const TextStyle(color: AppColors.text),
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Commentaire (optionnel)...',
+                  hintStyle: TextStyle(color: AppColors.textMute),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Passer', style: TextStyle(color: AppColors.textMute)),
+            ),
+            ElevatedButton(
+              onPressed: selectedRating == 0 ? null : () async {
+                await _submitRating(
+                  rating: selectedRating,
+                  comment: commentCtrl.text.trim(),
+                );
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ Mission validée ! Merci pour votre évaluation.'),
+                      backgroundColor: AppColors.green,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.amber),
+              child: const Text('Soumettre'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitRating({
+    required int rating,
+    required String comment,
+  }) async {
+    try {
+      await _client.from('ratings').insert({
+        'request_id': requestId,
+        'offer_id': offer['id'],
+        'client_id': _client.auth.currentUser?.id,
+        'provider_id': offer['provider_id'],
+        'rating': rating,
+        'comment': comment.isEmpty ? null : comment,
+      });
+
+      // Mettre à jour la note moyenne
+      final ratings = await _client
+          .from('ratings')
+          .select('rating')
+          .eq('provider_id', offer['provider_id'] as String);
+
+      if (ratings.isNotEmpty) {
+        final avg = ratings.map((r) => r['rating'] as int)
+            .reduce((a, b) => a + b) / ratings.length;
+        await _client.from('profiles').update({
+          'rating': (avg * 10).round() / 10,
+          'total_missions': ratings.length,
+        }).eq('id', offer['provider_id'] as String);
+      }
+    } catch (e) {
+      debugPrint('Erreur notation: $e');
     }
   }
 }
