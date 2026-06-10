@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
+import RatingForm from '@/components/RatingForm'
 
 const STATUS_LABELS: Record<string, { label: string, color: string }> = {
   open:        { label: 'Ouvert', color: 'var(--amber)' },
@@ -206,6 +207,15 @@ export default function RequestDetailPage() {
                       }}>
                         ✅ Valider la mission — libérer le paiement
                       </button>
+                    )}
+                    {isClient && offer.status === 'completed' && userId && (
+                      <RatingForm
+                        requestId={id}
+                        offerId={offer.id}
+                        clientId={userId}
+                        providerId={offer.provider_id}
+                        onRated={() => loadOffers()}
+                      />
                     )}
                     {offer.status === 'accepted' && (
                       <div style={{ fontSize: 13, color: 'var(--green)', marginTop: 8 }}>✓ Offre acceptée</div>
