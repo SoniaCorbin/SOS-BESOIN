@@ -30,19 +30,12 @@ export default function RequestDetailPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
       setUserId(session.user.id)
-
-      const { data: req } = await supabase
-        .from('requests')
-        .select('*')
-        .eq('id', id)
-        .single()
+      const { data: req } = await supabase.from('requests').select('*').eq('id', id).single()
       setRequest(req)
-
       await loadOffers()
       setLoading(false)
     }
     load()
-
     const channel = supabase.channel('request-detail')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, loadOffers)
       .subscribe()
@@ -52,7 +45,7 @@ export default function RequestDetailPage() {
   async function loadOffers() {
     const { data } = await supabase
       .from('offers')
-      .select('*, profiles(full_name, rating, total_missions, is_kyc_verified)')
+      .select('*')
       .eq('request_id', id)
       .order('created_at', { ascending: false })
     setOffers(data ?? [])
@@ -117,16 +110,8 @@ export default function RequestDetailPage() {
           {/* Carte demande */}
           <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 16, padding: '24px', marginBottom: 32 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-              <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: 11,
-                padding: '3px 10px', borderRadius: 6,
-                background: 'var(--amber-soft)', color: 'var(--amber)',
-              }}>{request?.category}</span>
-              <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: 11,
-                padding: '3px 10px', borderRadius: 6,
-                border: `1px solid ${status.color}`, color: status.color,
-              }}>{status.label}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '3px 10px', borderRadius: 6, background: 'var(--amber-soft)', color: 'var(--amber)' }}>{request?.category}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '3px 10px', borderRadius: 6, border: `1px solid ${status.color}`, color: status.color }}>{status.label}</span>
             </div>
             <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12, letterSpacing: '-0.02em' }}>{request?.title}</h1>
             <p style={{ fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.7, marginBottom: 16 }}>{request?.description}</p>
@@ -163,12 +148,7 @@ export default function RequestDetailPage() {
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <div style={{
-                          width: 40, height: 40, borderRadius: '50%',
-                          background: 'var(--bg-3)', border: '1px solid var(--line-2)',
-                          display: 'grid', placeItems: 'center',
-                          fontWeight: 700, fontSize: 13,
-                        }}>{initials}</div>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--bg-3)', border: '1px solid var(--line-2)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 13 }}>{initials}</div>
                         <div>
                           <div style={{ fontWeight: 600, fontSize: 14 }}>
                             {name}
@@ -179,35 +159,31 @@ export default function RequestDetailPage() {
                           </div>
                         </div>
                       </div>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: 'var(--amber)' }}>
-                        {offer.price}$
-                      </span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: 'var(--amber)' }}>{offer.price}$</span>
                     </div>
                     <p style={{ fontSize: 14, color: 'var(--text-dim)', marginBottom: 8 }}>{offer.message}</p>
                     <div style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 16 }}>🕐 {offer.availability}</div>
 
                     {isClient && offer.status === 'pending' && request?.status === 'open' && (
-                      <button onClick={() => handleAccept(offer)} style={{
-                        width: '100%', padding: '10px',
-                        background: 'var(--amber)', color: '#000',
-                        border: 'none', borderRadius: 8,
-                        fontWeight: 600, fontSize: 14, cursor: 'pointer',
-                        fontFamily: 'var(--font-sans)',
-                      }}>
+                      <button onClick={() => handleAccept(offer)} style={{ width: '100%', padding: '10px', background: 'var(--amber)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
                         🔒 Accepter et payer {offer.price}$
                       </button>
                     )}
-                    {isClient && offer.status === 'accepted' && (
-                      <button onClick={() => handleValidate(offer)} style={{
-                        width: '100%', padding: '10px',
-                        background: 'var(--green)', color: '#000',
-                        border: 'none', borderRadius: 8,
-                        fontWeight: 600, fontSize: 14, cursor: 'pointer',
-                        fontFamily: 'var(--font-sans)',
-                      }}>
-                        ✅ Valider la mission — libérer le paiement
-                      </button>
+
+                    {offer.status === 'accepted' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                        <div style={{ fontSize: 13, color: 'var(--green)' }}>✓ Offre acceptée</div>
+                        <Link href={`/chat/${offer.id}`} style={{ display: 'block', textAlign: 'center', padding: '10px', background: 'var(--cyan-soft)', border: '1px solid var(--cyan)', borderRadius: 8, color: 'var(--cyan)', fontWeight: 600, fontSize: 14 }}>
+                          💬 Ouvrir le chat
+                        </Link>
+                        {isClient && (
+                          <button onClick={() => handleValidate(offer)} style={{ width: '100%', padding: '10px', background: 'var(--green)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 600, fontSize: 14, cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
+                            ✅ Valider la mission — libérer le paiement
+                          </button>
+                        )}
+                      </div>
                     )}
+
                     {isClient && offer.status === 'completed' && userId && (
                       <RatingForm
                         requestId={id}
@@ -216,9 +192,6 @@ export default function RequestDetailPage() {
                         providerId={offer.provider_id}
                         onRated={() => loadOffers()}
                       />
-                    )}
-                    {offer.status === 'accepted' && (
-                      <div style={{ fontSize: 13, color: 'var(--green)', marginTop: 8 }}>✓ Offre acceptée</div>
                     )}
                   </div>
                 )
@@ -234,11 +207,7 @@ export default function RequestDetailPage() {
                 <input type="number" value={offerPrice} onChange={e => setOfferPrice(e.target.value)} placeholder="Votre prix ($)" style={inputStyle} />
                 <input type="text" value={offerAvail} onChange={e => setOfferAvail(e.target.value)} placeholder="Disponibilité (ex: ce soir à 19h)" style={inputStyle} />
                 <textarea value={offerMsg} onChange={e => setOfferMsg(e.target.value)} placeholder="Message au client..." rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
-                <button onClick={handleSubmitOffer} disabled={submitting} style={{
-                  padding: '12px', background: 'var(--amber)', color: '#000',
-                  border: 'none', borderRadius: 8, fontWeight: 600, fontSize: 14,
-                  cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)',
-                }}>
+                <button onClick={handleSubmitOffer} disabled={submitting} style={{ padding: '12px', background: 'var(--amber)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 600, fontSize: 14, cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-sans)' }}>
                   {submitting ? 'Envoi...' : '📤 Envoyer mon offre'}
                 </button>
               </div>
