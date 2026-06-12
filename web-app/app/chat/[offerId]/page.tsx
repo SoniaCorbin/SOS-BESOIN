@@ -74,99 +74,103 @@ export default function ChatPage() {
     <>
       <Nav />
       <main style={{ paddingTop: 64, height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-        {/* Header */}
-        <div style={{
-          padding: '16px 24px',
-          borderBottom: '1px solid var(--line)',
-          display: 'flex', alignItems: 'center', gap: 12,
-          background: 'var(--bg-2)',
-        }}>
-          <Link href="/dashboard" style={{ color: 'var(--text-mute)', fontSize: 20 }}>←</Link>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 15 }}>Chat</div>
-            <div style={{ fontSize: 12, color: 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)', display: 'inline-block', marginRight: 6 }} />
-              En direct
+        <div style={{ maxWidth: 700, width: '100%', margin: '0 auto', flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+          {/* Header */}
+          <div style={{
+            padding: '16px 24px',
+            borderBottom: '1px solid var(--line)',
+            display: 'flex', alignItems: 'center', gap: 12,
+            background: 'var(--bg-2)',
+          }}>
+            <Link href="/dashboard" style={{ color: 'var(--text-mute)', fontSize: 20 }}>←</Link>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 15 }}>Chat</div>
+              <div style={{ fontSize: 12, color: 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)', display: 'inline-block', marginRight: 6 }} />
+                En direct
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Messages */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {messages.length === 0 ? (
-            <div style={{ textAlign: 'center', color: 'var(--text-mute)', marginTop: 40, fontFamily: 'var(--font-mono)', fontSize: 13 }}>
-              Aucun message pour l'instant. Commencez la conversation!
-            </div>
-          ) : messages.map(msg => {
-            const isMe = msg.sender_id === userId
-            const name = msg.profiles?.full_name ?? 'Utilisateur'
-            const time = new Date(msg.created_at).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })
-
-            return (
-              <div key={msg.id} style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: isMe ? 'flex-end' : 'flex-start',
+          {/* Messages */}
+          <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {messages.length === 0 ? (
+              <div style={{
+                flex: 1,
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                gap: 12, textAlign: 'center',
               }}>
-                {!isMe && (
-                  <div style={{ fontSize: 11, color: 'var(--text-mute)', marginBottom: 4, paddingLeft: 4 }}>{name}</div>
-                )}
-                <div style={{
-                  maxWidth: '70%',
-                  padding: '10px 14px',
-                  borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                  background: isMe ? 'var(--amber)' : 'var(--bg-2)',
-                  border: isMe ? 'none' : '1px solid var(--line)',
-                  color: isMe ? '#000' : 'var(--text)',
-                  fontSize: 14,
-                  lineHeight: 1.5,
-                }}>
-                  {msg.content}
+                <div style={{ fontSize: 40 }}>💬</div>
+                <div style={{ color: 'var(--text-dim)', fontSize: 15, fontWeight: 500 }}>
+                  Démarrez la conversation
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--text-mute)', marginTop: 4, paddingLeft: 4, paddingRight: 4 }}>
-                  {time}
+                <div style={{ color: 'var(--text-mute)', fontSize: 13, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  Écrivez votre message ci-dessous ↓
                 </div>
               </div>
-            )
-          })}
-          <div ref={bottomRef} />
-        </div>
+            ) : messages.map(msg => {
+              const isMe = msg.sender_id === userId
+              const name = msg.profiles?.full_name ?? 'Utilisateur'
+              const time = new Date(msg.created_at).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })
 
-        {/* Input */}
-        <div style={{
-          padding: '16px 24px',
-          borderTop: '1px solid var(--line)',
-          background: 'var(--bg-2)',
-          display: 'flex', gap: 10,
-        }}>
-          <input
-            type="text"
-            value={text}
-            onChange={e => setText(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && sendMessage()}
-            placeholder="Écrivez un message..."
-            style={{
-              flex: 1, padding: '10px 16px',
-              background: 'var(--bg-3)', border: '1px solid var(--line-2)',
-              borderRadius: 24, color: 'var(--text)', fontSize: 14,
-              outline: 'none', fontFamily: 'var(--font-sans)',
-            }}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={sending || !text.trim()}
-            style={{
-              padding: '10px 20px',
-              background: text.trim() ? 'var(--amber)' : 'var(--bg-3)',
-              color: text.trim() ? '#000' : 'var(--text-mute)',
-              border: 'none', borderRadius: 24,
-              fontWeight: 600, fontSize: 14,
-              cursor: text.trim() ? 'pointer' : 'not-allowed',
-              fontFamily: 'var(--font-sans)',
-            }}
-          >
-            Envoyer
-          </button>
+              return (
+                <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start' }}>
+                  {!isMe && <div style={{ fontSize: 11, color: 'var(--text-mute)', marginBottom: 4, paddingLeft: 4 }}>{name}</div>}
+                  <div style={{
+                    maxWidth: '70%', padding: '10px 14px',
+                    borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                    background: isMe ? 'var(--amber)' : 'var(--bg-2)',
+                    border: isMe ? 'none' : '1px solid var(--line)',
+                    color: isMe ? '#000' : 'var(--text)',
+                    fontSize: 14, lineHeight: 1.5,
+                  }}>{msg.content}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-mute)', marginTop: 4, paddingLeft: 4, paddingRight: 4 }}>{time}</div>
+                </div>
+              )
+            })}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Input */}
+          <div style={{
+            padding: '16px 24px',
+            borderTop: '1px solid var(--line)',
+            borderBottom: '1px solid var(--line)',
+            background: 'var(--bg-2)',
+            display: 'flex', gap: 10,
+            position: 'sticky', bottom: 0,
+          }}>
+            <input
+              type="text"
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && sendMessage()}
+              placeholder="Écrivez un message..."
+              autoFocus
+              style={{
+                flex: 1, padding: '12px 16px',
+                background: 'var(--bg-3)', border: '1px solid var(--amber-soft)',
+                borderRadius: 24, color: 'var(--text)', fontSize: 14,
+                outline: 'none', fontFamily: 'var(--font-sans)',
+              }}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={sending || !text.trim()}
+              style={{
+                padding: '12px 24px',
+                background: text.trim() ? 'var(--amber)' : 'var(--bg-3)',
+                color: text.trim() ? '#000' : 'var(--text-mute)',
+                border: 'none', borderRadius: 24,
+                fontWeight: 600, fontSize: 14,
+                cursor: text.trim() ? 'pointer' : 'not-allowed',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              Envoyer
+            </button>
+          </div>
         </div>
       </main>
     </>
