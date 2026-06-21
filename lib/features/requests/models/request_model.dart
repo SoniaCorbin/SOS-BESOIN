@@ -11,6 +11,9 @@ class RequestModel {
   final String status;
   final DateTime createdAt;
   final DateTime expiresAt;
+  final double? latitude;
+  final double? longitude;
+
 
   const RequestModel({
     required this.id,
@@ -25,6 +28,8 @@ class RequestModel {
     required this.status,
     required this.createdAt,
     required this.expiresAt,
+    this.latitude,
+    this.longitude,
   });
 
   factory RequestModel.fromMap(Map<String, dynamic> map) => RequestModel(
@@ -40,6 +45,8 @@ class RequestModel {
     status:       map['status'] as String,
     createdAt:    DateTime.parse(map['created_at'] as String),
     expiresAt:    DateTime.parse(map['expires_at'] as String),
+    latitude:     (map['latitude'] as num?)?.toDouble(),
+    longitude:    (map['longitude'] as num?)?.toDouble(),
   );
 
   Map<String, dynamic> toMap() => {
@@ -52,6 +59,8 @@ class RequestModel {
     'neighborhood': neighborhood,
     'urgency':      urgency,
     'status':       status,
+    'latitude':     latitude,
+    'longitude':    longitude,
   };
 }
 
