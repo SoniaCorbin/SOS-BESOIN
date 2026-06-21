@@ -481,37 +481,21 @@ class _OfferCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              Expanded(
+              Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.text,
-                          ),
-                        ),
-                        if (isKyc) ...[
-                          const SizedBox(width: 6),
-                          const Icon(Icons.verified_rounded,
-                              size: 14, color: AppColors.cyan),
-                        ],
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.star_rounded,
-                            size: 12, color: AppColors.amber),
-                        const SizedBox(width: 2),
-                        Text(
-                          rating.toStringAsFixed(1),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textDim,
+                        Flexible(
+                          child: Text(
+                            name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.text,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -528,13 +512,16 @@ class _OfferCard extends StatelessWidget {
                 ),
               ),
               // Prix
-              Text(
+              Flexible(
+                child: Text(
                 '${price.toStringAsFixed(0)}\$',
                 style: const TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: AppColors.amber,
+                ),
+                  textAlign: TextAlign.right,
                 ),
               ),
             ],
@@ -556,14 +543,17 @@ class _OfferCard extends StatelessWidget {
               const Icon(Icons.schedule_rounded,
                   size: 12, color: AppColors.textMute),
               const SizedBox(width: 4),
-              Text(
-                offer['availability'] as String,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textMute,
+              Flexible(
+                child: Text(
+                  offer['availability'] as String,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textMute,
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
                 timeago.format(createdAt, locale: 'fr'),
                 style: const TextStyle(
@@ -926,6 +916,10 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
   }
 
   Future<void> _submit() async {
+    print('Price: ${_priceCtrl.text}');
+    print('MESSAGE: ${_messageCtrl.text}');
+    print('AVAIL: ${_availCtrl.text}');
+
     if (_priceCtrl.text.isEmpty ||
         _messageCtrl.text.isEmpty ||
         _availCtrl.text.isEmpty) {
@@ -938,7 +932,10 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
     setState(() => _loading = true);
 
     try {
+      print('TENTATIVE INSERT...');
       final userId = _client.auth.currentUser?.id;
+      print('USER ID: $userId');
+
       await _client.from('offers').insert({
         'request_id':   widget.requestId,
         'provider_id':  userId,
@@ -948,7 +945,7 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
         'status':       'pending',
       });
 
-      widget.onSubmitted();
+      print('INSERT OK');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -957,15 +954,17 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
             backgroundColor: AppColors.green,
           ),
         );
+        widget.onSubmitted();
       }
     } catch (e) {
+      print('ERREUR: $e');
       if (mounted) {
-        final message = (e.toString().contains('unique_offer') ||
-            e.toString().contains('23505'))
-            ? 'Vous avez déjà soumis une offre sur cette demande.'
+        final msg = e.toString().contains('23505')
+            ? 'Vous avez déjà soumis une offre pour cette demande.'
             : 'Erreur: $e';
+        Navigator.pop(context); // ferme le bottom sheet d'abord
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
+          SnackBar(content: Text(msg)),
         );
       }
     }
@@ -976,12 +975,13 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1049,7 +1049,10 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: _loading ? null : _submit,
+                onPressed: () {
+                  print('BOUTON CLIQUÉ - loading: $_loading');
+                  if (!_loading) _submit();
+                },
                 child: _loading
                     ? const SizedBox(
                   width: 20, height: 20,
@@ -1065,6 +1068,7 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }

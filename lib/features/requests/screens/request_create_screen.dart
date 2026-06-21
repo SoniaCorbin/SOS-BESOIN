@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../models/request_model.dart';
 import '../providers/request_provider.dart';
+import '../../../../core/services/geolocation_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 class RequestCreateScreen extends ConsumerStatefulWidget {
   const RequestCreateScreen({super.key});
@@ -24,6 +26,9 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
   String? _selectedCategory;
   String  _selectedUrgency = 'today';
   int     _currentStep     = 0;
+  double? _latitude;
+  double? _longitude;
+  bool _locating = false;
 
   @override
   void dispose() {
@@ -33,6 +38,24 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
     _neighCtrl.dispose();
     _budgetCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _useMyLocation() async {
+    setState(() => _locating = true);
+    final position = await GeolocationService.getCurrentPosition();
+    if (position != null) {
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+      });
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d\'obtenir votre position. Vérifiez les permissions.')),
+        );
+      }
+    }
+    setState(() => _locating = false);
   }
 
   Future<void> _submit() async {
@@ -54,6 +77,8 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
           : _neighCtrl.text.trim(),
       urgency:      _selectedUrgency,
       budget:       double.tryParse(_budgetCtrl.text),
+      latitude:     _latitude,
+      longitude:    _longitude,
     );
 
     if (!mounted) return;
@@ -338,6 +363,49 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
                   hintText: 'ex: Plateau, Outremont, Mile End...',
                   prefixIcon: Icon(Icons.map_outlined,
                       color: AppColors.textMute),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Position GPS
+              GestureDetector(
+                onTap: _locating ? null : _useMyLocation,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: _latitude != null ? AppColors.greenSoft : AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _latitude != null ? AppColors.green : AppColors.line2,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _latitude != null ? Icons.check_circle_rounded : Icons.my_location_rounded,
+                        size: 18,
+                        color: _latitude != null ? AppColors.green : AppColors.textMute,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _locating
+                              ? 'Localisation en cours...'
+                              : _latitude != null
+                              ? 'Position obtenue'
+                              : 'Utiliser ma position actuelle',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: _latitude != null ? AppColors.green : AppColors.textDim,
+                          ),
+                        ),
+                      ),
+                      if (_locating)
+                        const SizedBox(
+                          width: 16, height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber),
+                        ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
