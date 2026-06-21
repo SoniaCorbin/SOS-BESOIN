@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../../../core/router/app_router.dart';
+import '../../../../core/services/geolocation_service.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -19,6 +20,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _phoneCtrl = TextEditingController();
   bool _editing    = false;
   bool _loading    = false;
+  double? _latitude;
+  double? _longitude;
+  bool _locating = false;
 
   @override
   void initState() {
@@ -26,6 +30,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = ref.read(authProvider).user;
     _nameCtrl.text  = user?.fullName ?? '';
     _phoneCtrl.text = user?.phone ?? '';
+    _latitude = user?.latitude;
+    _longitude = user?.longitude;
   }
 
   @override
@@ -33,6 +39,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _useMyLocation() async {
+    setState(() => _locating = true);
+    final position = await GeolocationService.getCurrentPosition();
+    if (position != null) {
+      setState(() {
+        _latitude = position.latitude;
+        _longitude = position.longitude;
+      });
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d\'obtenir votre position. Vérifiez les permissions.')),
+        );
+      }
+    }
+    setState(() => _locating = false);
   }
 
   Future<void> _save() async {
@@ -44,6 +68,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       await Supabase.instance.client.from('profiles').update({
         'full_name': _nameCtrl.text.trim(),
         'phone':     _phoneCtrl.text.trim(),
+        'latitude':  _latitude,
+        'longitude': _longitude,
       }).eq('id', userId!);
 
       print('PROFILE SAVED!');
@@ -315,6 +341,50 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ? user!.phone!
                         : 'Non renseigné',
                   ),
+                  if (_editing) ...[
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: _locating ? null : _useMyLocation,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: _latitude != null ? AppColors.greenSoft : AppColors.surface2,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _latitude != null ? AppColors.green : AppColors.line2,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _latitude != null ? Icons.check_circle_rounded : Icons.my_location_rounded,
+                              size: 18,
+                              color: _latitude != null ? AppColors.green : AppColors.textMute,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _locating
+                                    ? 'Localisation en cours...'
+                                    : _latitude != null
+                                    ? 'Position enregistrée'
+                                    : 'Utiliser ma position actuelle',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: _latitude != null ? AppColors.green : AppColors.textDim,
+                                ),
+                              ),
+                            ),
+                            if (_locating)
+                              const SizedBox(
+                                width: 16, height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -464,9 +534,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const Divider(color: AppColors.line, height: 1),
                   _LegalButton(
-                    icon: Icons.replay_outlined,
-                    label: 'Politique de remboursement',
-                    onTap: () => context.push('/refund')
+                      icon: Icons.replay_outlined,
+                      label: 'Politique de remboursement',
+                      onTap: () => context.push('/refund')
                   ),
                 ],
               ),
@@ -658,7 +728,7 @@ class _LegalButton extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 14),
+            horizontal: 16, vertical: 14),
         child: Row(
           children: [
             Icon(icon, size: 20, color: AppColors.textDim),

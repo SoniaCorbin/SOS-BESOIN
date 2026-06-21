@@ -14,6 +14,8 @@ class AppUser {
   final double rating;
   final int totalMissions;
   final DateTime createdAt;
+  final double? latitude;
+  final double? longitude;
 
   const AppUser({
     required this.id,
@@ -28,6 +30,8 @@ class AppUser {
     this.isSuspended = false,
     this.rating = 0.0,
     this.totalMissions = 0,
+    this.latitude,
+    this.longitude,
     required this.createdAt,
   });
 
@@ -47,6 +51,8 @@ class AppUser {
     isSuspended: map['is_suspended'] as bool? ?? false,
     rating:         (map['rating'] as num?)?.toDouble() ?? 0.0,
     totalMissions:  map['total_missions'] as int? ?? 0,
+    latitude:  (map['latitude'] as num?)?.toDouble(),
+    longitude: (map['longitude'] as num?)?.toDouble(),
     createdAt:      DateTime.parse(map['created_at'] as String),
   );
 
@@ -64,6 +70,8 @@ class AppUser {
     'is_suspended':     isSuspended,
     'rating':           rating,
     'total_missions':   totalMissions,
+    'latitude':  latitude,
+    'longitude': longitude,
     'created_at':       createdAt.toIso8601String(),
   };
 
