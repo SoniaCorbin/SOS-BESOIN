@@ -7,6 +7,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../requests/providers/request_provider.dart';
 import '../../requests/models/request_model.dart';
+import '../../../../core/services/geolocation_service.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -717,11 +718,35 @@ class _MyRequestsList extends ConsumerWidget {
 }
 
 // ── Liste missions ouvertes (prestataire) ─────────────────
-class _OpenRequestsList extends ConsumerWidget {
+class _OpenRequestsList extends ConsumerStatefulWidget {
   const _OpenRequestsList();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_OpenRequestsList> createState() => _OpenRequestsListState();
+}
+
+class _OpenRequestsListState extends ConsumerState<_OpenRequestsList> {
+  double? _myLat;
+  double? _myLng;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPosition();
+  }
+
+  Future<void> _loadPosition() async {
+    final pos = await GeolocationService.getCurrentPosition();
+    if (pos != null && mounted) {
+      setState(() {
+        _myLat = pos.latitude;
+        _myLng = pos.longitude;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final requestsAsync = ref.watch(openRequestsProvider);
 
     return requestsAsync.when(
@@ -801,12 +826,27 @@ class _OpenRequestsList extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        r.location,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textMute,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            r.location,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textMute,
+                            ),
+                          ),
+                          if (_myLat != null && r.latitude != null && r.longitude != null) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              '· ${GeolocationService.formatDistance(GeolocationService.calculateDistance(_myLat!, _myLng!, r.latitude!, r.longitude!))}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.cyan,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
                   ),

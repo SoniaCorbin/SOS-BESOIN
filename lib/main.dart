@@ -33,16 +33,20 @@ Future<void> main() async {
     url: const String.fromEnvironment('SUPABASE_URL'),
     anonKey: const String.fromEnvironment('SUPABASE_ANON_KEY'),
   );
-  await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyCk77lSKIwwLhP4ix7-0XJoi6LgoCVrsFE",
-      authDomain: "sos-besoin.firebaseapp.com",
-      projectId: "sos-besoin",
-      storageBucket: "sos-besoin.firebasestorage.app",
-      messagingSenderId: "379256786062",
-      appId: "1:379256786062:web:4243e2df5d9efe80310ddf",
-    ),
-  );
+  try {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyCk77lSKIwwLhP4ix7-0XJoi6LgoCVrsFE",
+        authDomain: "sos-besoin.firebaseapp.com",
+        projectId: "sos-besoin",
+        storageBucket: "sos-besoin.firebasestorage.app",
+        messagingSenderId: "379256786062",
+        appId: "1:379256786062:web:4243e2df5d9efe80310ddf",
+      ),
+    );
+  } catch (e) {
+    debugPrint('Firebase already initialized: $e');
+  }
   await NotificationService.init();
   await initOnboarding();
 

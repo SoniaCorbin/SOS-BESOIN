@@ -99,6 +99,8 @@ class RequestNotifier extends StateNotifier<AsyncValue<void>> {
     required String urgency,
     double? budget,
     String? neighborhood,
+    double? latitude,
+    double? longitude,
   }) async {
     try {
       state = const AsyncValue.loading();
@@ -116,6 +118,8 @@ class RequestNotifier extends StateNotifier<AsyncValue<void>> {
         'neighborhood': neighborhood,
         'urgency':      urgency,
         'status':       'open',
+        'latitude':     latitude,
+        'longitude':    longitude,
       });
 
       state = const AsyncValue.data(null);
