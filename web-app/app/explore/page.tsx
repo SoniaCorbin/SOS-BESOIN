@@ -34,6 +34,7 @@ export default function ExplorePage() {
   const [myCoords, setMyCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [sortByDistance, setSortByDistance] = useState(false)
   const [locating, setLocating] = useState(false)
+  const [maxDistance, setMaxDistance] = useState(150) // km
 
   useEffect(() => {
     fetchRequests()
@@ -82,10 +83,18 @@ export default function ExplorePage() {
     return calculateDistance(myCoords.lat, myCoords.lng, req.latitude, req.longitude)
   }
 
-  let filtered = requests.filter(r =>
-    r.title.toLowerCase().includes(search.toLowerCase()) ||
-    r.description?.toLowerCase().includes(search.toLowerCase())
-  )
+  let filtered = requests.filter(r => {
+    const matchesSearch = r.title.toLowerCase().includes(search.toLowerCase()) ||
+      r.description?.toLowerCase().includes(search.toLowerCase())
+    if (!matchesSearch) return false
+
+    if (sortByDistance && myCoords && maxDistance < 150) {
+      const dist = getDistance(r)
+      if (dist === null) return true
+      return dist <= maxDistance
+    }
+    return true
+  })
 
   if (sortByDistance && myCoords) {
     filtered = [...filtered].sort((a, b) => {
@@ -126,7 +135,7 @@ export default function ExplorePage() {
           </div>
 
           {/* Recherche + tri distance */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+          <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
             <input
               type="text"
               value={search}
@@ -154,6 +163,33 @@ export default function ExplorePage() {
               {locating ? '📍 Localisation...' : '📍 Près de moi'}
             </button>
           </div>
+
+          {/* Slider rayon - visible seulement si tri par distance actif */}
+          {sortByDistance && myCoords && (
+            <div style={{
+              background: 'var(--bg-2)', border: '1px solid var(--line)',
+              borderRadius: 10, padding: '14px 18px', marginBottom: 20,
+              display: 'flex', alignItems: 'center', gap: 14,
+            }}>
+              <span style={{ fontSize: 13, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
+                Rayon de recherche
+              </span>
+              <input
+                type="range"
+                min={1}
+                max={150}
+                value={maxDistance}
+                onChange={e => setMaxDistance(Number(e.target.value))}
+                style={{ flex: 1, accentColor: 'var(--cyan)' }}
+              />
+              <span style={{
+                fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--cyan)',
+                minWidth: 70, textAlign: 'right',
+              }}>
+                {maxDistance >= 150 ? 'Tout' : `${maxDistance} km`}
+              </span>
+            </div>
+          )}
 
           {/* Filtres catégories */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 32 }}>
