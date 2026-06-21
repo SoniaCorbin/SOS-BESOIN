@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
+import { getCurrentPosition } from '@/lib/geolocation'
 
 const CATEGORIES = [
   'Tech & Informatique',
@@ -29,6 +30,8 @@ export default function NewRequestPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [locating, setLocating] = useState(false)
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -46,6 +49,17 @@ export default function NewRequestPage() {
 
   function update(key: string, value: string) {
     setForm(f => ({ ...f, [key]: value }))
+  }
+
+  async function handleUseLocation() {
+    setLocating(true)
+    try {
+      const pos = await getCurrentPosition()
+      setCoords(pos)
+    } catch (e) {
+      alert('Impossible d\'obtenir votre position. Vérifiez les permissions de localisation.')
+    }
+    setLocating(false)
   }
 
   async function handleSubmit() {
@@ -68,6 +82,8 @@ export default function NewRequestPage() {
         urgency: form.urgency,
         budget: form.budget ? parseFloat(form.budget) : null,
         location: form.location,
+        latitude: coords?.lat ?? null,
+        longitude: coords?.lng ?? null,
         client_id: session.user.id,
         status: 'open',
       })
@@ -212,6 +228,29 @@ export default function NewRequestPage() {
                   style={inputStyle}
                 />
               </div>
+            </div>
+
+            {/* Géolocalisation */}
+            <div>
+              <label style={labelStyle}>Position précise (optionnel)</label>
+              <button
+                onClick={handleUseLocation}
+                disabled={locating}
+                style={{
+                  width: '100%', padding: '10px 14px',
+                  background: coords ? 'var(--green-soft)' : 'var(--bg-3)',
+                  border: `1px solid ${coords ? 'var(--green)' : 'var(--line-2)'}`,
+                  borderRadius: 8, cursor: locating ? 'not-allowed' : 'pointer',
+                  fontSize: 13, color: coords ? 'var(--green)' : 'var(--text-dim)',
+                  fontFamily: 'var(--font-sans)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                {locating ? '📍 Localisation...' : coords ? '✓ Position obtenue' : '📍 Utiliser ma position actuelle'}
+              </button>
+              <p style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 6 }}>
+                Permet aux prestataires de voir la distance exacte jusqu'à vous.
+              </p>
             </div>
 
             {/* Bouton */}

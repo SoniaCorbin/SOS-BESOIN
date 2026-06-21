@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
+import { getCurrentPosition, calculateDistance, formatDistance } from '@/lib/geolocation'
 
 const CATEGORIES = [
   'Toutes',
@@ -30,6 +31,9 @@ export default function ExplorePage() {
   const [category, setCategory] = useState('Toutes')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const [myCoords, setMyCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [sortByDistance, setSortByDistance] = useState(false)
+  const [locating, setLocating] = useState(false)
 
   useEffect(() => {
     fetchRequests()
@@ -57,10 +61,42 @@ export default function ExplorePage() {
     setLoading(false)
   }
 
-  const filtered = requests.filter(r =>
+  async function handleSortByDistance() {
+    if (myCoords) {
+      setSortByDistance(s => !s)
+      return
+    }
+    setLocating(true)
+    try {
+      const pos = await getCurrentPosition()
+      setMyCoords(pos)
+      setSortByDistance(true)
+    } catch (e) {
+      alert('Impossible d\'obtenir votre position. Vérifiez les permissions de localisation.')
+    }
+    setLocating(false)
+  }
+
+  function getDistance(req: any): number | null {
+    if (!myCoords || !req.latitude || !req.longitude) return null
+    return calculateDistance(myCoords.lat, myCoords.lng, req.latitude, req.longitude)
+  }
+
+  let filtered = requests.filter(r =>
     r.title.toLowerCase().includes(search.toLowerCase()) ||
     r.description?.toLowerCase().includes(search.toLowerCase())
   )
+
+  if (sortByDistance && myCoords) {
+    filtered = [...filtered].sort((a, b) => {
+      const da = getDistance(a)
+      const db = getDistance(b)
+      if (da === null && db === null) return 0
+      if (da === null) return 1
+      if (db === null) return -1
+      return da - db
+    })
+  }
 
   const ago = (date: string) => {
     const mins = Math.round((Date.now() - new Date(date).getTime()) / 60000)
@@ -89,20 +125,35 @@ export default function ExplorePage() {
             </h1>
           </div>
 
-          {/* Recherche */}
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="🔍 Rechercher une demande..."
-            style={{
-              width: '100%', padding: '12px 16px',
-              background: 'var(--bg-2)', border: '1px solid var(--line-2)',
-              borderRadius: 10, color: 'var(--text)', fontSize: 14,
-              outline: 'none', fontFamily: 'var(--font-sans)',
-              marginBottom: 20,
-            }}
-          />
+          {/* Recherche + tri distance */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="🔍 Rechercher une demande..."
+              style={{
+                flex: 1, padding: '12px 16px',
+                background: 'var(--bg-2)', border: '1px solid var(--line-2)',
+                borderRadius: 10, color: 'var(--text)', fontSize: 14,
+                outline: 'none', fontFamily: 'var(--font-sans)',
+              }}
+            />
+            <button
+              onClick={handleSortByDistance}
+              disabled={locating}
+              style={{
+                padding: '12px 16px',
+                background: sortByDistance ? 'var(--cyan-soft)' : 'var(--bg-2)',
+                border: `1px solid ${sortByDistance ? 'var(--cyan)' : 'var(--line-2)'}`,
+                borderRadius: 10, color: sortByDistance ? 'var(--cyan)' : 'var(--text-dim)',
+                fontSize: 13, cursor: locating ? 'not-allowed' : 'pointer',
+                fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
+              }}
+            >
+              {locating ? '📍 Localisation...' : '📍 Près de moi'}
+            </button>
+          </div>
 
           {/* Filtres catégories */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 32 }}>
@@ -132,29 +183,37 @@ export default function ExplorePage() {
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-              {filtered.map(req => (
-                <Link key={req.id} href={`/requests/${req.id}`} style={{
-                  background: 'var(--bg-2)', border: '1px solid var(--line)',
-                  borderRadius: 12, padding: '20px', display: 'block',
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <span style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 11,
-                      padding: '3px 8px', borderRadius: 6,
-                      background: 'var(--amber-soft)', color: 'var(--amber)',
-                    }}>{req.category}</span>
-                    <span style={{ fontSize: 11, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)' }}>{ago(req.created_at)}</span>
-                  </div>
-                  <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{req.title}</h3>
-                  <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 12, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {req.description}
-                  </p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: 'var(--text-mute)' }}>{URGENCY_LABELS[req.urgency] ?? req.urgency}</span>
-                    {req.budget && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--amber)', fontWeight: 700 }}>{req.budget}$</span>}
-                  </div>
-                </Link>
-              ))}
+              {filtered.map(req => {
+                const dist = getDistance(req)
+                return (
+                  <Link key={req.id} href={`/requests/${req.id}`} style={{
+                    background: 'var(--bg-2)', border: '1px solid var(--line)',
+                    borderRadius: 12, padding: '20px', display: 'block',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                      <span style={{
+                        fontFamily: 'var(--font-mono)', fontSize: 11,
+                        padding: '3px 8px', borderRadius: 6,
+                        background: 'var(--amber-soft)', color: 'var(--amber)',
+                      }}>{req.category}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)' }}>{ago(req.created_at)}</span>
+                    </div>
+                    <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{req.title}</h3>
+                    <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 12, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {req.description}
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-mute)' }}>{URGENCY_LABELS[req.urgency] ?? req.urgency}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        {dist !== null && (
+                          <span style={{ fontSize: 12, color: 'var(--cyan)', fontFamily: 'var(--font-mono)' }}>📍 {formatDistance(dist)}</span>
+                        )}
+                        {req.budget && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--amber)', fontWeight: 700 }}>{req.budget}$</span>}
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
             </div>
           )}
         </div>
