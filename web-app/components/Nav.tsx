@@ -10,16 +10,35 @@ export default function Nav() {
   const [user, setUser] = useState<any>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   const notifCount = useNotifications(userId)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       setUser(data.session?.user ?? null)
       setUserId(data.session?.user?.id ?? null)
+      if (data.session?.user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', data.session.user.id)
+          .single()
+        setIsAdmin(profile?.is_admin ?? false)
+      }
     })
-    const { data: listener } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_, session) => {
       setUser(session?.user ?? null)
       setUserId(session?.user?.id ?? null)
+      if (session?.user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', session.user.id)
+          .single()
+        setIsAdmin(profile?.is_admin ?? false)
+      } else {
+        setIsAdmin(false)
+      }
     })
     return () => listener.subscription.unsubscribe()
   }, [])
@@ -60,6 +79,17 @@ export default function Nav() {
         <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {user ? (
             <>
+              {isAdmin && (
+                <Link href="/admin" style={{
+                  padding: '8px 18px',
+                  border: '1px solid var(--red)',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  color: 'var(--red)',
+                }}>
+                  Admin
+                </Link>
+              )}
               <Link href="/explore" style={{ padding: '8px 18px', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 14, color: 'var(--text-dim)' }}>
                 Explorer
               </Link>
@@ -112,6 +142,9 @@ export default function Nav() {
         }}>
           {user ? (
             <>
+              {isAdmin && (
+                <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--red)', borderRadius: 8, fontSize: 15, color: 'var(--red)' }}>Admin</Link>
+              )}
               <Link href="/explore" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>Explorer</Link>
               <Link href="/dashboard" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 8 }}>
                 Dashboard
