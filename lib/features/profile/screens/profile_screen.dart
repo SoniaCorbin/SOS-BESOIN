@@ -23,6 +23,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   double? _latitude;
   double? _longitude;
   bool _locating = false;
+  int _maxDistanceKm = 50;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _phoneCtrl.text = user?.phone ?? '';
     _latitude = user?.latitude;
     _longitude = user?.longitude;
+    _maxDistanceKm = user?.maxDistanceKm ?? 50;
   }
 
   @override
@@ -63,19 +65,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _loading = true);
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
-      print('SAVING PROFILE: userId=$userId, name=${_nameCtrl.text.trim()}');
 
       await Supabase.instance.client.from('profiles').update({
-        'full_name': _nameCtrl.text.trim(),
-        'phone':     _phoneCtrl.text.trim(),
-        'latitude':  _latitude,
-        'longitude': _longitude,
+        'full_name':        _nameCtrl.text.trim(),
+        'phone':            _phoneCtrl.text.trim(),
+        'latitude':         _latitude,
+        'longitude':        _longitude,
+        'max_distance_km':  _maxDistanceKm,
       }).eq('id', userId!);
 
-      print('PROFILE SAVED!');
-      // Refresh auth state
       await ref.read(authProvider.notifier).init();
-      print('AUTH REFRESHED!');
 
       if (mounted) {
         setState(() { _editing = false; _loading = false; });
@@ -85,7 +84,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             backgroundColor: AppColors.green,
           ),
         );
-        // Forcer le refresh en retournant au home
         context.go(AppRoutes.home);
       }
     } catch (e) {
@@ -199,7 +197,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            // Nom
             Text(
               user?.fullName ?? '',
               style: const TextStyle(
@@ -218,19 +215,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            // Badge rôle
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: isProvider
-                    ? AppColors.cyanSoft
-                    : AppColors.amberSoft,
+                color: isProvider ? AppColors.cyanSoft : AppColors.amberSoft,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isProvider
-                      ? AppColors.cyan
-                      : AppColors.amber,
+                  color: isProvider ? AppColors.cyan : AppColors.amber,
                 ),
               ),
               child: Text(
@@ -238,9 +229,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: isProvider
-                      ? AppColors.cyan
-                      : AppColors.amber,
+                  color: isProvider ? AppColors.cyan : AppColors.amber,
                 ),
               ),
             ),
@@ -262,13 +251,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 _ProfileStat(
                   label: 'KYC',
-                  value: user?.isKycVerified == true
-                      ? 'Vérifié'
-                      : 'En attente',
+                  value: user?.isKycVerified == true ? 'Vérifié' : 'En attente',
                   icon: Icons.verified_rounded,
-                  color: user?.isKycVerified == true
-                      ? AppColors.green
-                      : AppColors.textMute,
+                  color: user?.isKycVerified == true ? AppColors.green : AppColors.textMute,
                 ),
               ],
             ),
@@ -298,13 +283,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _editing
                       ? TextFormField(
                     controller: _nameCtrl,
-                    style: const TextStyle(
-                        color: AppColors.text),
+                    style: const TextStyle(color: AppColors.text),
                     decoration: const InputDecoration(
                       labelText: 'Nom complet',
-                      prefixIcon: Icon(
-                          Icons.person_outline_rounded,
-                          color: AppColors.textMute),
+                      prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.textMute),
                     ),
                   )
                       : _InfoRow(
@@ -313,7 +295,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     value: user?.fullName ?? '—',
                   ),
                   const SizedBox(height: 12),
-                  // Email (non modifiable)
                   _InfoRow(
                     icon: Icons.mail_outline_rounded,
                     label: 'Courriel',
@@ -325,24 +306,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ? TextFormField(
                     controller: _phoneCtrl,
                     keyboardType: TextInputType.phone,
-                    style: const TextStyle(
-                        color: AppColors.text),
+                    style: const TextStyle(color: AppColors.text),
                     decoration: const InputDecoration(
                       labelText: 'Téléphone',
-                      prefixIcon: Icon(
-                          Icons.phone_outlined,
-                          color: AppColors.textMute),
+                      prefixIcon: Icon(Icons.phone_outlined, color: AppColors.textMute),
                     ),
                   )
                       : _InfoRow(
                     icon: Icons.phone_outlined,
                     label: 'Téléphone',
-                    value: user?.phone?.isNotEmpty == true
-                        ? user!.phone!
-                        : 'Non renseigné',
+                    value: user?.phone?.isNotEmpty == true ? user!.phone! : 'Non renseigné',
                   ),
                   if (_editing) ...[
                     const SizedBox(height: 12),
+                    // Position GPS
                     GestureDetector(
                       onTap: _locating ? null : _useMyLocation,
                       child: Container(
@@ -384,6 +361,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ),
                     ),
+                    // Rayon de travail (prestataire seulement)
+                    if (isProvider) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(Icons.radar_rounded, size: 16, color: AppColors.textMute),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Rayon de travail',
+                            style: TextStyle(fontSize: 13, color: AppColors.textDim),
+                          ),
+                          const Spacer(),
+                          Text(
+                            _maxDistanceKm >= 500 ? 'Illimité' : '$_maxDistanceKm km',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.cyan,
+                              fontFamily: 'SpaceGrotesk',
+                            ),
+                          ),
+                        ],
+                      ),
+                      Slider(
+                        value: _maxDistanceKm.toDouble(),
+                        min: 5,
+                        max: 500,
+                        divisions: 99,
+                        activeColor: AppColors.cyan,
+                        inactiveColor: AppColors.line2,
+                        onChanged: (val) => setState(() => _maxDistanceKm = val.round()),
+                      ),
+                    ],
                   ],
                 ],
               ),
@@ -418,9 +428,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           icon: Icons.search_rounded,
                           isActive: !isProvider,
                           color: AppColors.amber,
-                          onTap: () => ref
-                              .read(authProvider.notifier)
-                              .switchRole(UserRole.client),
+                          onTap: () => ref.read(authProvider.notifier).switchRole(UserRole.client),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -430,9 +438,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           icon: Icons.handyman_rounded,
                           isActive: isProvider,
                           color: AppColors.cyan,
-                          onTap: () => ref
-                              .read(authProvider.notifier)
-                              .switchRole(UserRole.provider),
+                          onTap: () => ref.read(authProvider.notifier).switchRole(UserRole.provider),
                         ),
                       ),
                     ],
@@ -456,20 +462,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     padding: EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        Icon(Icons.admin_panel_settings_rounded,
-                            color: AppColors.amber, size: 22),
+                        Icon(Icons.admin_panel_settings_rounded, color: AppColors.amber, size: 22),
                         SizedBox(width: 12),
                         Text(
                           'Panel Administration',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.amber,
-                          ),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.amber),
                         ),
                         Spacer(),
-                        Icon(Icons.arrow_forward_ios_rounded,
-                            size: 14, color: AppColors.amber),
+                        Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.amber),
                       ],
                     ),
                   ),
@@ -490,28 +490,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.account_balance_rounded,
-                          color: AppColors.cyan, size: 22),
+                      const Icon(Icons.account_balance_rounded, color: AppColors.cyan, size: 22),
                       const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
                           'Configurer mes paiements',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.text,
-                          ),
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.text),
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded,
-                          size: 14, color: AppColors.textMute),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMute),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 20),
             ],
-
             // ── Pages légales ────────────────────
             Container(
               decoration: BoxDecoration(
@@ -534,9 +527,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   const Divider(color: AppColors.line, height: 1),
                   _LegalButton(
-                      icon: Icons.replay_outlined,
-                      label: 'Politique de remboursement',
-                      onTap: () => context.push('/refund')
+                    icon: Icons.replay_outlined,
+                    label: 'Politique de remboursement',
+                    onTap: () => context.push('/refund'),
                   ),
                 ],
               ),
@@ -547,8 +540,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               width: double.infinity,
               height: 52,
               child: OutlinedButton.icon(
-                onPressed: () =>
-                    ref.read(authProvider.notifier).signOut(),
+                onPressed: () => ref.read(authProvider.notifier).signOut(),
                 icon: const Icon(Icons.logout_rounded, size: 18),
                 label: const Text('Se déconnecter'),
                 style: OutlinedButton.styleFrom(
@@ -606,10 +598,7 @@ class _ProfileStat extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textMute,
-              ),
+              style: const TextStyle(fontSize: 11, color: AppColors.textMute),
             ),
           ],
         ),
@@ -639,21 +628,8 @@ class _InfoRow extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textMute,
-              ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.text,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textMute)),
+            Text(value, style: const TextStyle(fontSize: 14, color: AppColors.text, fontWeight: FontWeight.w500)),
           ],
         ),
       ],
@@ -694,8 +670,7 @@ class _RoleButton extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, size: 20,
-                color: isActive ? color : AppColors.textMute),
+            Icon(icon, size: 20, color: isActive ? color : AppColors.textMute),
             const SizedBox(height: 4),
             Text(
               label,
@@ -711,6 +686,7 @@ class _RoleButton extends StatelessWidget {
     );
   }
 }
+
 class _LegalButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -727,8 +703,7 @@ class _LegalButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-            horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: [
             Icon(icon, size: 20, color: AppColors.textDim),
@@ -736,18 +711,10 @@ class _LegalButton extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textDim,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: const TextStyle(fontSize: 14, color: AppColors.textDim, fontWeight: FontWeight.w500),
               ),
             ),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 14,
-              color: AppColors.textMute,
-            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMute),
           ],
         ),
       ),

@@ -16,6 +16,7 @@ class AppUser {
   final DateTime createdAt;
   final double? latitude;
   final double? longitude;
+  final int maxDistanceKm;
 
   const AppUser({
     required this.id,
@@ -32,6 +33,7 @@ class AppUser {
     this.totalMissions = 0,
     this.latitude,
     this.longitude,
+    this.maxDistanceKm = 50,
     required this.createdAt,
   });
 
@@ -41,7 +43,6 @@ class AppUser {
     fullName:       map['full_name'] as String,
     email:          map['email'] as String,
     avatarUrl:      map['avatar_url'] as String?,
-    phone:          map['phone'] as String?,
     stripeAccountId: map['stripe_account_id'] as String?,
     role:           map['role'] == 'provider'
         ? UserRole.provider
@@ -53,6 +54,7 @@ class AppUser {
     totalMissions:  map['total_missions'] as int? ?? 0,
     latitude:  (map['latitude'] as num?)?.toDouble(),
     longitude: (map['longitude'] as num?)?.toDouble(),
+    maxDistanceKm: map['max_distance_km'] as int? ?? 50,
     createdAt:      DateTime.parse(map['created_at'] as String),
   );
 
@@ -72,6 +74,7 @@ class AppUser {
     'total_missions':   totalMissions,
     'latitude':  latitude,
     'longitude': longitude,
+    'max_distance_km': maxDistanceKm,
     'created_at':       createdAt.toIso8601String(),
   };
 
@@ -83,6 +86,7 @@ class AppUser {
     UserRole? role,
     bool? isKycVerified,
     double? rating,
+    int? maxDistanceKm,
     int? totalMissions,
   }) =>
       AppUser(
@@ -95,6 +99,7 @@ class AppUser {
         isKycVerified: isKycVerified ?? this.isKycVerified,
         rating:        rating        ?? this.rating,
         totalMissions: totalMissions ?? this.totalMissions,
+        maxDistanceKm: maxDistanceKm ?? this.maxDistanceKm,
         createdAt:     createdAt,
       );
 
