@@ -34,16 +34,39 @@ export default function ExplorePage() {
   const [myCoords, setMyCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [sortByDistance, setSortByDistance] = useState(false)
   const [locating, setLocating] = useState(false)
-  const [maxDistance, setMaxDistance] = useState(150) // km
+  const [maxDistance, setMaxDistance] = useState(500)
+  const [isProvider, setIsProvider] = useState(false)
 
   useEffect(() => {
     fetchRequests()
-
     const channel = supabase.channel('explore')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, fetchRequests)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [category])
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+      const { data } = await supabase
+        .from('profiles')
+        .select('max_distance_km, role, latitude, longitude')
+        .eq('id', session.user.id)
+        .single()
+
+      if (data?.role === 'provider') {
+        setIsProvider(true)
+        if (data?.max_distance_km) setMaxDistance(data.max_distance_km)
+        // Auto-activer la position si le prestataire a une position enregistrée
+        if (data?.latitude && data?.longitude) {
+          setMyCoords({ lat: data.latitude, lng: data.longitude })
+          setSortByDistance(true)
+        }
+      }
+    }
+    loadProfile()
+  }, [])
 
   async function fetchRequests() {
     let query = supabase
@@ -88,7 +111,7 @@ export default function ExplorePage() {
       r.description?.toLowerCase().includes(search.toLowerCase())
     if (!matchesSearch) return false
 
-    if (sortByDistance && myCoords && maxDistance < 150) {
+    if (sortByDistance && myCoords && maxDistance < 500) {
       const dist = getDistance(r)
       if (dist === null) return true
       return dist <= maxDistance
@@ -127,10 +150,7 @@ export default function ExplorePage() {
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--cyan)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>·EXPLORER·</span>
             <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 8, letterSpacing: '-0.02em' }}>
               Demandes disponibles
-              <span style={{
-                marginLeft: 12, fontFamily: 'var(--font-mono)', fontSize: 16,
-                color: 'var(--cyan)', fontWeight: 400,
-              }}>{filtered.length}</span>
+              <span style={{ marginLeft: 12, fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--cyan)', fontWeight: 400 }}>{filtered.length}</span>
             </h1>
           </div>
 
@@ -160,34 +180,37 @@ export default function ExplorePage() {
                 fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
               }}
             >
-              {locating ? '📍 Localisation...' : '📍 Près de moi'}
+              {locating ? '📍 Localisation...' : sortByDistance ? '📍 Près de moi ✓' : '📍 Près de moi'}
             </button>
           </div>
 
-          {/* Slider rayon - visible seulement si tri par distance actif */}
-          {sortByDistance && myCoords && (
+          {/* Slider rayon - visible si prestataire OU si tri actif */}
+          {(isProvider || (sortByDistance && myCoords)) && (
             <div style={{
               background: 'var(--bg-2)', border: '1px solid var(--line)',
               borderRadius: 10, padding: '14px 18px', marginBottom: 20,
-              display: 'flex', alignItems: 'center', gap: 14,
             }}>
-              <span style={{ fontSize: 13, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
-                Rayon de recherche
-              </span>
-              <input
-                type="range"
-                min={1}
-                max={150}
-                value={maxDistance}
-                onChange={e => setMaxDistance(Number(e.target.value))}
-                style={{ flex: 1, accentColor: 'var(--cyan)' }}
-              />
-              <span style={{
-                fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--cyan)',
-                minWidth: 70, textAlign: 'right',
-              }}>
-                {maxDistance >= 150 ? 'Tout' : `${maxDistance} km`}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
+                <span style={{ fontSize: 13, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
+                  📡 Rayon de recherche
+                </span>
+                <input
+                  type="range"
+                  min={5}
+                  max={500}
+                  value={maxDistance}
+                  onChange={e => setMaxDistance(Number(e.target.value))}
+                  style={{ flex: 1, accentColor: 'var(--cyan)' }}
+                />
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--cyan)', minWidth: 70, textAlign: 'right' }}>
+                  {maxDistance >= 500 ? 'Illimité' : `${maxDistance} km`}
+                </span>
+              </div>
+              {isProvider && (
+                <p style={{ fontSize: 11, color: 'var(--text-mute)', margin: 0 }}>
+                  Configurez votre rayon par défaut dans votre <Link href="/profile" style={{ color: 'var(--cyan)' }}>profil</Link>.
+                </p>
+              )}
             </div>
           )}
 
@@ -215,7 +238,7 @@ export default function ExplorePage() {
           ) : filtered.length === 0 ? (
             <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '48px', textAlign: 'center' }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
-              <p style={{ color: 'var(--text-mute)' }}>Aucune demande pour cette catégorie.</p>
+              <p style={{ color: 'var(--text-mute)' }}>Aucune demande dans ce rayon.</p>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
+import { getCurrentPosition } from '@/lib/geolocation'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -10,6 +11,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [locating, setLocating] = useState(false)
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [maxDistanceKm, setMaxDistanceKm] = useState(50)
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -30,6 +34,7 @@ export default function ProfilePage() {
         .single()
 
       setProfile(data)
+      console.log('ROLE:', data?.role)
       setForm({
         full_name: data?.full_name ?? '',
         email: data?.email ?? '',
@@ -37,10 +42,25 @@ export default function ProfilePage() {
         city: data?.city ?? '',
         bio: data?.bio ?? '',
       })
+      if (data?.latitude && data?.longitude) {
+        setCoords({ lat: data.latitude, lng: data.longitude })
+      }
+      setMaxDistanceKm(data?.max_distance_km ?? 50)
       setLoading(false)
     }
     load()
   }, [])
+
+  async function handleUseLocation() {
+    setLocating(true)
+    try {
+      const pos = await getCurrentPosition()
+      setCoords(pos)
+    } catch (e) {
+      alert('Impossible d\'obtenir votre position. Vérifiez les permissions.')
+    }
+    setLocating(false)
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -50,6 +70,9 @@ export default function ProfilePage() {
       phone: form.phone,
       city: form.city,
       bio: form.bio,
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lng ?? null,
+      max_distance_km: maxDistanceKm,
     }).eq('id', session!.user.id)
     setSaving(false)
     setSuccess(true)
@@ -76,6 +99,8 @@ export default function ProfilePage() {
   const labelStyle = {
     fontSize: 13, color: 'var(--text-dim)', display: 'block', marginBottom: 6,
   }
+
+const isProvider = profile?.role === 'provider' || profile?.role === 'prestataire'
 
   return (
     <>
@@ -108,7 +133,7 @@ export default function ProfilePage() {
                   </span>
                 )}
                 <span style={{ fontSize: 11, color: 'var(--text-mute)', border: '1px solid var(--line)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)' }}>
-                  {profile?.role === 'provider' ? '🔧 Prestataire' : '🙋 Client'}
+                  {isProvider ? '🔧 Prestataire' : '🙋 Client'}
                 </span>
                 {profile?.rating > 0 && (
                   <span style={{ fontSize: 11, color: 'var(--amber)', border: '1px solid var(--amber)', borderRadius: 6, padding: '2px 8px', fontFamily: 'var(--font-mono)' }}>
@@ -148,8 +173,55 @@ export default function ProfilePage() {
               <input type="text" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} placeholder="Montréal" style={inputStyle} />
             </div>
 
+            {/* Position GPS */}
             <div>
-              <label style={labelStyle}>Bio {profile?.role === 'provider' ? '(visible par les clients)' : ''}</label>
+              <label style={labelStyle}>Position précise (optionnel)</label>
+              <button
+                onClick={handleUseLocation}
+                disabled={locating}
+                style={{
+                  width: '100%', padding: '10px 14px',
+                  background: coords ? 'var(--green-soft)' : 'var(--bg-3)',
+                  border: `1px solid ${coords ? 'var(--green)' : 'var(--line-2)'}`,
+                  borderRadius: 8, cursor: locating ? 'not-allowed' : 'pointer',
+                  fontSize: 13, color: coords ? 'var(--green)' : 'var(--text-dim)',
+                  fontFamily: 'var(--font-sans)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                {locating ? '📍 Localisation...' : coords ? '✓ Position enregistrée' : '📍 Utiliser ma position actuelle'}
+              </button>
+            </div>
+
+            {/* Rayon de travail (prestataire seulement) */}
+            {isProvider && (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <label style={labelStyle}>📡 Rayon de travail</label>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--cyan)', fontWeight: 600 }}>
+                    {maxDistanceKm >= 500 ? 'Illimité' : `${maxDistanceKm} km`}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={5}
+                  max={500}
+                  value={maxDistanceKm}
+                  onChange={e => setMaxDistanceKm(Number(e.target.value))}
+                  style={{ width: '100%', accentColor: 'var(--cyan)' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-mute)', marginTop: 4 }}>
+                  <span>5 km</span>
+                  <span>Illimité</span>
+                </div>
+                <p style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 6 }}>
+                  Vous ne verrez que les demandes dans ce rayon.
+                </p>
+              </div>
+            )}
+
+            <div>
+              <label style={labelStyle}>Bio {isProvider ? '(visible par les clients)' : ''}</label>
               <textarea value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} placeholder="Décrivez-vous en quelques mots..." rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
             </div>
 
