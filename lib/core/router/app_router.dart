@@ -42,7 +42,7 @@ class AppRoutes {
 
 // ── Variable statique onboarding ─────────────────────────
 bool _onboardingChecked = false;
-bool _onboardingDone    = true;
+bool _onboardingDone    = false;
 
 Future<void> initOnboarding() async {
   if (kIsWeb) {
