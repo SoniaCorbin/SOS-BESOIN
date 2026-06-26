@@ -57,137 +57,192 @@ class LegalScreen extends StatelessWidget {
 // ── Contenu légal ─────────────────────────────────────────
 class LegalContent {
   static const String termsOfService = '''
-CONDITIONS GÉNÉRALES D'UTILISATION
-Dernière mise à jour : mai 2026
+CONDITIONS D'UTILISATION
+Dernière mise à jour : 23 juin 2026
 
 1. ACCEPTATION DES CONDITIONS
-En utilisant l'application SOS-BESOIN, vous acceptez les présentes conditions générales d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser l'application.
+En accédant à la plateforme SOS-BESOIN, exploitée par Corbin Creative Tech Inc. (NEQ : 1182286402), vous acceptez d'être lié par les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser nos services.
 
 2. DESCRIPTION DU SERVICE
-SOS-BESOIN est une marketplace qui met en relation des clients ayant des besoins urgents avec des prestataires vérifiés. Nous agissons en tant qu'intermédiaire et ne sommes pas responsables de la qualité des services fournis. La vérification KYC confirme l'identité du prestataire uniquement — SOS-BESOIN ne garantit pas les qualifications, compétences ou certifications professionnelles des prestataires.
+SOS-BESOIN est une place de marché en ligne qui met en relation des clients ayant des besoins urgents avec des prestataires de services qualifiés. Corbin Creative Tech Inc. agit uniquement en tant qu'intermédiaire et n'est pas partie aux contrats conclus entre les clients et les prestataires.
 
-3. INSCRIPTION ET COMPTE
-- Vous devez avoir au moins 18 ans pour utiliser SOS-BESOIN.
-- Vous êtes responsable de la confidentialité de votre mot de passe.
-- Vous devez fournir des informations exactes lors de l'inscription.
-- Un seul compte par personne est autorisé.
+3. ADMISSIBILITÉ
+Pour utiliser SOS-BESOIN, vous devez :
+- Avoir au moins 18 ans
+- Résider au Canada
+- Fournir des informations exactes lors de l'inscription
+- Posséder un compte bancaire ou une carte de crédit valide
 
-4. POUR LES CLIENTS
-- Vous pouvez publier des demandes de service urgentes.
-- Le paiement est séquestré jusqu'à validation de la mission.
-- Vous ne payez que si vous acceptez une offre.
-- Vous avez 48h après la mission pour valider ou contester.
+4. COMPTES UTILISATEURS
+Vous êtes responsable de maintenir la confidentialité de vos identifiants de connexion. Vous acceptez de nous notifier immédiatement de toute utilisation non autorisée de votre compte. Corbin Creative Tech Inc. se réserve le droit de suspendre ou de résilier tout compte en cas de violation des présentes conditions.
 
-5. POUR LES PRESTATAIRES
-- Vous devez passer une vérification KYC avant de soumettre des offres.
-- Une commission de 10% est retenue sur chaque mission.
-- Le paiement est transféré sous 24h après validation.
-- Vous fixez vos propres tarifs.
+5. PAIEMENTS ET FRAIS
+Les paiements sont traités de manière sécurisée via Stripe. Le montant est séquestré jusqu'à la validation de la mission par le client ou après un délai de 3 jours sans action du client. Corbin Creative Tech Inc. perçoit une commission sur chaque transaction complétée. Les frais applicables sont affichés avant toute confirmation de paiement.
 
-6. PAIEMENT ET REMBOURSEMENT
-- Les paiements sont traités par Stripe.
-- En cas de litige, consultez notre politique de remboursement.
-- La commission de 10% n'est pas remboursable.
+6. OBLIGATIONS DES PRESTATAIRES
+Les prestataires s'engagent à :
+- Fournir des services conformes à leur description
+- Maintenir les licences et certifications requises par la loi
+- Traiter les clients avec respect et professionnalisme
+- Compléter les missions acceptées dans les délais convenus
+- Déclarer leurs revenus conformément aux lois fiscales applicables
 
-7. COMPORTEMENT INTERDIT
-- Fraude ou fausses informations
-- Harcèlement ou comportement abusif
-- Contournement du système de paiement
-- Utilisation à des fins illégales
+7. OBLIGATIONS DES CLIENTS
+Les clients s'engagent à :
+- Fournir des informations exactes sur leurs besoins
+- Être disponibles pour accueillir le prestataire aux heures convenues
+- Valider la mission dans les délais impartis
+- Ne pas contacter les prestataires en dehors de la plateforme pour éviter les frais
 
-8. RÉSILIATION
-SOS-BESOIN se réserve le droit de suspendre ou supprimer tout compte qui viole ces conditions.
+8. CONTENU INTERDIT
+Il est strictement interdit d'utiliser SOS-BESOIN pour :
+- Des activités illégales ou frauduleuses
+- Le harcèlement ou l'intimidation d'autres utilisateurs
+- La publication de fausses informations
+- La sollicitation de paiements en dehors de la plateforme
+- Toute activité portant atteinte aux droits d'autrui
 
 9. LIMITATION DE RESPONSABILITÉ
-SOS-BESOIN n'est pas responsable des dommages indirects résultant de l'utilisation du service.
+Corbin Creative Tech Inc. n'est pas responsable des dommages directs, indirects, accessoires ou consécutifs résultant de l'utilisation de la plateforme, de la qualité des services fournis par les prestataires, ou de tout litige entre utilisateurs. La responsabilité maximale de Corbin Creative Tech Inc. est limitée aux frais payés par l'utilisateur au cours des 30 derniers jours.
 
-10. CONTACT
-Pour toute question : support@sosbesoin.app
+10. PROPRIÉTÉ INTELLECTUELLE
+Tous les droits de propriété intellectuelle relatifs à la plateforme SOS-BESOIN, incluant le logo, le design et le code source, appartiennent à Corbin Creative Tech Inc. Toute reproduction non autorisée est interdite.
+
+11. DROIT APPLICABLE
+Les présentes conditions sont régies par les lois de la province de Québec et les lois fédérales du Canada applicables. Tout litige sera soumis à la juridiction exclusive des tribunaux du Québec.
+
+12. MODIFICATIONS
+Corbin Creative Tech Inc. se réserve le droit de modifier les présentes conditions à tout moment. Les utilisateurs seront informés des changements importants. L'utilisation continue de la plateforme après notification constitue une acceptation des nouvelles conditions.
+
+13. CONTACT
+Corbin Creative Tech Inc.
+1231 Rue De La Relève, Saint-Lazare, Québec, J7T 3G2
+support@sosbesoin.ca
+NEQ : 1182286402
 ''';
 
   static const String privacyPolicy = '''
 POLITIQUE DE CONFIDENTIALITÉ
-Dernière mise à jour : mai 2026
+Dernière mise à jour : 23 juin 2026
 
-1. DONNÉES COLLECTÉES
-Nous collectons les données suivantes :
-- Nom complet et adresse courriel
-- Numéro de téléphone (optionnel)
-- Informations de paiement (traitées par Stripe)
-- Historique des transactions
-- Messages échangés via le chat
-- Token FCM pour les notifications push
+1. RESPONSABLE DU TRAITEMENT
+Corbin Creative Tech Inc. (NEQ : 1182286402), ayant son siège au 1231 Rue De La Relève, Saint-Lazare, Québec, J7T 3G2, est responsable du traitement de vos renseignements personnels conformément à la Loi 25 (Loi modernisant des dispositions législatives en matière de protection des renseignements personnels) et à la Loi sur la protection des renseignements personnels et les documents électroniques (LPRPDE).
 
-2. UTILISATION DES DONNÉES
-Vos données sont utilisées pour :
-- Créer et gérer votre compte
-- Traiter les paiements
-- Envoyer des notifications push
-- Améliorer nos services
-- Prévenir la fraude
+Pour toute question relative à la protection de vos renseignements personnels, contactez notre responsable : support@sosbesoin.ca
 
-3. PARTAGE DES DONNÉES
-Nous ne vendons jamais vos données personnelles. Vos données peuvent être partagées avec :
-- Stripe (traitement des paiements)
-- Firebase (notifications push)
-- Supabase (stockage sécurisé)
+2. RENSEIGNEMENTS COLLECTÉS
+Nous collectons les renseignements suivants :
+- Informations d'identification : nom complet, adresse courriel, numéro de téléphone
+- Informations de localisation : ville, quartier, coordonnées GPS (avec votre consentement explicite)
+- Informations de paiement : traitées directement par Stripe — nous ne conservons pas vos données bancaires
+- Données d'utilisation : demandes publiées, offres soumises, messages échangés, évaluations
+- Données techniques : adresse IP, type d'appareil (pour la sécurité et l'amélioration du service)
 
-4. SÉCURITÉ
-- Toutes les données sont chiffrées en transit (HTTPS)
-- Les mots de passe sont hashés
-- Row Level Security activé sur toutes les tables
-- Clés API jamais exposées dans le code
+3. FINALITÉS DU TRAITEMENT
+Vos renseignements sont utilisés pour :
+- Créer et gérer votre compte utilisateur
+- Mettre en relation clients et prestataires
+- Traiter les paiements et émissions de factures
+- Assurer la sécurité et prévenir la fraude
+- Améliorer nos services et l'expérience utilisateur
+- Respecter nos obligations légales
+- Vous envoyer des communications relatives à votre compte (avec votre consentement)
 
-5. VOS DROITS
-Vous avez le droit de :
-- Accéder à vos données personnelles
-- Corriger vos informations
-- Supprimer votre compte et vos données
-- Retirer votre consentement
+4. GÉOLOCALISATION
+L'utilisation de votre position GPS est entièrement optionnelle et requiert votre consentement explicite. Elle sert uniquement à :
+- Afficher les demandes proches de votre position
+- Permettre aux prestataires de définir leur rayon de travail
+
+Vous pouvez retirer votre consentement à tout moment dans les paramètres de votre appareil.
+
+5. PARTAGE DES RENSEIGNEMENTS
+Nous ne vendons jamais vos renseignements personnels. Nous les partageons uniquement avec :
+- Stripe : traitement sécurisé des paiements
+- Firebase : notifications push
+- Supabase : hébergement sécurisé des données (serveurs en Amérique du Nord)
+- Autorités légales : uniquement si requis par la loi
 
 6. CONSERVATION DES DONNÉES
-Vos données sont conservées tant que votre compte est actif. Après suppression, elles sont effacées sous 30 jours.
+Vos renseignements sont conservés aussi longtemps que votre compte est actif. Après la fermeture de votre compte :
+- Les données de transaction sont conservées 7 ans (obligations fiscales)
+- Les autres données personnelles sont supprimées dans les 90 jours
+- Les données anonymisées peuvent être conservées à des fins statistiques
 
-7. COOKIES
-L'application mobile n'utilise pas de cookies.
+7. VOS DROITS (LOI 25)
+Conformément à la Loi 25, vous avez le droit de :
+- Accès : obtenir une copie de vos renseignements personnels
+- Rectification : corriger des renseignements inexacts
+- Suppression : demander l'effacement de vos données
+- Portabilité : recevoir vos données dans un format structuré
+- Retrait du consentement : à tout moment, sans préjudice
+- Plainte : auprès de la Commission d'accès à l'information du Québec
 
-8. CONTACT
-Pour exercer vos droits : privacy@sosbesoin.app
+Pour exercer vos droits : support@sosbesoin.ca
+
+8. SÉCURITÉ
+Nous mettons en œuvre des mesures de sécurité appropriées :
+- Chiffrement SSL/TLS de toutes les communications
+- Authentification sécurisée via Supabase Auth
+- Contrôle d'accès strict aux données (Row Level Security)
+- Paiements traités par Stripe (certifié PCI DSS)
+
+En cas d'incident de confidentialité, nous vous en informerons dans les 72 heures si vos droits sont susceptibles d'être affectés, conformément à la Loi 25.
+
+9. TÉMOINS (COOKIES)
+L'application mobile n'utilise pas de cookies publicitaires ou de suivi tiers.
+
+10. MODIFICATIONS
+Toute modification importante de cette politique sera communiquée par notification dans l'application au moins 30 jours avant son entrée en vigueur, conformément à la Loi 25.
+
+11. CONTACT
+Responsable de la protection des renseignements personnels
+Corbin Creative Tech Inc.
+1231 Rue De La Relève, Saint-Lazare, Québec, J7T 3G2
+support@sosbesoin.ca
+NEQ : 1182286402
 ''';
 
   static const String refundPolicy = '''
 POLITIQUE DE REMBOURSEMENT
-Dernière mise à jour : mai 2026
+Dernière mise à jour : 23 juin 2026
 
-1. PAIEMENT SÉQUESTRÉ
-Tous les paiements sur SOS-BESOIN sont séquestrés. Cela signifie que votre argent est retenu de façon sécurisée jusqu'à ce que vous validiez la mission.
+1. PRINCIPE DU PAIEMENT SÉQUESTRÉ
+SOS-BESOIN utilise un système de paiement séquestré (escrow) pour protéger les deux parties. Lorsqu'un client accepte une offre, le montant est retenu de manière sécurisée via Stripe et n'est libéré au prestataire qu'après la validation de la mission.
 
-2. CONDITIONS DE REMBOURSEMENT
+2. CAS DE REMBOURSEMENT
+Un remboursement complet est accordé dans les situations suivantes :
+- Le prestataire n'a pas effectué la mission convenue
+- Le prestataire annule après acceptation de l'offre
+- La mission n'a pas été complétée dans les délais convenus
+- Le service fourni ne correspond pas à la description de l'offre acceptée
+- Erreur technique ayant entraîné un double paiement
 
-Remboursement complet (100%) :
-- Si vous annulez avant d'accepter une offre
-- Si le prestataire ne se présente pas
-- Si la mission n'a pas été réalisée
+3. CAS DE NON-REMBOURSEMENT
+Aucun remboursement ne sera accordé dans les situations suivantes :
+- La mission a été validée par le client (validation manuelle ou automatique après 3 jours)
+- Le client a changé d'avis après la complétion de la mission
+- Le client n'était pas disponible à l'heure convenue sans préavis
+- Insatisfaction subjective non liée à un manquement du prestataire
 
-Remboursement partiel :
-- Si la mission est partiellement réalisée
-  (à déterminer au cas par cas)
+4. VALIDATION AUTOMATIQUE
+Si le client ne valide pas la mission dans les 3 jours suivant la complétion, le paiement est automatiquement libéré au prestataire. Passé ce délai, aucun remboursement ne peut être accordé sauf en cas de fraude avérée.
 
-Aucun remboursement :
-- Après validation de la mission
-- La commission de 10% n'est jamais remboursée
+5. PROCÉDURE DE REMBOURSEMENT
+Pour demander un remboursement :
+1. Contactez-nous à support@sosbesoin.ca dans les 7 jours suivant l'incident
+2. Indiquez votre numéro de demande et une description détaillée du problème
+3. Notre équipe examinera votre demande dans un délai de 5 jours ouvrables
+4. Si approuvé, le remboursement sera effectué sur votre mode de paiement original dans un délai de 5 à 10 jours ouvrables
 
-3. PROCESSUS DE REMBOURSEMENT
-1. Contactez le support dans les 48h
-2. Décrivez le problème en détail
-3. Notre équipe examine la demande sous 24h
-4. Le remboursement est traité sous 5-10 jours ouvrables
+6. LITIGES ENTRE UTILISATEURS
+En cas de litige entre un client et un prestataire, Corbin Creative Tech Inc. peut intervenir en tant que médiateur. Nous nous réservons le droit de prendre une décision finale concernant le remboursement après examen des preuves fournies par les deux parties.
 
-4. LITIGES
-En cas de désaccord entre client et prestataire, SOS-BESOIN peut intervenir comme médiateur. Notre décision est finale.
+7. FRAIS DE PLATEFORME
+Les frais de service de Corbin Creative Tech Inc. ne sont pas remboursables une fois la mise en relation effectuée, sauf en cas d'erreur technique de notre part.
 
-5. CONTACT
-Pour un remboursement : support@sosbesoin.app
+8. CONTACT
+Corbin Creative Tech Inc.
+support@sosbesoin.ca
+Délai de réponse : 2 jours ouvrables
 ''';
 }
-

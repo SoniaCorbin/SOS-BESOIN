@@ -7,6 +7,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/geolocation_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -41,6 +42,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Impossible d\'ouvrir le lien.')),
+        );
+      }
+    }
   }
 
   Future<void> _useMyLocation() async {
@@ -517,19 +529,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _LegalButton(
                     icon: Icons.description_outlined,
                     label: 'Conditions d\'utilisation',
-                    onTap: () => context.push('/terms'),
+                    onTap: () => _launchUrl('https://app.sosbesoin.ca/terms'),
                   ),
                   const Divider(color: AppColors.line, height: 1),
                   _LegalButton(
                     icon: Icons.privacy_tip_outlined,
                     label: 'Politique de confidentialité',
-                    onTap: () => context.push('/privacy'),
+                    onTap: () => _launchUrl('https://app.sosbesoin.ca/privacy'),
                   ),
                   const Divider(color: AppColors.line, height: 1),
                   _LegalButton(
                     icon: Icons.replay_outlined,
                     label: 'Politique de remboursement',
-                    onTap: () => context.push('/refund'),
+                    onTap: () => _launchUrl('https://app.sosbesoin.ca/refund'),
                   ),
                 ],
               ),
