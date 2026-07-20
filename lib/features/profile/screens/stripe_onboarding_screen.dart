@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -40,15 +41,12 @@ class _StripeOnboardingScreenState
       final url = response.data['url'] as String;
 
       if (await canLaunchUrl(Uri.parse(url))) {
-        await launchUrl(
-          Uri.parse(url),
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
+          SnackBar(content: Text('${'chat_error'.tr()}$e')),
         );
       }
     }
@@ -72,9 +70,9 @@ class _StripeOnboardingScreenState
               color: AppColors.textDim, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Paiements',
-          style: TextStyle(
+        title: Text(
+          'stripe_title'.tr(),
+          style: const TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -88,23 +86,18 @@ class _StripeOnboardingScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16),
-            // Icône
             Center(
               child: Container(
                 width: 80, height: 80,
                 decoration: BoxDecoration(
-                  color: hasStripe
-                      ? AppColors.greenSoft
-                      : AppColors.amberSoft,
+                  color: hasStripe ? AppColors.greenSoft : AppColors.amberSoft,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Icon(
                   hasStripe
                       ? Icons.check_circle_rounded
                       : Icons.account_balance_rounded,
-                  color: hasStripe
-                      ? AppColors.green
-                      : AppColors.amber,
+                  color: hasStripe ? AppColors.green : AppColors.amber,
                   size: 40,
                 ),
               ),
@@ -113,8 +106,8 @@ class _StripeOnboardingScreenState
             Center(
               child: Text(
                 hasStripe
-                    ? 'Compte de paiement actif !'
-                    : 'Configurez vos paiements',
+                    ? 'stripe_active_title'.tr()
+                    : 'stripe_setup_title'.tr(),
                 style: const TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 22,
@@ -128,8 +121,8 @@ class _StripeOnboardingScreenState
             Center(
               child: Text(
                 hasStripe
-                    ? 'Vous recevrez vos paiements automatiquement\naprès chaque mission validée.'
-                    : 'Pour recevoir vos paiements, vous devez\nconfigurer votre compte Stripe.',
+                    ? 'stripe_active_subtitle'.tr()
+                    : 'stripe_setup_subtitle'.tr(),
                 style: const TextStyle(
                   fontSize: 14,
                   color: AppColors.textMute,
@@ -140,23 +133,22 @@ class _StripeOnboardingScreenState
             ),
             const SizedBox(height: 40),
             if (!hasStripe) ...[
-              // Étapes
               _StepItem(
                 number: '1',
-                title: 'Créer votre compte Stripe',
-                desc: 'Connectez votre compte bancaire en toute sécurité.',
+                title: 'stripe_step1_title'.tr(),
+                desc: 'stripe_step1_desc'.tr(),
               ),
               const SizedBox(height: 16),
               _StepItem(
                 number: '2',
-                title: 'Vérifier votre identité',
-                desc: 'Stripe vérifie votre identité pour sécuriser les paiements.',
+                title: 'stripe_step2_title'.tr(),
+                desc: 'stripe_step2_desc'.tr(),
               ),
               const SizedBox(height: 16),
               _StepItem(
                 number: '3',
-                title: 'Recevoir vos paiements',
-                desc: '90% du montant transféré automatiquement après chaque mission.',
+                title: 'stripe_step3_title'.tr(),
+                desc: 'stripe_step3_desc'.tr(),
               ),
               const SizedBox(height: 40),
               SizedBox(
@@ -172,14 +164,14 @@ class _StripeOnboardingScreenState
                       color: AppColors.bg,
                     ),
                   )
-                      : const Row(
+                      : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.account_balance_rounded, size: 18),
-                      SizedBox(width: 8),
+                      const Icon(Icons.account_balance_rounded, size: 18),
+                      const SizedBox(width: 8),
                       Text(
-                        'Configurer mes paiements',
-                        style: TextStyle(fontWeight: FontWeight.w600),
+                        'stripe_configure_btn'.tr(),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -203,9 +195,9 @@ class _StripeOnboardingScreenState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Compte connecté',
-                            style: TextStyle(
+                          Text(
+                            'stripe_connected'.tr(),
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: AppColors.green,

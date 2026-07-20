@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/router/app_router.dart';
 import '../providers/auth_provider.dart';
@@ -24,6 +25,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _acceptTerms    = false;
 
   @override
+  void initState() {
+    super.initState();
+    _passCtrl.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
@@ -36,9 +43,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez accepter les conditions d\'utilisation.'),
-        ),
+        SnackBar(content: Text('accept_terms_error'.tr())),
       );
       return;
     }
@@ -69,7 +74,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       backgroundColor: AppColors.bg,
       body: Stack(
         children: [
-          // ── Glows ───────────────────────────────────────
           Positioned(
             top: -100, right: -100,
             child: Container(
@@ -96,7 +100,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
             ),
           ),
-          // ── Contenu ─────────────────────────────────────
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -104,7 +107,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 24),
-                  // Retour
                   IconButton(
                     onPressed: () => context.pop(),
                     icon: const Icon(
@@ -114,10 +116,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Titre
-                  const Text(
-                    'Créer un compte.',
-                    style: TextStyle(
+                  Text(
+                    'register_title'.tr(),
+                    style: const TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 36,
                       fontWeight: FontWeight.w600,
@@ -126,64 +127,56 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Rejoignez le réseau SOS-BESOIN.',
-                    style: TextStyle(
+                  Text(
+                    'register_subtitle'.tr(),
+                    style: const TextStyle(
                       fontSize: 15,
                       color: AppColors.textDim,
                     ),
                   ),
                   const SizedBox(height: 36),
-                  // Formulaire
                   Form(
                     key: _formKey,
                     child: Column(
                       children: [
-                        // Nom complet
                         TextFormField(
                           controller: _nameCtrl,
                           textCapitalization: TextCapitalization.words,
                           style: const TextStyle(color: AppColors.text),
-                          decoration: const InputDecoration(
-                            labelText: 'Nom complet',
-                            prefixIcon: Icon(Icons.person_outline_rounded,
+                          decoration: InputDecoration(
+                            labelText: 'full_name'.tr(),
+                            prefixIcon: const Icon(Icons.person_outline_rounded,
                                 color: AppColors.textMute),
                           ),
                           validator: (v) {
-                            if (v == null || v.trim().isEmpty) {
-                              return 'Champ requis';
-                            }
-                            if (v.trim().length < 2) {
-                              return 'Nom trop court';
-                            }
+                            if (v == null || v.trim().isEmpty) return 'name_required'.tr();
+                            if (v.trim().length < 2) return 'name_too_short'.tr();
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
-                        // Email
                         TextFormField(
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           style: const TextStyle(color: AppColors.text),
-                          decoration: const InputDecoration(
-                            labelText: 'Adresse courriel',
-                            prefixIcon: Icon(Icons.mail_outline_rounded,
+                          decoration: InputDecoration(
+                            labelText: 'email'.tr(),
+                            prefixIcon: const Icon(Icons.mail_outline_rounded,
                                 color: AppColors.textMute),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return 'Champ requis';
-                            if (!v.contains('@')) return 'Courriel invalide';
+                            if (v == null || v.isEmpty) return 'field_required'.tr();
+                            if (!v.contains('@')) return 'email_invalid'.tr();
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
-                        // Mot de passe
                         TextFormField(
                           controller: _passCtrl,
                           obscureText: _obscurePass,
                           style: const TextStyle(color: AppColors.text),
                           decoration: InputDecoration(
-                            labelText: 'Mot de passe',
+                            labelText: 'password'.tr(),
                             prefixIcon: const Icon(Icons.lock_outline_rounded,
                                 color: AppColors.textMute),
                             suffixIcon: IconButton(
@@ -198,25 +191,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return 'Champ requis';
-                            if (v.length < 8) return 'Minimum 8 caractères';
-                            if (!v.contains(RegExp(r'[A-Z]'))) {
-                              return 'Au moins une majuscule';
-                            }
-                            if (!v.contains(RegExp(r'[0-9]'))) {
-                              return 'Au moins un chiffre';
-                            }
+                            if (v == null || v.isEmpty) return 'field_required'.tr();
+                            if (v.length < 8) return 'password_min_8'.tr();
+                            if (!v.contains(RegExp(r'[A-Z]'))) return 'password_uppercase'.tr();
+                            if (!v.contains(RegExp(r'[a-z]'))) return 'pwd_lowercase'.tr();
+                            if (!v.contains(RegExp(r'[0-9]'))) return 'password_number'.tr();
+                            if (!v.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'))) return 'pwd_special'.tr();
                             return null;
                           },
                         ),
+                        const SizedBox(height: 8),
+                        _PasswordStrengthIndicator(password: _passCtrl.text),
                         const SizedBox(height: 16),
-                        // Confirmation mot de passe
                         TextFormField(
                           controller: _confirmCtrl,
                           obscureText: _obscureConfirm,
                           style: const TextStyle(color: AppColors.text),
                           decoration: InputDecoration(
-                            labelText: 'Confirmer le mot de passe',
+                            labelText: 'confirm_password'.tr(),
                             prefixIcon: const Icon(Icons.lock_outline_rounded,
                                 color: AppColors.textMute),
                             suffixIcon: IconButton(
@@ -231,15 +223,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return 'Champ requis';
-                            if (v != _passCtrl.text) {
-                              return 'Les mots de passe ne correspondent pas';
-                            }
+                            if (v == null || v.isEmpty) return 'field_required'.tr();
+                            if (v != _passCtrl.text) return 'passwords_no_match'.tr();
                             return null;
                           },
                         ),
                         const SizedBox(height: 24),
-                        // Conditions
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -256,25 +245,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               child: Padding(
                                 padding: const EdgeInsets.only(top: 12),
                                 child: RichText(
-                                  text: const TextSpan(
-                                    style: TextStyle(
+                                  text: TextSpan(
+                                    style: const TextStyle(
                                       fontSize: 13,
                                       color: AppColors.textDim,
                                       height: 1.5,
                                     ),
                                     children: [
-                                      TextSpan(text: 'J\'accepte les '),
+                                      TextSpan(text: 'accept_terms'.tr()),
                                       TextSpan(
-                                        text: 'Conditions d\'utilisation',
-                                        style: TextStyle(
+                                        text: 'terms_of_use'.tr(),
+                                        style: const TextStyle(
                                           color: AppColors.amber,
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                      TextSpan(text: ' et la '),
+                                      TextSpan(text: 'and'.tr()),
                                       TextSpan(
-                                        text: 'Politique de confidentialité',
-                                        style: TextStyle(
+                                        text: 'privacy_policy'.tr(),
+                                        style: const TextStyle(
                                           color: AppColors.amber,
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -287,7 +276,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           ],
                         ),
                         const SizedBox(height: 28),
-                        // Bouton inscription
                         SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -301,26 +289,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 color: AppColors.bg,
                               ),
                             )
-                                : const Text('Créer mon compte'),
+                                : Text('create_my_account'.tr()),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        // Déjà un compte
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
-                              'Déjà un compte ? ',
-                              style: TextStyle(
+                            Text(
+                              'already_account'.tr(),
+                              style: const TextStyle(
                                 color: AppColors.textDim,
                                 fontSize: 14,
                               ),
                             ),
                             TextButton(
                               onPressed: () => context.go(AppRoutes.login),
-                              child: const Text(
-                                'Se connecter',
-                                style: TextStyle(
+                              child: Text(
+                                'sign_in_link'.tr(),
+                                style: const TextStyle(
                                   color: AppColors.amber,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
@@ -339,6 +326,48 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── Widget indicateur force mot de passe ──────────────────
+class _PasswordStrengthIndicator extends StatelessWidget {
+  final String password;
+
+  const _PasswordStrengthIndicator({required this.password});
+
+  @override
+  Widget build(BuildContext context) {
+    final criteria = [
+      (label: 'pwd_min_8'.tr(),     met: password.length >= 8),
+      (label: 'pwd_uppercase'.tr(), met: password.contains(RegExp(r'[A-Z]'))),
+      (label: 'pwd_lowercase'.tr(), met: password.contains(RegExp(r'[a-z]'))),
+      (label: 'pwd_number'.tr(),    met: password.contains(RegExp(r'[0-9]'))),
+      (label: 'pwd_special'.tr(),   met: password.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'))),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: criteria.map((c) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(
+          children: [
+            Icon(
+              c.met ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+              size: 14,
+              color: c.met ? AppColors.green : AppColors.textMute,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              c.label,
+              style: TextStyle(
+                fontSize: 12,
+                color: c.met ? AppColors.green : AppColors.textMute,
+              ),
+            ),
+          ],
+        ),
+      )).toList(),
     );
   }
 }

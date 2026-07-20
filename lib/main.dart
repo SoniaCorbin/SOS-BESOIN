@@ -11,9 +11,11 @@ import 'core/services/payment_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
 
   if (!kIsWeb) {
     await SystemChrome.setPreferredOrientations([
@@ -57,13 +59,22 @@ Future<void> main() async {
   }
 
   timeago.setLocaleMessages('fr', timeago.FrMessages());
-
   await initializeDateFormatting('fr_CA', null);
 
   final prefs = await SharedPreferences.getInstance();
   final onboardingDone = prefs.getBool('onboarding_done') ?? false;
 
-  runApp(const ProviderScope(child: SosBesoinApp()));
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [
+        Locale('fr'),
+        Locale('en'),
+      ],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('fr'),
+      child: const ProviderScope(child: SosBesoinApp()),
+    ),
+  );
 }
 
 class SosBesoinApp extends ConsumerWidget {
@@ -77,6 +88,9 @@ class SosBesoinApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       routerConfig: router,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
     );
   }
 }

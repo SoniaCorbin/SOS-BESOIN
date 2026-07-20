@@ -44,7 +44,7 @@ class AppUser {
     email:          map['email'] as String,
     avatarUrl:      map['avatar_url'] as String?,
     stripeAccountId: map['stripe_account_id'] as String?,
-    role:           map['role'] == 'provider'
+    role:           (map['role'] == 'provider' || map['role'] == 'prestataire')
         ? UserRole.provider
         : UserRole.client,
     isKycVerified:  map['is_kyc_verified'] as bool? ?? false,

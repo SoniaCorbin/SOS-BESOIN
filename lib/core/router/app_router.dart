@@ -23,6 +23,7 @@ import '../../features/admin/screens/admin_screen.dart';
 import '../../features/profile/screens/stripe_onboarding_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
 import 'package:flutter/foundation.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 // ── Routes nommées ───────────────────────────────────────
 class AppRoutes {
@@ -155,22 +156,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/terms',
-        builder: (_, __) => const LegalScreen(
-          title: 'Conditions générales d\'utilisation',
+        builder: (_, __) => LegalScreen(
+          title: 'legal_privacy_title'.tr(),
           content: LegalContent.termsOfService,
         ),
       ),
       GoRoute(
         path: '/privacy',
-        builder: (_, __) => const LegalScreen(
-          title: 'Politique de confidentialité',
+        builder: (_, __) => LegalScreen(
+          title: 'legal_privacy_title'.tr(),
           content: LegalContent.privacyPolicy,
         ),
       ),
       GoRoute(
         path: '/refund',
-        builder: (_, __) => const LegalScreen(
-          title: 'Politique de remboursement',
+        builder: (_, __) => LegalScreen(
+          title: 'legal_refund_title'.tr(),
           content: LegalContent.refundPolicy,
         ),
       ),

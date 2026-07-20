@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/router/app_router.dart';
 import '../providers/auth_provider.dart';
@@ -13,11 +14,11 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _formKey    = GlobalKey<FormState>();
-  final _emailCtrl  = TextEditingController();
-  final _passCtrl   = TextEditingController();
-  bool _obscure     = true;
-  bool _loading     = false;
+  final _formKey   = GlobalKey<FormState>();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl  = TextEditingController();
+  bool _obscure    = true;
+  bool _loading    = false;
 
   @override
   void dispose() {
@@ -53,7 +54,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       backgroundColor: AppColors.bg,
       body: Stack(
         children: [
-          // ── Glows ───────────────────────────────────────
           Positioned(
             top: -150, left: -100,
             child: Container(
@@ -80,7 +80,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
           ),
-          // ── Contenu ─────────────────────────────────────
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -88,7 +87,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 48),
-                  // Logo
+                  // Toggle FR/EN
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 16, right: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () => context.setLocale(const Locale('fr')),
+                            child: Text(
+                              'FR',
+                              style: TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: context.locale.languageCode == 'fr'
+                                    ? AppColors.amber
+                                    : AppColors.textMute,
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: Text('|',
+                                style: TextStyle(color: AppColors.textMute, fontSize: 13)),
+                          ),
+                          GestureDetector(
+                            onTap: () => context.setLocale(const Locale('en')),
+                            child: Text(
+                              'EN',
+                              style: TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: context.locale.languageCode == 'en'
+                                    ? AppColors.amber
+                                    : AppColors.textMute,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   Row(
                     children: [
                       Container(
@@ -110,9 +153,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'SOS·BESOIN',
-                        style: TextStyle(
+                      Text(
+                        'app_name'.tr(),
+                        style: const TextStyle(
                           fontFamily: 'SpaceGrotesk',
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -122,10 +165,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
                   const SizedBox(height: 48),
-                  // Titre
-                  const Text(
-                    'Bon retour.',
-                    style: TextStyle(
+                  Text(
+                    'login_title'.tr(),
+                    style: const TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 36,
                       fontWeight: FontWeight.w600,
@@ -134,43 +176,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Connectez-vous pour accéder à votre compte.',
-                    style: TextStyle(
+                  Text(
+                    'login_subtitle'.tr(),
+                    style: const TextStyle(
                       fontSize: 15,
                       color: AppColors.textDim,
                     ),
                   ),
                   const SizedBox(height: 40),
-                  // Formulaire
                   Form(
                     key: _formKey,
                     child: Column(
                       children: [
-                        // Email
                         TextFormField(
                           controller: _emailCtrl,
                           keyboardType: TextInputType.emailAddress,
                           style: const TextStyle(color: AppColors.text),
-                          decoration: const InputDecoration(
-                            labelText: 'Adresse courriel',
-                            prefixIcon: Icon(Icons.mail_outline_rounded,
+                          decoration: InputDecoration(
+                            labelText: 'email'.tr(),
+                            prefixIcon: const Icon(Icons.mail_outline_rounded,
                                 color: AppColors.textMute),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return 'Champ requis';
-                            if (!v.contains('@')) return 'Courriel invalide';
+                            if (v == null || v.isEmpty) return 'field_required'.tr();
+                            if (!v.contains('@')) return 'email_invalid'.tr();
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
-                        // Mot de passe
                         TextFormField(
                           controller: _passCtrl,
                           obscureText: _obscure,
                           style: const TextStyle(color: AppColors.text),
                           decoration: InputDecoration(
-                            labelText: 'Mot de passe',
+                            labelText: 'password'.tr(),
                             prefixIcon: const Icon(Icons.lock_outline_rounded,
                                 color: AppColors.textMute),
                             suffixIcon: IconButton(
@@ -185,20 +224,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return 'Champ requis';
-                            if (v.length < 6) return 'Minimum 6 caractères';
+                            if (v == null || v.isEmpty) return 'field_required'.tr();
+                            if (v.length < 6) return 'password_min'.tr();
                             return null;
                           },
                         ),
                         const SizedBox(height: 12),
-                        // Mot de passe oublié
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {},
-                            child: const Text(
-                              'Mot de passe oublié ?',
-                              style: TextStyle(
+                            child: Text(
+                              'forgot_password'.tr(),
+                              style: const TextStyle(
                                 color: AppColors.amber,
                                 fontSize: 13,
                               ),
@@ -206,7 +244,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        // Bouton connexion
                         SizedBox(
                           width: double.infinity,
                           height: 52,
@@ -220,19 +257,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 color: AppColors.bg,
                               ),
                             )
-                                : const Text('Se connecter'),
+                                : Text('sign_in'.tr()),
                           ),
                         ),
                         const SizedBox(height: 24),
-                        // Divider
                         Row(
                           children: [
                             const Expanded(child: Divider(color: AppColors.line2)),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(
-                                'ou',
-                                style: TextStyle(
+                                'or'.tr(),
+                                style: const TextStyle(
                                   color: AppColors.textMute,
                                   fontSize: 13,
                                 ),
@@ -242,23 +278,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ],
                         ),
                         const SizedBox(height: 24),
-                        // Bouton inscription
                         SizedBox(
                           width: double.infinity,
                           height: 52,
                           child: OutlinedButton(
                             onPressed: () => context.push(AppRoutes.register),
-                            child: const Text('Créer un compte'),
+                            child: Text('create_account'.tr()),
                           ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 32),
-                  // Mentions légales
                   Center(
                     child: Text(
-                      'En continuant, vous acceptez nos Conditions d\'utilisation\net notre Politique de confidentialité.',
+                      'legal_notice'.tr(),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 11,

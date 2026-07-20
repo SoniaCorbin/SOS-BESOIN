@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/history_provider.dart';
 import '../models/transaction_model.dart';
@@ -25,9 +26,9 @@ class HistoryScreen extends ConsumerWidget {
               color: AppColors.textDim, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Historique',
-          style: TextStyle(
+        title: Text(
+          'history_title'.tr(),
+          style: const TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -42,7 +43,6 @@ class HistoryScreen extends ConsumerWidget {
   }
 }
 
-// ── Historique client ─────────────────────────────────────
 class _ClientHistory extends StatelessWidget {
   final WidgetRef ref;
 
@@ -57,14 +57,14 @@ class _ClientHistory extends StatelessWidget {
         child: CircularProgressIndicator(color: AppColors.amber),
       ),
       error: (e, _) => Center(
-        child: Text('Erreur: $e',
+        child: Text('${'chat_error'.tr()}$e',
             style: const TextStyle(color: AppColors.red)),
       ),
       data: (transactions) => transactions.isEmpty
           ? _EmptyHistory(
         icon: Icons.history_rounded,
-        message: 'Aucune transaction pour l\'instant',
-        subtitle: 'Vos achats apparaîtront ici.',
+        message: 'history_client_empty'.tr(),
+        subtitle: 'history_client_empty_sub'.tr(),
       )
           : ListView.builder(
         padding: const EdgeInsets.all(20),
@@ -78,7 +78,6 @@ class _ClientHistory extends StatelessWidget {
   }
 }
 
-// ── Historique prestataire ────────────────────────────────
 class _ProviderHistory extends StatelessWidget {
   final WidgetRef ref;
 
@@ -94,12 +93,11 @@ class _ProviderHistory extends StatelessWidget {
         child: CircularProgressIndicator(color: AppColors.cyan),
       ),
       error: (e, _) => Center(
-        child: Text('Erreur: $e',
+        child: Text('${'chat_error'.tr()}$e',
             style: const TextStyle(color: AppColors.red)),
       ),
       data: (transactions) => CustomScrollView(
         slivers: [
-          // Stats
           SliverToBoxAdapter(
             child: statsAsync.when(
               loading: () => const SizedBox(),
@@ -109,21 +107,21 @@ class _ProviderHistory extends StatelessWidget {
                 child: Row(
                   children: [
                     _StatCard(
-                      label: 'Total gagné',
+                      label: 'stats_total_earned'.tr(),
                       value: '${(stats['total_earned'] as double).toStringAsFixed(0)}\$',
                       color: AppColors.green,
                       icon: Icons.attach_money_rounded,
                     ),
                     const SizedBox(width: 12),
                     _StatCard(
-                      label: 'Ce mois',
+                      label: 'stats_this_month'.tr(),
                       value: '${(stats['this_month'] as double).toStringAsFixed(0)}\$',
                       color: AppColors.cyan,
                       icon: Icons.calendar_month_rounded,
                     ),
                     const SizedBox(width: 12),
                     _StatCard(
-                      label: 'Missions',
+                      label: 'stats_missions'.tr(),
                       value: '${stats['total_missions']}',
                       color: AppColors.amber,
                       icon: Icons.task_alt_rounded,
@@ -133,20 +131,18 @@ class _ProviderHistory extends StatelessWidget {
               ),
             ),
           ),
-          // Liste
           transactions.isEmpty
               ? SliverToBoxAdapter(
             child: _EmptyHistory(
               icon: Icons.work_history_rounded,
-              message: 'Aucune mission complétée',
-              subtitle: 'Vos revenus apparaîtront ici.',
+              message: 'history_provider_empty'.tr(),
+              subtitle: 'history_provider_empty_sub'.tr(),
             ),
           )
               : SliverList(
             delegate: SliverChildBuilderDelegate(
                   (context, i) => Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: _TransactionCard(
                   transaction: transactions[i],
                   isClient: false,
@@ -161,7 +157,6 @@ class _ProviderHistory extends StatelessWidget {
   }
 }
 
-// ── Carte transaction ─────────────────────────────────────
 class _TransactionCard extends StatelessWidget {
   final TransactionModel transaction;
   final bool isClient;
@@ -189,7 +184,6 @@ class _TransactionCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Emoji catégorie
           Container(
             width: 44, height: 44,
             decoration: BoxDecoration(
@@ -204,7 +198,6 @@ class _TransactionCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Infos
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +232,6 @@ class _TransactionCard extends StatelessWidget {
               ],
             ),
           ),
-          // Montant + statut
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -289,7 +281,6 @@ class _TransactionCard extends StatelessWidget {
   }
 }
 
-// ── Stat card ─────────────────────────────────────────────
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
@@ -342,7 +333,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ── Empty state ───────────────────────────────────────────
 class _EmptyHistory extends StatelessWidget {
   final IconData icon;
   final String message;

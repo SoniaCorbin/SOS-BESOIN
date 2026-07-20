@@ -4,8 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../../core/theme/app_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 
-// ── Providers ─────────────────────────────────────────────
 final _client = Supabase.instance.client;
 
 final messagesProvider = StreamProvider.family<List<Map<String, dynamic>>, String>(
@@ -29,7 +29,6 @@ FutureProvider.family<Map<String, dynamic>, String>((ref, offerId) async {
   return Map<String, dynamic>.from(data);
 });
 
-// ── Screen ────────────────────────────────────────────────
 class ChatScreen extends ConsumerStatefulWidget {
   final String chatId;
 
@@ -40,9 +39,9 @@ class ChatScreen extends ConsumerStatefulWidget {
 }
 
 class _ChatScreenState extends ConsumerState<ChatScreen> {
-  final _msgCtrl      = TextEditingController();
-  final _scrollCtrl   = ScrollController();
-  bool _sending       = false;
+  final _msgCtrl    = TextEditingController();
+  final _scrollCtrl = ScrollController();
+  bool _sending     = false;
 
   @override
   void dispose() {
@@ -80,7 +79,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
+          SnackBar(content: Text('${'chat_error'.tr()}$e')),
         );
       }
     }
@@ -90,9 +89,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final messagesAsync  = ref.watch(messagesProvider(widget.chatId));
-    final offerAsync     = ref.watch(offerDetailProvider(widget.chatId));
-    final currentUserId  = _client.auth.currentUser?.id;
+    final messagesAsync = ref.watch(messagesProvider(widget.chatId));
+    final offerAsync    = ref.watch(offerDetailProvider(widget.chatId));
+    final currentUserId = _client.auth.currentUser?.id;
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -104,9 +103,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: offerAsync.when(
-          loading: () => const Text(
-            'Chargement...',
-            style: TextStyle(color: AppColors.textDim, fontSize: 16),
+          loading: () => Text(
+            'chat_loading'.tr(),
+            style: const TextStyle(color: AppColors.textDim, fontSize: 16),
           ),
           error: (_, __) => const Text('Chat'),
           data: (offer) {
@@ -125,9 +124,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                const Text(
-                  '● En ligne',
-                  style: TextStyle(
+                Text(
+                  'chat_online'.tr(),
+                  style: const TextStyle(
                     fontSize: 11,
                     color: AppColors.green,
                   ),
@@ -138,44 +137,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.flag_outlined,
-                color: AppColors.textDim),
-            onPressed: () => context.push(
-              '/report?offerId=${widget.chatId}',
-            ),
+            icon: const Icon(Icons.flag_outlined, color: AppColors.textDim),
+            onPressed: () => context.push('/report?offerId=${widget.chatId}'),
           ),
           IconButton(
-            icon: const Icon(Icons.info_outline_rounded,
-                color: AppColors.textDim),
+            icon: const Icon(Icons.info_outline_rounded, color: AppColors.textDim),
             onPressed: () {},
           ),
         ],
       ),
       body: Column(
         children: [
-          // ── Messages ─────────────────────────────────
           Expanded(
             child: messagesAsync.when(
               loading: () => const Center(
-                child: CircularProgressIndicator(
-                    color: AppColors.amber),
+                child: CircularProgressIndicator(color: AppColors.amber),
               ),
               error: (e, _) => Center(
-                child: Text('Erreur: $e',
+                child: Text('${'chat_error'.tr()}$e',
                     style: const TextStyle(color: AppColors.red)),
               ),
               data: (messages) {
                 if (messages.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.chat_bubble_outline_rounded,
+                        const Icon(Icons.chat_bubble_outline_rounded,
                             size: 48, color: AppColors.textMute),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Text(
-                          'Commencez la conversation !',
-                          style: TextStyle(
+                          'chat_empty'.tr(),
+                          style: const TextStyle(
                             color: AppColors.textMute,
                             fontSize: 14,
                           ),
@@ -193,27 +186,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       horizontal: 16, vertical: 12),
                   itemCount: messages.length,
                   itemBuilder: (context, i) {
-                    final msg      = messages[i];
-                    final isMe     = msg['sender_id'] == currentUserId;
-                    final content  = msg['content'] as String;
-                    final sentAt   = DateTime.parse(
-                        msg['created_at'] as String);
+                    final msg     = messages[i];
+                    final isMe    = msg['sender_id'] == currentUserId;
+                    final content = msg['content'] as String;
+                    final sentAt  = DateTime.parse(msg['created_at'] as String);
 
-                    // Afficher date si premier message ou
-                    // plus de 5 min d'écart
                     final showDate = i == 0 ||
                         sentAt
                             .difference(DateTime.parse(
                             messages[i - 1]['created_at'] as String))
-                            .inMinutes >
-                            5;
+                            .inMinutes > 5;
 
                     return Column(
                       children: [
                         if (showDate)
                           Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             child: Text(
                               timeago.format(sentAt, locale: 'fr'),
                               style: const TextStyle(
@@ -234,7 +222,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               },
             ),
           ),
-          // ── Input ─────────────────────────────────────
           _ChatInput(
             controller: _msgCtrl,
             sending: _sending,
@@ -246,7 +233,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 }
 
-// ── Bulle de message ──────────────────────────────────────
 class _MessageBubble extends StatelessWidget {
   final String content;
   final bool isMe;
@@ -267,8 +253,7 @@ class _MessageBubble extends StatelessWidget {
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.72,
         ),
-        padding: const EdgeInsets.symmetric(
-            horizontal: 14, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isMe ? AppColors.amber : AppColors.surface2,
           borderRadius: BorderRadius.only(
@@ -316,7 +301,6 @@ class _MessageBubble extends StatelessWidget {
   }
 }
 
-// ── Input chat ────────────────────────────────────────────
 class _ChatInput extends StatelessWidget {
   final TextEditingController controller;
   final bool sending;
@@ -350,7 +334,7 @@ class _ChatInput extends StatelessWidget {
               maxLines: null,
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(
-                hintText: 'Écrivez un message...',
+                hintText: 'chat_hint'.tr(),
                 hintStyle: const TextStyle(
                     color: AppColors.textMute, fontSize: 14),
                 filled: true,
@@ -382,9 +366,7 @@ class _ChatInput extends StatelessWidget {
               width: 44, height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: sending
-                    ? AppColors.surface2
-                    : AppColors.amber,
+                color: sending ? AppColors.surface2 : AppColors.amber,
                 boxShadow: sending
                     ? []
                     : [

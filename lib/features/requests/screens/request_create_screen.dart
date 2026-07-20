@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../models/request_model.dart';
 import '../providers/request_provider.dart';
@@ -16,19 +17,19 @@ class RequestCreateScreen extends ConsumerStatefulWidget {
 }
 
 class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
-  final _formKey       = GlobalKey<FormState>();
-  final _titleCtrl     = TextEditingController();
-  final _descCtrl      = TextEditingController();
-  final _locationCtrl  = TextEditingController();
-  final _neighCtrl     = TextEditingController();
-  final _budgetCtrl    = TextEditingController();
+  final _formKey      = GlobalKey<FormState>();
+  final _titleCtrl    = TextEditingController();
+  final _descCtrl     = TextEditingController();
+  final _locationCtrl = TextEditingController();
+  final _neighCtrl    = TextEditingController();
+  final _budgetCtrl   = TextEditingController();
 
   String? _selectedCategory;
   String  _selectedUrgency = 'today';
   int     _currentStep     = 0;
   double? _latitude;
   double? _longitude;
-  bool _locating = false;
+  bool    _locating        = false;
 
   @override
   void dispose() {
@@ -45,13 +46,13 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
     final position = await GeolocationService.getCurrentPosition();
     if (position != null) {
       setState(() {
-        _latitude = position.latitude;
+        _latitude  = position.latitude;
         _longitude = position.longitude;
       });
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible d\'obtenir votre position. Vérifiez les permissions.')),
+          SnackBar(content: Text('request_location_error'.tr())),
         );
       }
     }
@@ -62,7 +63,7 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Choisissez une catégorie.')),
+        SnackBar(content: Text('request_category_required'.tr())),
       );
       return;
     }
@@ -89,8 +90,8 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Demande publiée ! Les pros vont répondre.'),
+        SnackBar(
+          content: Text('request_success'.tr()),
           backgroundColor: AppColors.green,
         ),
       );
@@ -101,7 +102,7 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesProvider);
-    final isLoading = ref.watch(requestNotifierProvider).isLoading;
+    final isLoading       = ref.watch(requestNotifierProvider).isLoading;
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -112,9 +113,9 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
               color: AppColors.textDim, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Lancer un SOS',
-          style: TextStyle(
+        title: Text(
+          'request_create_title'.tr(),
+          style: const TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -136,22 +137,19 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Étape 1 : Catégorie ──────────────────
               _SectionTitle(
                 step: 1,
-                title: 'Quelle catégorie ?',
+                title: 'request_step1_title'.tr(),
                 isActive: _currentStep >= 0,
               ),
               const SizedBox(height: 16),
               categoriesAsync.when(
                 loading: () => const Center(
                   child: CircularProgressIndicator(
-                    color: AppColors.amber,
-                    strokeWidth: 2,
-                  ),
+                      color: AppColors.amber, strokeWidth: 2),
                 ),
                 error: (e, _) => Text(
-                  'Erreur de chargement',
+                  'request_load_error'.tr(),
                   style: const TextStyle(color: AppColors.red),
                 ),
                 data: (categories) => GridView.builder(
@@ -166,7 +164,7 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
                   ),
                   itemCount: categories.length,
                   itemBuilder: (context, i) {
-                    final cat = categories[i];
+                    final cat        = categories[i];
                     final isSelected = _selectedCategory == cat.slug;
                     return GestureDetector(
                       onTap: () {
@@ -217,11 +215,9 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-
-              // ── Étape 2 : Description ────────────────
               _SectionTitle(
                 step: 2,
-                title: 'Décrivez votre besoin',
+                title: 'request_step2_title'.tr(),
                 isActive: _currentStep >= 1,
               ),
               const SizedBox(height: 16),
@@ -231,15 +227,15 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
                 onChanged: (_) {
                   if (_currentStep < 1) setState(() => _currentStep = 1);
                 },
-                decoration: const InputDecoration(
-                  labelText: 'Titre court',
-                  hintText: 'ex: Lave-vaisselle Bosch qui fuit, urgent',
-                  prefixIcon: Icon(Icons.title_rounded,
+                decoration: InputDecoration(
+                  labelText: 'request_title_label'.tr(),
+                  hintText: 'request_title_hint'.tr(),
+                  prefixIcon: const Icon(Icons.title_rounded,
                       color: AppColors.textMute),
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Champ requis';
-                  if (v.trim().length < 10) return 'Minimum 10 caractères';
+                  if (v == null || v.trim().isEmpty) return 'field_required'.tr();
+                  if (v.trim().length < 10) return 'request_min_10'.tr();
                   return null;
                 },
               ),
@@ -251,33 +247,29 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
                 onChanged: (_) {
                   if (_currentStep < 1) setState(() => _currentStep = 1);
                 },
-                decoration: const InputDecoration(
-                  labelText: 'Description détaillée',
-                  hintText:
-                  'Décrivez le problème, le contexte, ce dont vous avez besoin...',
-                  prefixIcon: Icon(Icons.description_outlined,
+                decoration: InputDecoration(
+                  labelText: 'request_desc_label'.tr(),
+                  hintText: 'request_desc_hint'.tr(),
+                  prefixIcon: const Icon(Icons.description_outlined,
                       color: AppColors.textMute),
                   alignLabelWithHint: true,
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Champ requis';
-                  if (v.trim().length < 20) return 'Minimum 20 caractères';
+                  if (v == null || v.trim().isEmpty) return 'field_required'.tr();
+                  if (v.trim().length < 20) return 'request_min_20'.tr();
                   return null;
                 },
               ),
               const SizedBox(height: 32),
-
-              // ── Étape 3 : Détails ────────────────────
               _SectionTitle(
                 step: 3,
-                title: 'Où, quand et combien ?',
+                title: 'request_step3_title'.tr(),
                 isActive: _currentStep >= 2,
               ),
               const SizedBox(height: 16),
-              // Urgence
-              const Text(
-                'Quand en avez-vous besoin ?',
-                style: TextStyle(
+              Text(
+                'request_urgency_label'.tr(),
+                style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textDim,
@@ -335,104 +327,110 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 16),
-              // Ville
               TextFormField(
                 controller: _locationCtrl,
                 style: const TextStyle(color: AppColors.text),
                 onChanged: (_) {
                   if (_currentStep < 2) setState(() => _currentStep = 2);
                 },
-                decoration: const InputDecoration(
-                  labelText: 'Ville',
-                  hintText: 'ex: Montréal',
-                  prefixIcon: Icon(Icons.location_city_rounded,
+                decoration: InputDecoration(
+                  labelText: 'request_city_label'.tr(),
+                  hintText: 'request_city_hint'.tr(),
+                  prefixIcon: const Icon(Icons.location_city_rounded,
                       color: AppColors.textMute),
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Champ requis';
+                  if (v == null || v.trim().isEmpty) return 'field_required'.tr();
                   return null;
                 },
               ),
               const SizedBox(height: 16),
-              // Quartier
               TextFormField(
                 controller: _neighCtrl,
                 style: const TextStyle(color: AppColors.text),
-                decoration: const InputDecoration(
-                  labelText: 'Quartier (optionnel)',
-                  hintText: 'ex: Plateau, Outremont, Mile End...',
-                  prefixIcon: Icon(Icons.map_outlined,
+                decoration: InputDecoration(
+                  labelText: 'request_neighborhood_label'.tr(),
+                  hintText: 'request_neighborhood_hint'.tr(),
+                  prefixIcon: const Icon(Icons.map_outlined,
                       color: AppColors.textMute),
                 ),
               ),
               const SizedBox(height: 16),
-              // Position GPS
               GestureDetector(
                 onTap: _locating ? null : _useMyLocation,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: _latitude != null ? AppColors.greenSoft : AppColors.surface,
+                    color: _latitude != null
+                        ? AppColors.greenSoft
+                        : AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _latitude != null ? AppColors.green : AppColors.line2,
+                      color: _latitude != null
+                          ? AppColors.green
+                          : AppColors.line2,
                     ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        _latitude != null ? Icons.check_circle_rounded : Icons.my_location_rounded,
+                        _latitude != null
+                            ? Icons.check_circle_rounded
+                            : Icons.my_location_rounded,
                         size: 18,
-                        color: _latitude != null ? AppColors.green : AppColors.textMute,
+                        color: _latitude != null
+                            ? AppColors.green
+                            : AppColors.textMute,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           _locating
-                              ? 'Localisation en cours...'
+                              ? 'profile_locating'.tr()
                               : _latitude != null
-                              ? 'Position obtenue'
-                              : 'Utiliser ma position actuelle',
+                              ? 'request_location_obtained'.tr()
+                              : 'profile_location_use'.tr(),
                           style: TextStyle(
                             fontSize: 14,
-                            color: _latitude != null ? AppColors.green : AppColors.textDim,
+                            color: _latitude != null
+                                ? AppColors.green
+                                : AppColors.textDim,
                           ),
                         ),
                       ),
                       if (_locating)
                         const SizedBox(
                           width: 16, height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: AppColors.amber),
                         ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              // Budget
               TextFormField(
                 controller: _budgetCtrl,
                 style: const TextStyle(color: AppColors.text),
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Budget estimé (optionnel)',
-                  hintText: 'ex: 150',
-                  prefixIcon: Icon(Icons.attach_money_rounded,
+                decoration: InputDecoration(
+                  labelText: 'request_budget_label'.tr(),
+                  hintText: 'request_budget_hint'.tr(),
+                  prefixIcon: const Icon(Icons.attach_money_rounded,
                       color: AppColors.textMute),
                   suffixText: '\$',
                 ),
                 validator: (v) {
                   if (v != null && v.isNotEmpty) {
                     if (double.tryParse(v) == null) {
-                      return 'Montant invalide';
+                      return 'request_budget_invalid'.tr();
                     }
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 40),
-
-              // ── Bouton soumettre ─────────────────────
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -447,10 +445,10 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
                         const Icon(Icons.shield_outlined,
                             size: 16, color: AppColors.cyan),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Paiement séquestré — vous ne payez qu\'après validation.',
-                            style: TextStyle(
+                            'request_escrow_note'.tr(),
+                            style: const TextStyle(
                               fontSize: 12,
                               color: AppColors.textDim,
                             ),
@@ -472,12 +470,13 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
                             color: AppColors.bg,
                           ),
                         )
-                            : const Row(
+                            : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.warning_amber_rounded, size: 18),
-                            SizedBox(width: 8),
-                            Text('Publier ma demande'),
+                            const Icon(Icons.warning_amber_rounded,
+                                size: 18),
+                            const SizedBox(width: 8),
+                            Text('request_publish_btn'.tr()),
                           ],
                         ),
                       ),
@@ -494,7 +493,6 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
   }
 }
 
-// ── Indicateur d'étapes ───────────────────────────────────
 class _StepIndicator extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
@@ -527,7 +525,6 @@ class _StepIndicator extends StatelessWidget {
   }
 }
 
-// ── Titre de section ──────────────────────────────────────
 class _SectionTitle extends StatelessWidget {
   final int step;
   final String title;
