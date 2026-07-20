@@ -245,7 +245,7 @@ function Footer() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© 2026 SOS-BESOIN · Tous droits réservés</span>
+          <span>© 2026 SOS-BESOIN · Une marque de Corbin Creative Tech Inc. · Tous droits réservés</span>
           <span>support@sosbesoin.ca · app.sosbesoin.ca</span>
         </div>
       </div>
