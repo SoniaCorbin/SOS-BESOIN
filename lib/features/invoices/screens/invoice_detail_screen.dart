@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../models/invoice_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../../../core/services/pdf_service.dart';
 
-// ── Provider ──────────────────────────────────────────────
 final invoiceDetailProvider =
 FutureProvider.family<InvoiceModel, String>((ref, id) async {
   final data = await Supabase.instance.client
@@ -20,7 +20,6 @@ FutureProvider.family<InvoiceModel, String>((ref, id) async {
   return InvoiceModel.fromMap(data);
 });
 
-// ── Screen ────────────────────────────────────────────────
 class InvoiceDetailScreen extends ConsumerWidget {
   final String invoiceId;
 
@@ -41,9 +40,9 @@ class InvoiceDetailScreen extends ConsumerWidget {
               color: AppColors.textDim, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Facture',
-          style: TextStyle(
+        title: Text(
+          'invoice_title'.tr(),
+          style: const TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -52,10 +51,10 @@ class InvoiceDetailScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share_outlined,
-                color: AppColors.textDim),
+            icon: const Icon(Icons.share_outlined, color: AppColors.textDim),
             onPressed: () {
-              final invoiceData = ref.read(invoiceDetailProvider(invoiceId)).value;
+              final invoiceData =
+                  ref.read(invoiceDetailProvider(invoiceId)).value;
               if (invoiceData != null) {
                 PdfService.generateAndShareInvoice(invoiceData);
               }
@@ -68,14 +67,13 @@ class InvoiceDetailScreen extends ConsumerWidget {
           child: CircularProgressIndicator(color: AppColors.amber),
         ),
         error: (e, _) => Center(
-          child: Text('Erreur: $e',
+          child: Text('${'chat_error'.tr()}$e',
               style: const TextStyle(color: AppColors.red)),
         ),
         data: (invoice) => SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // ── En-tête facture ──────────────────────
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(24),
@@ -86,7 +84,6 @@ class InvoiceDetailScreen extends ConsumerWidget {
                 ),
                 child: Column(
                   children: [
-                    // Logo
                     Container(
                       width: 56, height: 56,
                       decoration: BoxDecoration(
@@ -100,9 +97,9 @@ class InvoiceDetailScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'SOS·BESOIN',
-                      style: TextStyle(
+                    Text(
+                      'app_name'.tr(),
+                      style: const TextStyle(
                         fontFamily: 'SpaceGrotesk',
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -126,9 +123,9 @@ class InvoiceDetailScreen extends ConsumerWidget {
                         color: AppColors.greenSoft,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
-                        '✓ Payée',
-                        style: TextStyle(
+                      child: Text(
+                        'invoice_paid'.tr(),
+                        style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: AppColors.green,
@@ -139,83 +136,78 @@ class InvoiceDetailScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              // ── Détails mission ──────────────────────
               _Section(
-                title: 'Mission',
+                title: 'invoice_section_mission'.tr(),
                 children: [
                   _DetailRow(
-                    label: 'Service',
+                    label: 'invoice_service'.tr(),
                     value: invoice.requestTitle,
                   ),
                   _DetailRow(
-                    label: 'Catégorie',
+                    label: 'invoice_category'.tr(),
                     value: '${invoice.categoryEmoji} ${invoice.requestCategory}',
                   ),
                   _DetailRow(
-                    label: 'Date',
+                    label: 'invoice_date'.tr(),
                     value: DateFormat('d MMMM yyyy', 'fr_CA')
                         .format(invoice.createdAt),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              // ── Parties ──────────────────────────────
               _Section(
-                title: 'Parties',
+                title: 'invoice_section_parties'.tr(),
                 children: [
                   _DetailRow(
-                    label: 'Client',
+                    label: 'invoice_client'.tr(),
                     value: invoice.clientName,
                   ),
                   _DetailRow(
-                    label: 'Prestataire',
+                    label: 'invoice_provider'.tr(),
                     value: invoice.providerName,
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              // ── Montants ─────────────────────────────
               _Section(
-                title: 'Détail des montants',
+                title: 'invoice_section_amounts'.tr(),
                 children: [
                   _DetailRow(
-                    label: 'Montant total',
+                    label: 'invoice_total'.tr(),
                     value: '${invoice.amount.toStringAsFixed(2)}\$',
                   ),
                   _DetailRow(
-                    label: 'Commission plateforme (10%)',
+                    label: 'invoice_commission'.tr(),
                     value: '-${invoice.platformFee.toStringAsFixed(2)}\$',
                     valueColor: AppColors.red,
                   ),
                   const Divider(color: AppColors.line),
                   _DetailRow(
                     label: isProvider
-                        ? 'Montant reçu'
-                        : 'Montant payé',
+                        ? 'invoice_received'.tr()
+                        : 'invoice_paid_amount'.tr(),
                     value: isProvider
                         ? '+${invoice.providerAmount.toStringAsFixed(2)}\$'
                         : '${invoice.amount.toStringAsFixed(2)}\$',
-                    valueColor: isProvider
-                        ? AppColors.green
-                        : AppColors.amber,
+                    valueColor: isProvider ? AppColors.green : AppColors.amber,
                     isBold: true,
                   ),
                 ],
               ),
               const SizedBox(height: 24),
-              // ── Bouton PDF ───────────────────────────
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    final invoiceData = ref.read(invoiceDetailProvider(invoiceId)).value;
+                    final invoiceData =
+                        ref.read(invoiceDetailProvider(invoiceId)).value;
                     if (invoiceData != null) {
                       PdfService.generateAndShareInvoice(invoiceData);
                     }
                   },
                   icon: const Icon(Icons.picture_as_pdf_outlined),
-                  label: const Text('Télécharger en PDF'),
+                  label: Text('invoice_download_pdf'.tr()),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.amber,
                     side: const BorderSide(color: AppColors.amber),
@@ -231,15 +223,11 @@ class InvoiceDetailScreen extends ConsumerWidget {
   }
 }
 
-// ── Section ───────────────────────────────────────────────
 class _Section extends StatelessWidget {
   final String title;
   final List<Widget> children;
 
-  const _Section({
-    required this.title,
-    required this.children,
-  });
+  const _Section({required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -272,7 +260,6 @@ class _Section extends StatelessWidget {
   }
 }
 
-// ── Detail row ────────────────────────────────────────────
 class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
@@ -295,18 +282,13 @@ class _DetailRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.textDim,
-            ),
+            style: const TextStyle(fontSize: 13, color: AppColors.textDim),
           ),
           Text(
             value,
             style: TextStyle(
               fontSize: 13,
-              fontWeight: isBold
-                  ? FontWeight.w700
-                  : FontWeight.w500,
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
               color: valueColor ?? AppColors.text,
               fontFamily: isBold ? 'SpaceGrotesk' : null,
             ),

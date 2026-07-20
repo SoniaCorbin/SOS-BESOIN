@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/router/app_router.dart';
 import '../providers/invoice_provider.dart';
@@ -14,8 +15,8 @@ class InvoiceListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState  = ref.watch(authProvider);
-    final isProvider = authState.activeRole == UserRole.provider;
+    final authState     = ref.watch(authProvider);
+    final isProvider    = authState.activeRole == UserRole.provider;
     final invoicesAsync = isProvider
         ? ref.watch(providerInvoicesProvider)
         : ref.watch(clientInvoicesProvider);
@@ -29,9 +30,9 @@ class InvoiceListScreen extends ConsumerWidget {
               color: AppColors.textDim, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Factures',
-          style: TextStyle(
+        title: Text(
+          'invoices_title'.tr(),
+          style: const TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -44,7 +45,7 @@ class InvoiceListScreen extends ConsumerWidget {
           child: CircularProgressIndicator(color: AppColors.amber),
         ),
         error: (e, _) => Center(
-          child: Text('Erreur: $e',
+          child: Text('${'chat_error'.tr()}$e',
               style: const TextStyle(color: AppColors.red)),
         ),
         data: (invoices) => invoices.isEmpty
@@ -55,9 +56,9 @@ class InvoiceListScreen extends ConsumerWidget {
               const Icon(Icons.receipt_long_outlined,
                   size: 48, color: AppColors.textMute),
               const SizedBox(height: 16),
-              const Text(
-                'Aucune facture pour l\'instant',
-                style: TextStyle(
+              Text(
+                'invoices_empty'.tr(),
+                style: const TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -67,8 +68,8 @@ class InvoiceListScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 isProvider
-                    ? 'Vos factures apparaîtront après\nchaque mission complétée.'
-                    : 'Vos factures apparaîtront après\nchaque paiement.',
+                    ? 'invoices_empty_provider'.tr()
+                    : 'invoices_empty_client'.tr(),
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.textMute,
@@ -84,9 +85,7 @@ class InvoiceListScreen extends ConsumerWidget {
           itemBuilder: (context, i) => _InvoiceCard(
             invoice: invoices[i],
             isProvider: isProvider,
-            onTap: () => context.push(
-              '/invoices/${invoices[i].id}',
-            ),
+            onTap: () => context.push('/invoices/${invoices[i].id}'),
           ),
         ),
       ),
@@ -94,7 +93,6 @@ class InvoiceListScreen extends ConsumerWidget {
   }
 }
 
-// ── Carte facture ─────────────────────────────────────────
 class _InvoiceCard extends StatelessWidget {
   final InvoiceModel invoice;
   final bool isProvider;
@@ -122,7 +120,6 @@ class _InvoiceCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Emoji catégorie
             Container(
               width: 44, height: 44,
               decoration: BoxDecoration(
@@ -137,7 +134,6 @@ class _InvoiceCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Infos
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +167,6 @@ class _InvoiceCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Montant + statut
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -181,9 +176,7 @@ class _InvoiceCard extends StatelessWidget {
                     fontFamily: 'SpaceGrotesk',
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: isProvider
-                        ? AppColors.green
-                        : AppColors.text,
+                    color: isProvider ? AppColors.green : AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -194,9 +187,9 @@ class _InvoiceCard extends StatelessWidget {
                     color: AppColors.greenSoft,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'Payée',
-                    style: TextStyle(
+                  child: Text(
+                    'invoices_paid'.tr(),
+                    style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: AppColors.green,

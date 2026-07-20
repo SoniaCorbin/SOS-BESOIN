@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
@@ -23,7 +24,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _loading    = false;
   double? _latitude;
   double? _longitude;
-  bool _locating = false;
+  bool _locating   = false;
   int _maxDistanceKm = 50;
 
   @override
@@ -32,9 +33,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = ref.read(authProvider).user;
     _nameCtrl.text  = user?.fullName ?? '';
     _phoneCtrl.text = user?.phone ?? '';
-    _latitude = user?.latitude;
-    _longitude = user?.longitude;
-    _maxDistanceKm = user?.maxDistanceKm ?? 50;
+    _latitude       = user?.latitude;
+    _longitude      = user?.longitude;
+    _maxDistanceKm  = user?.maxDistanceKm ?? 50;
   }
 
   @override
@@ -49,7 +50,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible d\'ouvrir le lien.')),
+          SnackBar(content: Text('profile_link_error'.tr())),
         );
       }
     }
@@ -60,13 +61,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final position = await GeolocationService.getCurrentPosition();
     if (position != null) {
       setState(() {
-        _latitude = position.latitude;
+        _latitude  = position.latitude;
         _longitude = position.longitude;
       });
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible d\'obtenir votre position. Vérifiez les permissions.')),
+          SnackBar(content: Text('profile_location_error'.tr())),
         );
       }
     }
@@ -79,11 +80,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       final userId = Supabase.instance.client.auth.currentUser?.id;
 
       await Supabase.instance.client.from('profiles').update({
-        'full_name':        _nameCtrl.text.trim(),
-        'phone':            _phoneCtrl.text.trim(),
-        'latitude':         _latitude,
-        'longitude':        _longitude,
-        'max_distance_km':  _maxDistanceKm,
+        'full_name':       _nameCtrl.text.trim(),
+        'phone':           _phoneCtrl.text.trim(),
+        'latitude':        _latitude,
+        'longitude':       _longitude,
+        'max_distance_km': _maxDistanceKm,
       }).eq('id', userId!);
 
       await ref.read(authProvider.notifier).init();
@@ -91,8 +92,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         setState(() { _editing = false; _loading = false; });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Profil mis à jour !'),
+          SnackBar(
+            content: Text('profile_updated'.tr()),
             backgroundColor: AppColors.green,
           ),
         );
@@ -102,7 +103,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (mounted) {
         setState(() => _loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
+          SnackBar(content: Text('${'chat_error'.tr()}$e')),
         );
       }
     }
@@ -123,9 +124,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               color: AppColors.textDim, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Mon profil',
-          style: TextStyle(
+        title: Text(
+          'profile_title'.tr(),
+          style: const TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -142,7 +143,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               }
             },
             child: Text(
-              _editing ? 'Sauvegarder' : 'Modifier',
+              _editing ? 'profile_save'.tr() : 'profile_edit'.tr(),
               style: TextStyle(
                 color: isProvider ? AppColors.cyan : AppColors.amber,
                 fontWeight: FontWeight.w600,
@@ -155,7 +156,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // ── Avatar ──────────────────────────────────
             const SizedBox(height: 16),
             Center(
               child: Stack(
@@ -221,10 +221,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 4),
             Text(
               user?.email ?? '',
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textMute,
-              ),
+              style: const TextStyle(fontSize: 14, color: AppColors.textMute),
             ),
             const SizedBox(height: 8),
             Container(
@@ -237,7 +234,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
               child: Text(
-                isProvider ? 'Mode Prestataire' : 'Mode Client',
+                isProvider
+                    ? 'profile_mode_provider'.tr()
+                    : 'profile_mode_client'.tr(),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -246,31 +245,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            // ── Stats ────────────────────────────────────
             Row(
               children: [
                 _ProfileStat(
-                  label: 'Note',
+                  label: 'profile_stat_rating'.tr(),
                   value: user?.rating.toStringAsFixed(1) ?? '—',
                   icon: Icons.star_rounded,
                   color: AppColors.amber,
                 ),
                 _ProfileStat(
-                  label: 'Missions',
+                  label: 'profile_stat_missions'.tr(),
                   value: '${user?.totalMissions ?? 0}',
                   icon: Icons.task_alt_rounded,
                   color: AppColors.cyan,
                 ),
                 _ProfileStat(
                   label: 'KYC',
-                  value: user?.isKycVerified == true ? 'Vérifié' : 'En attente',
+                  value: user?.isKycVerified == true
+                      ? 'profile_stat_kyc_verified'.tr()
+                      : 'profile_stat_kyc_pending'.tr(),
                   icon: Icons.verified_rounded,
-                  color: user?.isKycVerified == true ? AppColors.green : AppColors.textMute,
+                  color: user?.isKycVerified == true
+                      ? AppColors.green
+                      : AppColors.textMute,
                 ),
               ],
             ),
             const SizedBox(height: 32),
-            // ── Infos ────────────────────────────────────
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -281,9 +282,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Informations personnelles',
-                    style: TextStyle(
+                  Text(
+                    'profile_personal_info'.tr(),
+                    style: const TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -291,102 +292,119 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // Nom
                   _editing
                       ? TextFormField(
                     controller: _nameCtrl,
                     style: const TextStyle(color: AppColors.text),
-                    decoration: const InputDecoration(
-                      labelText: 'Nom complet',
-                      prefixIcon: Icon(Icons.person_outline_rounded, color: AppColors.textMute),
+                    decoration: InputDecoration(
+                      labelText: 'profile_full_name'.tr(),
+                      prefixIcon: const Icon(
+                          Icons.person_outline_rounded,
+                          color: AppColors.textMute),
                     ),
                   )
                       : _InfoRow(
                     icon: Icons.person_outline_rounded,
-                    label: 'Nom complet',
+                    label: 'profile_full_name'.tr(),
                     value: user?.fullName ?? '—',
                   ),
                   const SizedBox(height: 12),
                   _InfoRow(
                     icon: Icons.mail_outline_rounded,
-                    label: 'Courriel',
+                    label: 'profile_email'.tr(),
                     value: user?.email ?? '—',
                   ),
                   const SizedBox(height: 12),
-                  // Téléphone
                   _editing
                       ? TextFormField(
                     controller: _phoneCtrl,
                     keyboardType: TextInputType.phone,
                     style: const TextStyle(color: AppColors.text),
-                    decoration: const InputDecoration(
-                      labelText: 'Téléphone',
-                      prefixIcon: Icon(Icons.phone_outlined, color: AppColors.textMute),
+                    decoration: InputDecoration(
+                      labelText: 'profile_phone'.tr(),
+                      prefixIcon: const Icon(Icons.phone_outlined,
+                          color: AppColors.textMute),
                     ),
                   )
                       : _InfoRow(
                     icon: Icons.phone_outlined,
-                    label: 'Téléphone',
-                    value: user?.phone?.isNotEmpty == true ? user!.phone! : 'Non renseigné',
+                    label: 'profile_phone'.tr(),
+                    value: user?.phone?.isNotEmpty == true
+                        ? user!.phone!
+                        : 'profile_phone_empty'.tr(),
                   ),
                   if (_editing) ...[
                     const SizedBox(height: 12),
-                    // Position GPS
                     GestureDetector(
                       onTap: _locating ? null : _useMyLocation,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
-                          color: _latitude != null ? AppColors.greenSoft : AppColors.surface2,
+                          color: _latitude != null
+                              ? AppColors.greenSoft
+                              : AppColors.surface2,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: _latitude != null ? AppColors.green : AppColors.line2,
+                            color: _latitude != null
+                                ? AppColors.green
+                                : AppColors.line2,
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
-                              _latitude != null ? Icons.check_circle_rounded : Icons.my_location_rounded,
+                              _latitude != null
+                                  ? Icons.check_circle_rounded
+                                  : Icons.my_location_rounded,
                               size: 18,
-                              color: _latitude != null ? AppColors.green : AppColors.textMute,
+                              color: _latitude != null
+                                  ? AppColors.green
+                                  : AppColors.textMute,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 _locating
-                                    ? 'Localisation en cours...'
+                                    ? 'profile_locating'.tr()
                                     : _latitude != null
-                                    ? 'Position enregistrée'
-                                    : 'Utiliser ma position actuelle',
+                                    ? 'profile_location_saved'.tr()
+                                    : 'profile_location_use'.tr(),
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: _latitude != null ? AppColors.green : AppColors.textDim,
+                                  color: _latitude != null
+                                      ? AppColors.green
+                                      : AppColors.textDim,
                                 ),
                               ),
                             ),
                             if (_locating)
                               const SizedBox(
                                 width: 16, height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.amber),
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: AppColors.amber),
                               ),
                           ],
                         ),
                       ),
                     ),
-                    // Rayon de travail (prestataire seulement)
                     if (isProvider) ...[
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          const Icon(Icons.radar_rounded, size: 16, color: AppColors.textMute),
+                          const Icon(Icons.radar_rounded,
+                              size: 16, color: AppColors.textMute),
                           const SizedBox(width: 8),
-                          const Text(
-                            'Rayon de travail',
-                            style: TextStyle(fontSize: 13, color: AppColors.textDim),
+                          Text(
+                            'profile_work_radius'.tr(),
+                            style: const TextStyle(
+                                fontSize: 13, color: AppColors.textDim),
                           ),
                           const Spacer(),
                           Text(
-                            _maxDistanceKm >= 500 ? 'Illimité' : '$_maxDistanceKm km',
+                            _maxDistanceKm >= 500
+                                ? 'profile_unlimited'.tr()
+                                : '$_maxDistanceKm km',
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -403,7 +421,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         divisions: 99,
                         activeColor: AppColors.cyan,
                         inactiveColor: AppColors.line2,
-                        onChanged: (val) => setState(() => _maxDistanceKm = val.round()),
+                        onChanged: (val) =>
+                            setState(() => _maxDistanceKm = val.round()),
                       ),
                     ],
                   ],
@@ -411,7 +430,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // ── Switch de rôle ───────────────────────────
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -422,9 +440,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Mode actif',
-                    style: TextStyle(
+                  Text(
+                    'profile_active_mode'.tr(),
+                    style: const TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -436,21 +454,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     children: [
                       Expanded(
                         child: _RoleButton(
-                          label: 'Client',
+                          label: 'profile_client'.tr(),
                           icon: Icons.search_rounded,
                           isActive: !isProvider,
                           color: AppColors.amber,
-                          onTap: () => ref.read(authProvider.notifier).switchRole(UserRole.client),
+                          onTap: () => ref
+                              .read(authProvider.notifier)
+                              .switchRole(UserRole.client),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _RoleButton(
-                          label: 'Prestataire',
+                          label: 'profile_provider'.tr(),
                           icon: Icons.handyman_rounded,
                           isActive: isProvider,
                           color: AppColors.cyan,
-                          onTap: () => ref.read(authProvider.notifier).switchRole(UserRole.provider),
+                          onTap: () => ref
+                              .read(authProvider.notifier)
+                              .switchRole(UserRole.provider),
                         ),
                       ),
                     ],
@@ -459,7 +481,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // ── Bouton admin ────────────────────
             if (user?.isAdmin == true) ...[
               Container(
                 width: double.infinity,
@@ -470,18 +491,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 child: GestureDetector(
                   onTap: () => context.push('/admin'),
-                  child: const Padding(
-                    padding: EdgeInsets.all(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
                     child: Row(
                       children: [
-                        Icon(Icons.admin_panel_settings_rounded, color: AppColors.amber, size: 22),
-                        SizedBox(width: 12),
+                        const Icon(Icons.admin_panel_settings_rounded,
+                            color: AppColors.amber, size: 22),
+                        const SizedBox(width: 12),
                         Text(
-                          'Panel Administration',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.amber),
+                          'profile_admin_panel'.tr(),
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.amber),
                         ),
-                        Spacer(),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.amber),
+                        const Spacer(),
+                        const Icon(Icons.arrow_forward_ios_rounded,
+                            size: 14, color: AppColors.amber),
                       ],
                     ),
                   ),
@@ -502,22 +528,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.account_balance_rounded, color: AppColors.cyan, size: 22),
+                      const Icon(Icons.account_balance_rounded,
+                          color: AppColors.cyan, size: 22),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Configurer mes paiements',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.text),
+                          'profile_configure_payments'.tr(),
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.text),
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMute),
+                      const Icon(Icons.arrow_forward_ios_rounded,
+                          size: 14, color: AppColors.textMute),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 20),
             ],
-            // ── Pages légales ────────────────────
             Container(
               decoration: BoxDecoration(
                 color: AppColors.surface,
@@ -528,33 +558,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 children: [
                   _LegalButton(
                     icon: Icons.description_outlined,
-                    label: 'Conditions d\'utilisation',
-                    onTap: () => _launchUrl('https://app.sosbesoin.ca/terms'),
+                    label: 'profile_terms'.tr(),
+                    onTap: () =>
+                        _launchUrl('https://app.sosbesoin.ca/terms'),
                   ),
                   const Divider(color: AppColors.line, height: 1),
                   _LegalButton(
                     icon: Icons.privacy_tip_outlined,
-                    label: 'Politique de confidentialité',
-                    onTap: () => _launchUrl('https://app.sosbesoin.ca/privacy'),
+                    label: 'profile_privacy'.tr(),
+                    onTap: () =>
+                        _launchUrl('https://app.sosbesoin.ca/privacy'),
                   ),
                   const Divider(color: AppColors.line, height: 1),
                   _LegalButton(
                     icon: Icons.replay_outlined,
-                    label: 'Politique de remboursement',
-                    onTap: () => _launchUrl('https://app.sosbesoin.ca/refund'),
+                    label: 'profile_refund'.tr(),
+                    onTap: () =>
+                        _launchUrl('https://app.sosbesoin.ca/refund'),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            // ── Déconnexion ──────────────────────────────
             SizedBox(
               width: double.infinity,
               height: 52,
               child: OutlinedButton.icon(
-                onPressed: () => ref.read(authProvider.notifier).signOut(),
+                onPressed: () =>
+                    ref.read(authProvider.notifier).signOut(),
                 icon: const Icon(Icons.logout_rounded, size: 18),
-                label: const Text('Se déconnecter'),
+                label: Text('profile_sign_out'.tr()),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.red,
                   side: const BorderSide(color: AppColors.red),
@@ -569,7 +602,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 }
 
-// ── Stat profil ───────────────────────────────────────────
 class _ProfileStat extends StatelessWidget {
   final String label;
   final String value;
@@ -610,7 +642,8 @@ class _ProfileStat extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: const TextStyle(fontSize: 11, color: AppColors.textMute),
+              style: const TextStyle(
+                  fontSize: 11, color: AppColors.textMute),
             ),
           ],
         ),
@@ -619,7 +652,6 @@ class _ProfileStat extends StatelessWidget {
   }
 }
 
-// ── Info row ──────────────────────────────────────────────
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -640,8 +672,14 @@ class _InfoRow extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textMute)),
-            Text(value, style: const TextStyle(fontSize: 14, color: AppColors.text, fontWeight: FontWeight.w500)),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 11, color: AppColors.textMute)),
+            Text(value,
+                style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w500)),
           ],
         ),
       ],
@@ -649,7 +687,6 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-// ── Bouton rôle ───────────────────────────────────────────
 class _RoleButton extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -673,7 +710,9 @@ class _RoleButton extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isActive ? color.withValues(alpha: 0.15) : AppColors.surface2,
+          color: isActive
+              ? color.withValues(alpha: 0.15)
+              : AppColors.surface2,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isActive ? color : AppColors.line2,
@@ -682,7 +721,9 @@ class _RoleButton extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(icon, size: 20, color: isActive ? color : AppColors.textMute),
+            Icon(icon,
+                size: 20,
+                color: isActive ? color : AppColors.textMute),
             const SizedBox(height: 4),
             Text(
               label,
@@ -723,10 +764,14 @@ class _LegalButton extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 14, color: AppColors.textDim, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textDim,
+                    fontWeight: FontWeight.w500),
               ),
             ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMute),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                size: 14, color: AppColors.textMute),
           ],
         ),
       ),

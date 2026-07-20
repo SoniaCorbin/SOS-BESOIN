@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/router/app_router.dart';
 import '../providers/auth_provider.dart';
 import '../models/user_model.dart';
+import '../../../../core/widgets/language_toggle.dart';
 
 class RoleSelectScreen extends ConsumerStatefulWidget {
   const RoleSelectScreen({super.key});
@@ -32,7 +34,6 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
       backgroundColor: AppColors.bg,
       body: Stack(
         children: [
-          // ── Glows ─────────────────────────────────────
           Positioned(
             top: -150, left: -100,
             child: Container(
@@ -59,7 +60,6 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
               ),
             ),
           ),
-          // ── Contenu ───────────────────────────────────
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -67,10 +67,14 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 48),
-                  // Titre
-                  const Text(
-                    'Comment voulez-vous\ncommencer ?',
-                    style: TextStyle(
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: const LanguageToggle(),
+                  ),
+                  const SizedBox(height:16),
+                  Text(
+                    'role_title'.tr(),
+                    style: const TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontSize: 32,
                       fontWeight: FontWeight.w600,
@@ -80,63 +84,57 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Vous pourrez changer de mode à tout moment\ndans votre profil.',
-                    style: TextStyle(
+                  Text(
+                    'role_subtitle'.tr(),
+                    style: const TextStyle(
                       fontSize: 15,
                       color: AppColors.textDim,
                       height: 1.5,
                     ),
                   ),
                   const SizedBox(height: 48),
-                  // Carte Client
                   _RoleCard(
                     role: UserRole.client,
                     selected: _selected == UserRole.client,
                     icon: Icons.search_rounded,
-                    title: 'Je suis un client',
-                    subtitle: 'Je cherche un professionnel\npour un besoin urgent.',
+                    title: 'role_client_title'.tr(),
+                    subtitle: 'role_client_subtitle'.tr(),
                     color: AppColors.amber,
                     softColor: AppColors.amberSoft,
-                    bullets: const [
-                      'Publiez une demande en 90 secondes',
-                      'Recevez des offres de pros vérifiés',
-                      'Payez seulement après validation',
+                    bullets: [
+                      'role_client_bullet_1'.tr(),
+                      'role_client_bullet_2'.tr(),
+                      'role_client_bullet_3'.tr(),
                     ],
                     onTap: () => setState(() => _selected = UserRole.client),
                   ),
                   const SizedBox(height: 16),
-                  // Carte Prestataire
                   _RoleCard(
                     role: UserRole.provider,
                     selected: _selected == UserRole.provider,
                     icon: Icons.handyman_rounded,
-                    title: 'Je suis un prestataire',
-                    subtitle: 'Je propose mes services\npour des missions urgentes.',
+                    title: 'role_provider_title'.tr(),
+                    subtitle: 'role_provider_subtitle'.tr(),
                     color: AppColors.cyan,
                     softColor: AppColors.cyanSoft,
-                    bullets: const [
-                      'Recevez des missions près de chez vous',
-                      'Fixez vos propres tarifs',
-                      'Paiement garanti sous 24h',
+                    bullets: [
+                      'role_provider_bullet_1'.tr(),
+                      'role_provider_bullet_2'.tr(),
+                      'role_provider_bullet_3'.tr(),
                     ],
                     onTap: () => setState(() => _selected = UserRole.provider),
                   ),
                   const Spacer(),
-                  // Bouton confirmer
                   SizedBox(
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: (_selected == null || _loading)
-                          ? null
-                          : _confirm,
+                      onPressed: (_selected == null || _loading) ? null : _confirm,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _selected == UserRole.provider
                             ? AppColors.cyan
                             : AppColors.amber,
-                        disabledBackgroundColor:
-                        AppColors.surface2,
+                        disabledBackgroundColor: AppColors.surface2,
                       ),
                       child: _loading
                           ? const SizedBox(
@@ -148,8 +146,8 @@ class _RoleSelectScreenState extends ConsumerState<RoleSelectScreen> {
                       )
                           : Text(
                         _selected == null
-                            ? 'Choisissez un mode'
-                            : 'Continuer',
+                            ? 'role_choose'.tr()
+                            : 'continue'.tr(),
                         style: TextStyle(
                           color: _selected == null
                               ? AppColors.textMute
@@ -279,8 +277,7 @@ class _RoleCard extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
                     children: [
-                      Icon(Icons.check_circle_rounded,
-                          size: 16, color: color),
+                      Icon(Icons.check_circle_rounded, size: 16, color: color),
                       const SizedBox(width: 10),
                       Text(
                         b,

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/router/app_router.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -142,9 +143,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Un pro disponible, quand c\'est urgent',
-                      style: TextStyle(
+                    Text(
+                      'splash_tagline'.tr(),
+                      style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textMute,
                         letterSpacing: 0.2,

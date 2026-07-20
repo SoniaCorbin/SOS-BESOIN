@@ -2,18 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../../core/theme/app_colors.dart';
-
-// ── Raisons de signalement ────────────────────────────────
-const kReportReasons = [
-  'Comportement inapproprié',
-  'Arnaque ou fraude',
-  'Fausses informations',
-  'Contenu offensant',
-  'Harcèlement',
-  'Non-respect des conditions',
-  'Autre',
-];
 
 class ReportScreen extends ConsumerStatefulWidget {
   final String? reportedUserId;
@@ -34,9 +24,19 @@ class ReportScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportScreenState extends ConsumerState<ReportScreen> {
-  final _descCtrl    = TextEditingController();
+  final _descCtrl = TextEditingController();
   String? _reason;
-  bool _loading      = false;
+  bool _loading   = false;
+
+  List<String> get _reportReasons => [
+    'report_reason_1'.tr(),
+    'report_reason_2'.tr(),
+    'report_reason_3'.tr(),
+    'report_reason_4'.tr(),
+    'report_reason_5'.tr(),
+    'report_reason_6'.tr(),
+    'report_reason_7'.tr(),
+  ];
 
   @override
   void dispose() {
@@ -47,9 +47,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   Future<void> _submit() async {
     if (_reason == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez choisir une raison.'),
-        ),
+        SnackBar(content: Text('report_reason_required'.tr())),
       );
       return;
     }
@@ -69,13 +67,13 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         'description': _descCtrl.text.trim().isEmpty
             ? null
             : _descCtrl.text.trim(),
-        'status':      'pending',
+        'status': 'pending',
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Signalement envoyé. Merci !'),
+          SnackBar(
+            content: Text('report_success'.tr()),
             backgroundColor: AppColors.green,
           ),
         );
@@ -84,7 +82,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
+          SnackBar(content: Text('${'chat_error'.tr()}$e')),
         );
       }
     }
@@ -103,9 +101,9 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               color: AppColors.textDim, size: 20),
           onPressed: () => context.pop(),
         ),
-        title: const Text(
-          'Signaler',
-          style: TextStyle(
+        title: Text(
+          'report_title'.tr(),
+          style: const TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -118,7 +116,6 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icône
             Center(
               child: Container(
                 width: 64, height: 64,
@@ -134,10 +131,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Center(
+            Center(
               child: Text(
-                'Signaler un problème',
-                style: TextStyle(
+                'report_header'.tr(),
+                style: const TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
@@ -146,11 +143,11 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const Center(
+            Center(
               child: Text(
-                'Votre signalement sera examiné\npar notre équipe sous 24h.',
+                'report_subtitle'.tr(),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.textMute,
                   height: 1.5,
@@ -158,11 +155,9 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               ),
             ),
             const SizedBox(height: 32),
-
-            // Raison
-            const Text(
-              'Raison du signalement',
-              style: TextStyle(
+            Text(
+              'report_reason_title'.tr(),
+              style: const TextStyle(
                 fontFamily: 'SpaceGrotesk',
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -170,7 +165,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ...kReportReasons.map((reason) => GestureDetector(
+            ..._reportReasons.map((reason) => GestureDetector(
               onTap: () => setState(() => _reason = reason),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -216,11 +211,9 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               ),
             )),
             const SizedBox(height: 24),
-
-            // Description optionnelle
-            const Text(
-              'Description (optionnel)',
-              style: TextStyle(
+            Text(
+              'report_desc_title'.tr(),
+              style: const TextStyle(
                 fontFamily: 'SpaceGrotesk',
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -232,16 +225,14 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               controller: _descCtrl,
               style: const TextStyle(color: AppColors.text),
               maxLines: 4,
-              decoration: const InputDecoration(
-                hintText: 'Décrivez le problème en détail...',
-                prefixIcon: Icon(Icons.description_outlined,
+              decoration: InputDecoration(
+                hintText: 'report_desc_hint'.tr(),
+                prefixIcon: const Icon(Icons.description_outlined,
                     color: AppColors.textMute),
                 alignLabelWithHint: true,
               ),
             ),
             const SizedBox(height: 32),
-
-            // Bouton soumettre
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -259,14 +250,15 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                     color: AppColors.text,
                   ),
                 )
-                    : const Row(
+                    : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.flag_rounded, size: 18),
-                    SizedBox(width: 8),
+                    const Icon(Icons.flag_rounded, size: 18),
+                    const SizedBox(width: 8),
                     Text(
-                      'Envoyer le signalement',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                      'report_submit_btn'.tr(),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),

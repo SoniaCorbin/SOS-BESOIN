@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 
-// ── Provider ──────────────────────────────────────────────
 final _client = Supabase.instance.client;
 
 final conversationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
@@ -21,24 +21,23 @@ final conversationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) a
   return List<Map<String, dynamic>>.from(data);
 });
 
-// ── Screen ────────────────────────────────────────────────
 class ConversationsScreen extends ConsumerWidget {
   const ConversationsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState      = ref.watch(authProvider);
-    final isProvider     = authState.activeRole == UserRole.provider;
-    final convsAsync     = ref.watch(conversationsProvider);
-    final currentUserId  = _client.auth.currentUser?.id;
+    final authState     = ref.watch(authProvider);
+    final isProvider    = authState.activeRole == UserRole.provider;
+    final convsAsync    = ref.watch(conversationsProvider);
+    final currentUserId = _client.auth.currentUser?.id;
 
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: AppBar(
         backgroundColor: AppColors.bg,
-        title: const Text(
-          'Messages',
-          style: TextStyle(
+        title: Text(
+          'messages_title'.tr(),
+          style: const TextStyle(
             fontFamily: 'SpaceGrotesk',
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -51,7 +50,7 @@ class ConversationsScreen extends ConsumerWidget {
           child: CircularProgressIndicator(color: AppColors.amber),
         ),
         error: (e, _) => Center(
-          child: Text('Erreur: $e',
+          child: Text('${'chat_error'.tr()}$e',
               style: const TextStyle(color: AppColors.red)),
         ),
         data: (conversations) => conversations.isEmpty
@@ -62,9 +61,9 @@ class ConversationsScreen extends ConsumerWidget {
               const Icon(Icons.chat_bubble_outline_rounded,
                   size: 48, color: AppColors.textMute),
               const SizedBox(height: 16),
-              const Text(
-                'Aucune conversation',
-                style: TextStyle(
+              Text(
+                'conv_empty_title'.tr(),
+                style: const TextStyle(
                   fontFamily: 'SpaceGrotesk',
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -74,8 +73,8 @@ class ConversationsScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 isProvider
-                    ? 'Vos conversations apparaîtront\naprès qu\'une offre soit acceptée.'
-                    : 'Vos conversations apparaîtront\naprès avoir accepté une offre.',
+                    ? 'conv_empty_provider'.tr()
+                    : 'conv_empty_client'.tr(),
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.textMute,
@@ -92,14 +91,13 @@ class ConversationsScreen extends ConsumerWidget {
             final conv        = conversations[i];
             final isClient    = conv['client_id'] == currentUserId;
             final otherName   = isClient
-                ? conv['provider_name'] as String? ?? 'Prestataire'
-                : conv['client_name'] as String? ?? 'Client';
+                ? conv['provider_name'] as String? ?? 'conv_provider_default'.tr()
+                : conv['client_name'] as String? ?? 'conv_client_default'.tr();
             final lastMessage = conv['last_message'] as String?;
             final lastMsgAt   = conv['last_message_at'] != null
                 ? DateTime.parse(conv['last_message_at'] as String)
                 : null;
-            final unread      = (conv['unread_count'] as num?)?.toInt() ?? 0;
-            final category    = conv['request_category'] as String? ?? '';
+            final unread  = (conv['unread_count'] as num?)?.toInt() ?? 0;
 
             final initials = otherName.split(' ').length >= 2
                 ? '${otherName.split(' ')[0][0]}${otherName.split(' ')[1][0]}'.toUpperCase()
@@ -121,7 +119,6 @@ class ConversationsScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    // Avatar
                     Container(
                       width: 48, height: 48,
                       decoration: BoxDecoration(
@@ -144,7 +141,6 @@ class ConversationsScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Infos
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +184,7 @@ class ConversationsScreen extends ConsumerWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  lastMessage ?? 'Démarrez la conversation...',
+                                  lastMessage ?? 'conv_start'.tr(),
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: unread > 0
