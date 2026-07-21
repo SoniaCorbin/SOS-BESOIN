@@ -267,6 +267,7 @@
   "rating_comment_hint": "Commentaire (optionnel)...",
   "rating_success": "✅ Mission validée ! Merci pour votre évaluation.",
   "payment_success": "✅ Paiement réussi ! Facture {invoice}",
-  "payment_cancelled": "Paiement annulé."
+  "payment_cancelled": "Paiement annulé.",
+
 }
 
