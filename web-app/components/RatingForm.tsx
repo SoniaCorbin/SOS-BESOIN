@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 }
 
 export default function RatingForm({ requestId, offerId, clientId, providerId, onRated }: Props) {
+  const t = useTranslations('rating')
   const [rating, setRating] = useState(0)
   const [hover, setHover] = useState(0)
   const [comment, setComment] = useState('')
@@ -22,15 +24,14 @@ export default function RatingForm({ requestId, offerId, clientId, providerId, o
     setLoading(true)
 
     await supabase.from('ratings').insert({
-      request_id: requestId,
-      offer_id: offerId,
-      client_id: clientId,
+      request_id:  requestId,
+      offer_id:    offerId,
+      client_id:   clientId,
       provider_id: providerId,
       rating,
       comment,
     })
 
-    // Mettre à jour la note moyenne du prestataire
     const { data: ratings } = await supabase
       .from('ratings')
       .select('rating')
@@ -39,7 +40,7 @@ export default function RatingForm({ requestId, offerId, clientId, providerId, o
     if (ratings && ratings.length > 0) {
       const avg = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
       await supabase.from('profiles').update({
-        rating: Math.round(avg * 10) / 10,
+        rating:         Math.round(avg * 10) / 10,
         total_missions: ratings.length,
       }).eq('id', providerId)
     }
@@ -57,7 +58,7 @@ export default function RatingForm({ requestId, offerId, clientId, providerId, o
       fontSize: 14, color: 'var(--green)',
       textAlign: 'center',
     }}>
-      ✅ Merci pour votre évaluation!
+      {t('success')}
     </div>
   )
 
@@ -69,10 +70,9 @@ export default function RatingForm({ requestId, offerId, clientId, providerId, o
       marginTop: 12,
     }}>
       <h4 style={{ fontSize: 15, fontWeight: 600, marginBottom: 16 }}>
-        ⭐ Évaluer le prestataire
+        {t('title')}
       </h4>
 
-      {/* Étoiles */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         {[1, 2, 3, 4, 5].map(star => (
           <button
@@ -92,11 +92,10 @@ export default function RatingForm({ requestId, offerId, clientId, providerId, o
         ))}
       </div>
 
-      {/* Commentaire */}
       <textarea
         value={comment}
         onChange={e => setComment(e.target.value)}
-        placeholder="Laissez un commentaire (optionnel)..."
+        placeholder={t('comment_placeholder')}
         rows={3}
         style={{
           width: '100%', padding: '10px 14px',
@@ -120,7 +119,7 @@ export default function RatingForm({ requestId, offerId, clientId, providerId, o
           fontFamily: 'var(--font-sans)',
         }}
       >
-        {loading ? 'Envoi...' : 'Soumettre l\'évaluation'}
+        {loading ? t('submitting') : t('submit_btn')}
       </button>
     </div>
   )

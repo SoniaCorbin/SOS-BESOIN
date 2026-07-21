@@ -1,8 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 
 export default function Stats() {
+  const t = useTranslations('stats')
   const [stats, setStats] = useState({
     providers: 0,
     requests: 0,
@@ -30,7 +32,7 @@ export default function Stats() {
 
       setStats({
         providers: providers ?? 0,
-        requests: requests ?? 0,
+        requests:  requests ?? 0,
         completed: completed ?? 0,
         avgRating: avg,
       })
@@ -45,10 +47,10 @@ export default function Stats() {
   }, [])
 
   const items = [
-    { label: 'Missions complétées', value: stats.completed.toLocaleString('fr'), icon: '📈' },
-    { label: 'Délai moyen de réponse', value: stats.requests > 0 ? '— min' : '— min', icon: '🕐' },
-    { label: 'Prestataires vérifiés actifs', value: stats.providers.toLocaleString('fr'), icon: '🛡' },
-    { label: 'Note moyenne / 5', value: stats.avgRating > 0 ? stats.avgRating.toFixed(2) : '—', icon: '★' },
+    { label: t('completed'),      value: stats.completed.toLocaleString('fr'), icon: '📈' },
+    { label: t('response_time'),  value: stats.requests > 0 ? '— min' : '— min', icon: '🕐' },
+    { label: t('providers'),      value: stats.providers.toLocaleString('fr'), icon: '🛡' },
+    { label: t('rating'),         value: stats.avgRating > 0 ? stats.avgRating.toFixed(2) : '—', icon: '★' },
   ]
 
   return (

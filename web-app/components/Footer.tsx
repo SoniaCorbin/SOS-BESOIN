@@ -1,11 +1,16 @@
+'use client'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 export default function Footer() {
+  const t = useTranslations('footer')
+
   return (
     <footer style={{
       borderTop: '1px solid var(--line)',
-      padding: '60px 24px 32px',
-      background: 'var(--bg)',
+      background: 'var(--bg-2)',
+      padding: '64px 24px 32px',
+      marginTop: 80,
     }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         <div style={{
@@ -22,58 +27,84 @@ export default function Footer() {
                 background: 'var(--amber-soft)',
                 border: '1px solid var(--amber)',
                 display: 'grid', placeItems: 'center',
-                color: 'var(--amber)',
+                color: 'var(--amber)', fontSize: 16,
               }}>⚠</div>
-              <span style={{ fontWeight: 700, fontSize: 16 }}>
+              <span style={{ fontWeight: 700, fontSize: 15 }}>
                 SOS<b style={{ color: 'var(--amber)' }}>·BESOIN</b>
               </span>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--text-dim)', lineHeight: 1.6 }}>
-              La place de marché pour vos besoins urgents. Prestaires vérifiés. Paiement séquestré.
+            <p style={{ fontSize: 13, color: 'var(--text-mute)', lineHeight: 1.6 }}>
+              {t('tagline')}
             </p>
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              {['𝕏', 'in', '📸'].map((icon, i) => (
+                <div key={i} style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  border: '1px solid var(--line)',
+                  display: 'grid', placeItems: 'center',
+                  fontSize: 14, color: 'var(--text-mute)',
+                  cursor: 'pointer',
+                }}>{icon}</div>
+              ))}
+            </div>
           </div>
 
           {/* Plateforme */}
           <div>
-            <h5 style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 16 }}>Plateforme</h5>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+              {t('platform')}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
-                { label: 'Comment ça marche', href: '#how' },
-                { label: 'Catégories', href: '#categories' },
-                { label: 'Demandes en direct', href: '#live' },
-                { label: 'Devenir prestataire', href: '#pros' },
-              ].map((l, i) => (
-                <li key={i}><Link href={l.href} style={{ fontSize: 14, color: 'var(--text-dim)' }}>{l.label}</Link></li>
+                { label: t('how_it_works'), href: '#how' },
+                { label: t('categories'), href: '#categories' },
+                { label: t('live_requests'), href: '/explore' },
+                { label: t('become_provider'), href: '/register' },
+                { label: t('send_sos'), href: '/requests/new' },
+              ].map(link => (
+                <Link key={link.href} href={link.href} style={{ fontSize: 14, color: 'var(--text-mute)' }}>
+                  {link.label}
+                </Link>
               ))}
-            </ul>
+            </div>
           </div>
 
           {/* Support */}
           <div>
-            <h5 style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 16 }}>Support</h5>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+              {t('support')}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
-                { label: "Centre d'aide", href: '#' },
-                { label: 'Contacter le support', href: '#' },
-                { label: 'FAQ', href: '#faq' },
-              ].map((l, i) => (
-                <li key={i}><Link href={l.href} style={{ fontSize: 14, color: 'var(--text-dim)' }}>{l.label}</Link></li>
+                { label: t('help_center'), href: '#' },
+                { label: t('contact'), href: 'mailto:support@sosbesoin.ca' },
+                { label: t('faq'), href: '#faq' },
+                { label: t('access_app'), href: 'https://app.sosbesoin.ca' },
+              ].map(link => (
+                <Link key={link.label} href={link.href} style={{ fontSize: 14, color: 'var(--text-mute)' }}>
+                  {link.label}
+                </Link>
               ))}
-            </ul>
+            </div>
           </div>
 
           {/* Légal */}
           <div>
-            <h5 style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-mute)', marginBottom: 16 }}>Légal</h5>
-            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+              {t('legal')}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
-                { label: "Conditions générales", href: '/terms' },
-                { label: 'Politique de confidentialité', href: '/privacy' },
-                { label: 'Politique de remboursement', href: '/refund' },
-              ].map((l, i) => (
-                <li key={i}><Link href={l.href} style={{ fontSize: 14, color: 'var(--text-dim)' }}>{l.label}</Link></li>
+                { label: t('terms'), href: '/terms' },
+                { label: t('privacy'), href: '/privacy' },
+                { label: t('refund'), href: '/refund' },
+                { label: t('cookies'), href: '#' },
+              ].map(link => (
+                <Link key={link.href} href={link.href} style={{ fontSize: 14, color: 'var(--text-mute)' }}>
+                  {link.label}
+                </Link>
               ))}
-            </ul>
+            </div>
           </div>
         </div>
 
@@ -87,9 +118,11 @@ export default function Footer() {
           flexWrap: 'wrap',
           gap: 12,
         }}>
-          <span style={{ fontSize: 12, color: 'var(--text-mute)' }}>© 2026 SOS-BESOIN · Tous droits réservés</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-mute)' }}>
-            status: ALL SYSTEMS OK
+          <span style={{ fontSize: 12, color: 'var(--text-mute)' }}>
+            {t('copyright')}
+          </span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--green)' }}>
+            {t('status')}
           </span>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server'
 import Nav from '@/components/Nav'
 import Stats from '@/components/Stats'
 import Categories from '@/components/Categories'
@@ -8,7 +9,9 @@ import Footer from '@/components/Footer'
 import Testimonials from '@/components/Testimonials'
 import FAQ from '@/components/FAQ'
 
-export default function Home() {
+export default async function Home() {
+  const t = await getTranslations('home')
+
   return (
     <>
       <Nav />
@@ -36,8 +39,8 @@ export default function Home() {
               letterSpacing: '-0.03em',
               marginTop: 16,
             }}>
-              Un pro disponible,<br />
-              <span style={{ color: 'var(--amber)' }}>quand c'est urgent.</span>
+              {t('title')}<br />
+              <span style={{ color: 'var(--amber)' }}>{t('title_accent')}</span>
             </h1>
             <p style={{
               marginTop: 24,
@@ -46,7 +49,7 @@ export default function Home() {
               maxWidth: 480,
               margin: '24px auto 0',
             }}>
-              Décrivez ce qu'il vous faut. Un prestataire vérifié répond en moins de 30 minutes.
+              {t('subtitle')}
             </p>
           </div>
         </section>

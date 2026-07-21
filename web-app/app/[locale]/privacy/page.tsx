@@ -1,17 +1,20 @@
 'use client'
 import Nav from '@/components/Nav'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 export default function PrivacyPage() {
+  const t = useTranslations('legal')
+
   return (
     <>
       <Nav />
       <main style={{ paddingTop: 64, minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px' }}>
           <div style={{ marginBottom: 32 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>·LÉGAL·</span>
-            <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 8, letterSpacing: '-0.02em' }}>Politique de confidentialité</h1>
-            <p style={{ fontSize: 13, color: 'var(--text-mute)', marginTop: 8 }}>Dernière mise à jour : 23 juin 2026</p>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('tag')}</span>
+            <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 8, letterSpacing: '-0.02em' }}>{t('privacy_title')}</h1>
+            <p style={{ fontSize: 13, color: 'var(--text-mute)', marginTop: 8 }}>{t('updated')}</p>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32, fontSize: 14, color: 'var(--text-dim)', lineHeight: 1.8 }}>
@@ -127,8 +130,8 @@ export default function PrivacyPage() {
             </section>
 
             <div style={{ borderTop: '1px solid var(--line)', paddingTop: 24, display: 'flex', gap: 16 }}>
-              <Link href="/terms" style={{ color: 'var(--cyan)', fontSize: 13 }}>Conditions d'utilisation →</Link>
-              <Link href="/refund" style={{ color: 'var(--cyan)', fontSize: 13 }}>Politique de remboursement →</Link>
+              <Link href="/terms" style={{ color: 'var(--cyan)', fontSize: 13 }}>{t('link_terms')}</Link>
+              <Link href="/refund" style={{ color: 'var(--cyan)', fontSize: 13 }}>{t('link_refund')}</Link>
             </div>
           </div>
         </div>

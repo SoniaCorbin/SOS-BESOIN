@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 
@@ -15,29 +16,28 @@ type Profile = {
   is_kyc_verified: boolean
 }
 
-const STATUS_LABELS: Record<string, { label: string, color: string }> = {
-  open:        { label: 'Ouvert', color: 'var(--amber)' },
-  in_progress: { label: 'En cours', color: 'var(--cyan)' },
-  completed:   { label: 'Complété', color: 'var(--green)' },
-  cancelled:   { label: 'Annulé', color: 'var(--red)' },
-  pending:     { label: 'En attente', color: 'var(--text-dim)' },
-  accepted:    { label: 'Acceptée', color: 'var(--green)' },
-}
-
 export default function DashboardPage() {
   const router = useRouter()
+  const t = useTranslations('dashboard')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [activeRole, setActiveRole] = useState<'client' | 'provider'>('client')
   const [requests, setRequests] = useState<any[]>([])
   const [offers, setOffers] = useState<any[]>([])
-  const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const STATUS_LABELS: Record<string, { label: string, color: string }> = {
+    open:        { label: t('status_open'), color: 'var(--amber)' },
+    in_progress: { label: t('status_in_progress'), color: 'var(--cyan)' },
+    completed:   { label: t('status_completed'), color: 'var(--green)' },
+    cancelled:   { label: t('status_cancelled'), color: 'var(--red)' },
+    pending:     { label: t('status_pending'), color: 'var(--text-dim)' },
+    accepted:    { label: t('status_accepted'), color: 'var(--green)' },
+  }
 
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
-      setUserId(session.user.id)
 
       const { data: prof } = await supabase
         .from('profiles')
@@ -46,7 +46,6 @@ export default function DashboardPage() {
         .single()
       setProfile(prof)
 
-      // Demandes client
       const { data: reqs } = await supabase
         .from('requests')
         .select('id, title, category, status, budget, created_at')
@@ -55,7 +54,6 @@ export default function DashboardPage() {
         .limit(10)
       setRequests(reqs ?? [])
 
-      // Offres prestataire
       const { data: offs } = await supabase
         .from('offers')
         .select('*, requests(title, category, status, budget)')
@@ -77,7 +75,7 @@ export default function DashboardPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'var(--bg)' }}>
-      <div style={{ color: 'var(--amber)', fontFamily: 'var(--font-mono)' }}>Chargement...</div>
+      <div style={{ color: 'var(--amber)', fontFamily: 'var(--font-mono)' }}>{t('loading')}</div>
     </div>
   )
 
@@ -87,12 +85,11 @@ export default function DashboardPage() {
       <main style={{ paddingTop: 64, minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
 
-          {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
             <div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>·DASHBOARD·</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('tag')}</span>
               <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 8, letterSpacing: '-0.02em' }}>
-                Bonjour, {profile?.full_name?.split(' ')[0]} 👋
+                {t('greeting', { name: profile?.full_name?.split(' ')[0] ?? '' })}
               </h1>
             </div>
             {activeRole === 'client' && (
@@ -100,12 +97,11 @@ export default function DashboardPage() {
                 padding: '12px 24px', background: 'var(--amber)',
                 color: '#000', borderRadius: 10, fontWeight: 600, fontSize: 14,
               }}>
-                + Lancer un SOS
+                {t('sos_btn')}
               </Link>
             )}
           </div>
 
-          {/* Switcher */}
           <div style={{
             display: 'inline-flex',
             background: 'var(--bg-2)',
@@ -131,21 +127,19 @@ export default function DashboardPage() {
                   transition: 'all 0.15s',
                 }}
               >
-                {r === 'client' ? '🙋 Client' : '🔧 Prestataire'}
+                {r === 'client' ? t('role_client') : t('role_provider')}
               </button>
             ))}
           </div>
 
-          {/* Vue Client */}
           {activeRole === 'client' && (
             <>
-              {/* Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
                 {[
-                  { label: 'Demandes totales', value: requests.length },
-                  { label: 'En cours', value: requests.filter(r => r.status === 'in_progress').length },
-                  { label: 'Complétées', value: requests.filter(r => r.status === 'completed').length },
-                  { label: 'Ouvertes', value: requests.filter(r => r.status === 'open').length },
+                  { label: t('stat_total_requests'), value: requests.length },
+                  { label: t('stat_in_progress'), value: requests.filter(r => r.status === 'in_progress').length },
+                  { label: t('stat_completed'), value: requests.filter(r => r.status === 'completed').length },
+                  { label: t('stat_open'), value: requests.filter(r => r.status === 'open').length },
                 ].map((s, i) => (
                   <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '20px' }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 700, color: 'var(--amber)' }}>{s.value}</div>
@@ -154,14 +148,13 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* Demandes */}
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Mes demandes</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>{t('my_requests')}</h2>
               {requests.length === 0 ? (
                 <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '48px', textAlign: 'center' }}>
                   <div style={{ fontSize: 32, marginBottom: 12 }}>📭</div>
-                  <p style={{ color: 'var(--text-mute)', marginBottom: 16 }}>Aucune demande pour l'instant.</p>
+                  <p style={{ color: 'var(--text-mute)', marginBottom: 16 }}>{t('no_requests')}</p>
                   <Link href="/requests/new" style={{ padding: '10px 20px', background: 'var(--amber)', color: '#000', borderRadius: 8, fontWeight: 600, fontSize: 14 }}>
-                    Créer ma première demande
+                    {t('create_first')}
                   </Link>
                 </div>
               ) : (
@@ -190,16 +183,14 @@ export default function DashboardPage() {
             </>
           )}
 
-          {/* Vue Prestataire */}
           {activeRole === 'provider' && (
             <>
-              {/* Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
                 {[
-                  { label: 'Offres soumises', value: offers.length },
-                  { label: 'Acceptées', value: offers.filter(o => o.status === 'accepted').length },
-                  { label: 'Complétées', value: offers.filter(o => o.status === 'completed').length },
-                  { label: 'Note moyenne', value: profile?.rating ? `${profile.rating.toFixed(1)} ★` : '—' },
+                  { label: t('stat_offers'), value: offers.length },
+                  { label: t('stat_accepted'), value: offers.filter(o => o.status === 'accepted').length },
+                  { label: t('stat_completed'), value: offers.filter(o => o.status === 'completed').length },
+                  { label: t('stat_rating'), value: profile?.rating ? `${profile.rating.toFixed(1)} ★` : '—' },
                 ].map((s, i) => (
                   <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '20px' }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 700, color: 'var(--green)' }}>{s.value}</div>
@@ -208,12 +199,11 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* Offres */}
-              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>Mes offres</h2>
+              <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 16 }}>{t('my_offers')}</h2>
               {offers.length === 0 ? (
                 <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '48px', textAlign: 'center' }}>
                   <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
-                  <p style={{ color: 'var(--text-mute)' }}>Aucune offre soumise pour l'instant.</p>
+                  <p style={{ color: 'var(--text-mute)' }}>{t('no_offers')}</p>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

@@ -1,12 +1,14 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import Link from 'next/link'
 
 export default function AdminPage() {
   const router = useRouter()
+  const t = useTranslations('admin')
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'requests'>('stats')
   const [stats, setStats] = useState({ users: 0, providers: 0, requests: 0, completed: 0, revenue: 0 })
@@ -18,7 +20,6 @@ export default function AdminPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
 
-      // Vérifier si admin
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_admin')
@@ -73,7 +74,7 @@ export default function AdminPage() {
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', background: 'var(--bg)' }}>
-      <div style={{ color: 'var(--amber)', fontFamily: 'var(--font-mono)' }}>Chargement...</div>
+      <div style={{ color: 'var(--amber)', fontFamily: 'var(--font-mono)' }}>{t('loading')}</div>
     </div>
   )
 
@@ -94,29 +95,25 @@ export default function AdminPage() {
       <Nav />
       <main style={{ paddingTop: 64, minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 24px' }}>
-
-          {/* Header */}
           <div style={{ marginBottom: 32 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--red)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>·ADMIN·</span>
-            <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 8, letterSpacing: '-0.02em' }}>Panel Admin</h1>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--red)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('tag')}</span>
+            <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 8, letterSpacing: '-0.02em' }}>{t('title')}</h1>
           </div>
 
-          {/* Tabs */}
           <div style={{ display: 'flex', gap: 4, background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 10, padding: 4, marginBottom: 32, width: 'fit-content' }}>
-            <button style={tabStyle('stats')} onClick={() => setActiveTab('stats')}>📊 Statistiques</button>
-            <button style={tabStyle('users')} onClick={() => setActiveTab('users')}>👥 Utilisateurs</button>
-            <button style={tabStyle('requests')} onClick={() => setActiveTab('requests')}>📋 Demandes</button>
+            <button style={tabStyle('stats')} onClick={() => setActiveTab('stats')}>{t('tab_stats')}</button>
+            <button style={tabStyle('users')} onClick={() => setActiveTab('users')}>{t('tab_users')}</button>
+            <button style={tabStyle('requests')} onClick={() => setActiveTab('requests')}>{t('tab_requests')}</button>
           </div>
 
-          {/* Stats */}
           {activeTab === 'stats' && (
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
                 {[
-                  { label: 'Utilisateurs total', value: stats.users, color: 'var(--amber)' },
-                  { label: 'Prestataires', value: stats.providers, color: 'var(--cyan)' },
-                  { label: 'Demandes total', value: stats.requests, color: 'var(--violet)' },
-                  { label: 'Missions complétées', value: stats.completed, color: 'var(--green)' },
+                  { label: t('stat_users'), value: stats.users, color: 'var(--amber)' },
+                  { label: t('stat_providers'), value: stats.providers, color: 'var(--cyan)' },
+                  { label: t('stat_requests'), value: stats.requests, color: 'var(--violet)' },
+                  { label: t('stat_completed'), value: stats.completed, color: 'var(--green)' },
                 ].map((s, i) => (
                   <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '24px' }}>
                     <div style={{ fontFamily: 'var(--font-mono)', fontSize: 36, fontWeight: 700, color: s.color }}>{s.value}</div>
@@ -127,12 +124,11 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Users */}
           {activeTab === 'users' && (
             <div>
               <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 16, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 600 }}>Utilisateurs ({users.length})</span>
+                  <span style={{ fontWeight: 600 }}>{t('tab_users')} ({users.length})</span>
                 </div>
                 {users.map((user, i) => (
                   <div key={user.id} style={{
@@ -161,7 +157,7 @@ export default function AdminPage() {
                         fontFamily: 'var(--font-sans)',
                       }}
                     >
-                      {user.is_suspended ? 'Réactiver' : 'Suspendre'}
+                      {user.is_suspended ? t('reactivate') : t('suspend')}
                     </button>
                   </div>
                 ))}
@@ -169,12 +165,11 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Requests */}
           {activeTab === 'requests' && (
             <div>
               <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 16, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)' }}>
-                  <span style={{ fontWeight: 600 }}>Demandes ({requests.length})</span>
+                  <span style={{ fontWeight: 600 }}>{t('tab_requests')} ({requests.length})</span>
                 </div>
                 {requests.map((req, i) => (
                   <Link key={req.id} href={`/requests/${req.id}`} style={{

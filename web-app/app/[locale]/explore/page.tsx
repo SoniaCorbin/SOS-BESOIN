@@ -1,11 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import { getCurrentPosition, calculateDistance, formatDistance } from '@/lib/geolocation'
 
-const CATEGORIES = [
+const CATEGORIES_FR = [
   'Toutes',
   'Tech & Informatique',
   'Réparation & Bricolage',
@@ -19,16 +20,24 @@ const CATEGORIES = [
   'Autres',
 ]
 
-const URGENCY_LABELS: Record<string, string> = {
-  asap:     '🔴 Dès que possible',
-  today:    '🟠 Aujourd\'hui',
-  tomorrow: '🟡 Demain',
-  week:     '🟢 Cette semaine',
-}
+const CATEGORIES_EN = [
+  'All',
+  'Tech & IT',
+  'Repair & DIY',
+  'Music & Events',
+  'Transport & Delivery',
+  'Courses & Tutoring',
+  'Writing & Design',
+  'Web & Development',
+  'Legal & Admin',
+  'Health & Wellness',
+  'Other',
+]
 
 export default function ExplorePage() {
+  const t = useTranslations('explore')
   const [requests, setRequests] = useState<any[]>([])
-  const [category, setCategory] = useState('Toutes')
+  const [category, setCategory] = useState(0) // index
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [myCoords, setMyCoords] = useState<{ lat: number; lng: number } | null>(null)
@@ -36,6 +45,21 @@ export default function ExplorePage() {
   const [locating, setLocating] = useState(false)
   const [maxDistance, setMaxDistance] = useState(500)
   const [isProvider, setIsProvider] = useState(false)
+  const [locale, setLocale] = useState('fr')
+
+  const CATEGORIES = locale === 'en' ? CATEGORIES_EN : CATEGORIES_FR
+
+  const URGENCY_LABELS: Record<string, string> = {
+    asap:     t('urgency_asap'),
+    today:    t('urgency_today'),
+    tomorrow: t('urgency_tomorrow'),
+    week:     t('urgency_week'),
+  }
+
+  useEffect(() => {
+    const html = document.documentElement.lang
+    setLocale(html || 'fr')
+  }, [])
 
   useEffect(() => {
     fetchRequests()
@@ -58,7 +82,6 @@ export default function ExplorePage() {
       if (data?.role === 'provider') {
         setIsProvider(true)
         if (data?.max_distance_km) setMaxDistance(data.max_distance_km)
-        // Auto-activer la position si le prestataire a une position enregistrée
         if (data?.latitude && data?.longitude) {
           setMyCoords({ lat: data.latitude, lng: data.longitude })
           setSortByDistance(true)
@@ -76,8 +99,9 @@ export default function ExplorePage() {
       .order('created_at', { ascending: false })
       .limit(50)
 
-    if (category !== 'Toutes') {
-      query = query.eq('category', category)
+    const selectedCat = CATEGORIES[category]
+    if (category !== 0) {
+      query = query.eq('category', selectedCat)
     }
 
     const { data } = await query
@@ -96,7 +120,7 @@ export default function ExplorePage() {
       setMyCoords(pos)
       setSortByDistance(true)
     } catch (e) {
-      alert('Impossible d\'obtenir votre position. Vérifiez les permissions de localisation.')
+      alert(t('no_results'))
     }
     setLocating(false)
   }
@@ -110,7 +134,6 @@ export default function ExplorePage() {
     const matchesSearch = r.title.toLowerCase().includes(search.toLowerCase()) ||
       r.description?.toLowerCase().includes(search.toLowerCase())
     if (!matchesSearch) return false
-
     if (sortByDistance && myCoords && maxDistance < 500) {
       const dist = getDistance(r)
       if (dist === null) return true
@@ -132,11 +155,11 @@ export default function ExplorePage() {
 
   const ago = (date: string) => {
     const mins = Math.round((Date.now() - new Date(date).getTime()) / 60000)
-    if (mins < 1) return 'à l\'instant'
-    if (mins < 60) return `il y a ${mins} min`
+    if (mins < 1) return t('ago_now')
+    if (mins < 60) return t('ago_min', { count: mins })
     const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return `il y a ${hrs}h`
-    return `il y a ${Math.floor(hrs / 24)}j`
+    if (hrs < 24) return t('ago_hours', { count: hrs })
+    return t('ago_days', { count: Math.floor(hrs / 24) })
   }
 
   return (
@@ -145,22 +168,20 @@ export default function ExplorePage() {
       <main style={{ paddingTop: 64, minHeight: '100vh', background: 'var(--bg)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
 
-          {/* Header */}
           <div style={{ marginBottom: 32 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--cyan)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>·EXPLORER·</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--cyan)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('tag')}</span>
             <h1 style={{ fontSize: 32, fontWeight: 700, marginTop: 8, letterSpacing: '-0.02em' }}>
-              Demandes disponibles
+              {t('title')}
               <span style={{ marginLeft: 12, fontFamily: 'var(--font-mono)', fontSize: 16, color: 'var(--cyan)', fontWeight: 400 }}>{filtered.length}</span>
             </h1>
           </div>
 
-          {/* Recherche + tri distance */}
           <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="🔍 Rechercher une demande..."
+              placeholder={t('search_placeholder')}
               style={{
                 flex: 1, padding: '12px 16px',
                 background: 'var(--bg-2)', border: '1px solid var(--line-2)',
@@ -180,11 +201,10 @@ export default function ExplorePage() {
                 fontFamily: 'var(--font-sans)', whiteSpace: 'nowrap',
               }}
             >
-              {locating ? '📍 Localisation...' : sortByDistance ? '📍 Près de moi ✓' : '📍 Près de moi'}
+              {locating ? t('locating') : sortByDistance ? t('near_me_active') : t('near_me')}
             </button>
           </div>
 
-          {/* Slider rayon - visible si prestataire OU si tri actif */}
           {(isProvider || (sortByDistance && myCoords)) && (
             <div style={{
               background: 'var(--bg-2)', border: '1px solid var(--line)',
@@ -192,7 +212,7 @@ export default function ExplorePage() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
                 <span style={{ fontSize: 13, color: 'var(--text-dim)', whiteSpace: 'nowrap' }}>
-                  📡 Rayon de recherche
+                  {t('radius_label')}
                 </span>
                 <input
                   type="range"
@@ -203,42 +223,40 @@ export default function ExplorePage() {
                   style={{ flex: 1, accentColor: 'var(--cyan)' }}
                 />
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--cyan)', minWidth: 70, textAlign: 'right' }}>
-                  {maxDistance >= 500 ? 'Illimité' : `${maxDistance} km`}
+                  {maxDistance >= 500 ? t('radius_unlimited') : `${maxDistance} km`}
                 </span>
               </div>
               {isProvider && (
                 <p style={{ fontSize: 11, color: 'var(--text-mute)', margin: 0 }}>
-                  Configurez votre rayon par défaut dans votre <Link href="/profile" style={{ color: 'var(--cyan)' }}>profil</Link>.
+                  {t('radius_profile')} <Link href="/profile" style={{ color: 'var(--cyan)' }}>profil</Link>.
                 </p>
               )}
             </div>
           )}
 
-          {/* Filtres catégories */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 32 }}>
-            {CATEGORIES.map(cat => (
+            {CATEGORIES.map((cat, i) => (
               <button
                 key={cat}
-                onClick={() => setCategory(cat)}
+                onClick={() => setCategory(i)}
                 style={{
                   padding: '6px 14px',
-                  background: category === cat ? 'var(--cyan-soft)' : 'var(--bg-2)',
-                  border: `1px solid ${category === cat ? 'var(--cyan)' : 'var(--line)'}`,
+                  background: category === i ? 'var(--cyan-soft)' : 'var(--bg-2)',
+                  border: `1px solid ${category === i ? 'var(--cyan)' : 'var(--line)'}`,
                   borderRadius: 20, cursor: 'pointer',
-                  fontSize: 13, color: category === cat ? 'var(--cyan)' : 'var(--text-dim)',
+                  fontSize: 13, color: category === i ? 'var(--cyan)' : 'var(--text-dim)',
                   fontFamily: 'var(--font-sans)',
                 }}
               >{cat}</button>
             ))}
           </div>
 
-          {/* Liste */}
           {loading ? (
-            <div style={{ color: 'var(--amber)', fontFamily: 'var(--font-mono)' }}>Chargement...</div>
+            <div style={{ color: 'var(--amber)', fontFamily: 'var(--font-mono)' }}>{t('loading')}</div>
           ) : filtered.length === 0 ? (
             <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '48px', textAlign: 'center' }}>
               <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
-              <p style={{ color: 'var(--text-mute)' }}>Aucune demande dans ce rayon.</p>
+              <p style={{ color: 'var(--text-mute)' }}>{t('no_results')}</p>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>

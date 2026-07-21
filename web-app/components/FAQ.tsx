@@ -1,43 +1,27 @@
 'use client'
 import { useState } from 'react'
-
-const FAQ_ITEMS = [
-  {
-    q: "Combien de temps avant de recevoir une offre ?",
-    a: "Les prestataires vérifiés près de vous répondent rapidement. Sur les catégories Tech, Musique et Transport, la majorité des demandes reçoivent au moins 2 offres en moins de 15 minutes en journée."
-  },
-  {
-    q: "Comment fonctionne le paiement séquestré ?",
-    a: "Quand vous acceptez une offre, votre carte est débitée mais l'argent reste bloqué chez Stripe. Le prestataire ne reçoit le paiement qu'après votre validation. Si rien ne va, on rembourse."
-  },
-  {
-    q: "Que se passe-t-il si je dois annuler ma demande ?",
-    a: "Tant qu'aucune offre n'est acceptée, vous pouvez annuler sans frais. Une fois une offre acceptée, des conditions s'appliquent selon le délai et la catégorie."
-  },
-  {
-    q: "Les prestataires sont-ils vérifiés ?",
-    a: "Tous les prestataires passent un KYC (identité + adresse) avant de pouvoir soumettre des offres. Les prestataires notés moins de 3,5/5 après 10 missions sont suspendus automatiquement."
-  },
-  {
-    q: "Quelle est la commission de la plateforme ?",
-    a: "10% du montant de la mission, retenue automatiquement sur le paiement du prestataire. Aucun frais caché côté client : le prix affiché par le prestataire est le prix que vous payez."
-  },
-  {
-    q: "Puis-je utiliser un code promo ?",
-    a: "Les codes promo arrivent bientôt ! Inscrivez-vous sur la liste d'attente pour être notifié en priorité."
-  },
-]
+import { useTranslations } from 'next-intl'
 
 export default function FAQ() {
+  const t = useTranslations('faq')
   const [open, setOpen] = useState<number | null>(null)
+
+  const FAQ_ITEMS = [
+    { q: t('q1'), a: t('a1') },
+    { q: t('q2'), a: t('a2') },
+    { q: t('q3'), a: t('a3') },
+    { q: t('q4'), a: t('a4') },
+    { q: t('q5'), a: t('a5') },
+    { q: t('q6'), a: t('a6') },
+  ]
 
   return (
     <section style={{ padding: '80px 24px', background: 'var(--bg-2)' }} id="faq">
       <div style={{ maxWidth: 720, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>·FAQ·</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--amber)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('tag')}</span>
           <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 700, marginTop: 12, letterSpacing: '-0.02em' }}>
-            Les choses qu'on<br />nous demande le plus.
+            {t('title')}<br />{t('title_2')}
           </h2>
         </div>
 

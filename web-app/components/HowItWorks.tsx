@@ -1,27 +1,31 @@
+import { useTranslations } from 'next-intl'
+
 export default function HowItWorks() {
+  const t = useTranslations('how_it_works')
+
   const steps = [
     {
       number: '01',
-      title: 'Décrivez votre besoin',
-      desc: 'Prenez 90 secondes pour décrire ce qu\'il vous faut, votre budget et votre délai.',
+      title: t('step1_title'),
+      desc: t('step1_desc'),
       color: 'var(--amber)',
     },
     {
       number: '02',
-      title: 'Recevez des offres',
-      desc: 'Les prestataires vérifiés vous envoient leur prix et leur dispo en direct.',
+      title: t('step2_title'),
+      desc: t('step2_desc'),
       color: 'var(--cyan)',
     },
     {
       number: '03',
-      title: 'Acceptez et payez',
-      desc: 'Choisissez l\'offre qui vous convient. Le paiement est séquestré — vous ne payez qu\'à la validation.',
+      title: t('step3_title'),
+      desc: t('step3_desc'),
       color: 'var(--violet)',
     },
     {
       number: '04',
-      title: 'Mission accomplie',
-      desc: 'Validez la mission terminée. Le prestataire est payé dans les 24h. Laissez un avis.',
+      title: t('step4_title'),
+      desc: t('step4_desc'),
       color: 'var(--green)',
     },
   ]
@@ -36,13 +40,15 @@ export default function HowItWorks() {
             color: 'var(--violet)',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-          }}>·COMMENT_ÇA_MARCHE·</span>
+          }}>{t('tag')}</span>
           <h2 style={{
             fontSize: 'clamp(28px, 4vw, 48px)',
             fontWeight: 700,
             marginTop: 12,
             letterSpacing: '-0.02em',
-          }}>Simple. Rapide. <span style={{ color: 'var(--violet)' }}>Sécurisé.</span></h2>
+          }}>
+            {t('title')} <span style={{ color: 'var(--violet)' }}>{t('title_accent')}</span>
+          </h2>
         </div>
 
         <div style={{

@@ -1,202 +1,109 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-
-type Request = {
-  id: string
-  title: string
-  category: string
-  budget: number
-  created_at: string
-  status: string
-  location: string
-  urgency: string
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  'Tech & Informatique':   '#06b6d4',
-  'Réparation & Bricolage': '#f59e0b',
-  'Musique & Événements':  '#8b5cf6',
-  'Transport & Livraison': '#84cc16',
-  'Cours & Tutoriels':     '#f59e0b',
-  'Rédaction & Graphisme': '#ec4899',
-  'Web & Développement':   '#06b6d4',
-  'Juridique & Admin':     '#8b5cf6',
-  'Santé & Bien-être':     '#84cc16',
-  'Autres':                '#8892a4',
-}
-
-const URGENCY_LABELS: Record<string, string> = {
-  asap:     'Dès que possible',
-  today:    "Aujourd'hui",
-  tomorrow: 'Demain',
-  week:     'Cette semaine',
-}
+import { useTranslations } from 'next-intl'
+import { supabase } from '@/lib/supabase'
 
 export default function LiveBoard() {
-  const [requests, setRequests] = useState<Request[]>([])
-  const [category, setCategory] = useState('Toutes')
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
-
-  const CATEGORIES = ['Toutes', 'Tech & Informatique', 'Réparation & Bricolage', 'Musique & Événements', 'Transport & Livraison', 'Cours & Tutoriels', 'Autres']
+  const t = useTranslations('liveboard')
+  const [requests, setRequests] = useState<any[]>([])
 
   useEffect(() => {
     fetchRequests()
-
     const channel = supabase.channel('liveboard')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, () => {
-        fetchRequests()
-        setLastUpdate(new Date())
-      })
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'requests',
+      }, fetchRequests)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
-  }, [category])
+  }, [])
 
   async function fetchRequests() {
-    let query = supabase
+    const { data } = await supabase
       .from('requests')
-      .select('id, title, category, budget, created_at, status, location, urgency')
-      .in('status', ['open', 'in_progress'])
+      .select('id, title, category, location, urgency, budget, created_at')
+      .eq('status', 'open')
       .order('created_at', { ascending: false })
-      .limit(10)
-
-    if (category !== 'Toutes') {
-      query = query.eq('category', category)
-    }
-
-    const { data } = await query
+      .limit(6)
     setRequests(data ?? [])
-    setLastUpdate(new Date())
   }
 
   const ago = (date: string) => {
     const mins = Math.round((Date.now() - new Date(date).getTime()) / 60000)
-    if (mins < 1) return 'à l\'instant'
-    if (mins < 60) return `il y a ${mins} min`
-    const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return `il y a ${hrs}h`
-    return `il y a ${Math.floor(hrs / 24)}j`
+    if (mins < 1) return t('ago_now')
+    if (mins < 60) return t('ago_min', { count: mins })
+    return t('ago_hours', { count: Math.floor(mins / 60) })
+  }
+
+  const urgencyLabel = (urgency: string) => {
+    const labels: Record<string, string> = {
+      asap:     t('urgency_asap'),
+      today:    t('urgency_today'),
+      tomorrow: t('urgency_tomorrow'),
+      week:     t('urgency_week'),
+    }
+    return labels[urgency] ?? urgency
   }
 
   return (
-    <section style={{ padding: '80px 24px', background: 'var(--bg)' }} id="live">
+    <section style={{ padding: '80px 24px', background: 'var(--bg-2)' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--cyan)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>·LIVE_FEED·</span>
-          <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 700, marginTop: 12, letterSpacing: '-0.02em' }}>
-            Ce qui s'est lancé<br /><span style={{ color: 'var(--cyan)' }}>dans les dernières minutes.</span>
-          </h2>
-          <p style={{ fontSize: 15, color: 'var(--text-dim)', marginTop: 16, maxWidth: 480, margin: '16px auto 0' }}>
-            Aperçu en temps réel des demandes ouvertes. Connectez-vous pour soumettre une offre.
-          </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40, flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--cyan)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--cyan)', marginRight: 6, animation: 'pulse 2s infinite' }} />
+              {t('tag')}
+            </span>
+            <h2 style={{ fontSize: 'clamp(24px, 3vw, 40px)', fontWeight: 700, marginTop: 8, letterSpacing: '-0.02em' }}>
+              {t('title')} <span style={{ color: 'var(--cyan)' }}>{t('title_accent')}</span>
+            </h2>
+          </div>
+          <Link href="/explore" style={{ fontSize: 14, color: 'var(--cyan)', fontWeight: 500 }}>
+            {t('see_all')}
+          </Link>
         </div>
 
-        {/* Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 24 }}>
-
-          {/* Sidebar filtres */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text-mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>FILTRES</div>
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '10px 14px',
-                  background: category === cat ? 'var(--cyan-soft)' : 'transparent',
-                  border: `1px solid ${category === cat ? 'var(--cyan)' : 'transparent'}`,
-                  borderRadius: 8, cursor: 'pointer',
-                  fontFamily: 'var(--font-sans)',
-                  color: category === cat ? 'var(--cyan)' : 'var(--text-dim)',
-                  fontSize: 14, textAlign: 'left',
-                }}
-              >
-                {cat}
-              </button>
-            ))}
-
-            {/* Mode pro CTA */}
-            <div style={{
-              marginTop: 16,
-              background: 'var(--amber-soft)',
-              border: '1px solid var(--amber)',
-              borderRadius: 12, padding: '16px',
-            }}>
-              <div style={{ fontSize: 18, marginBottom: 8 }}>⚡</div>
-              <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>Mode prestataire</div>
-              <div style={{ fontSize: 12, color: 'var(--text-dim)', marginBottom: 12 }}>
-                Recevez les nouvelles demandes par notification.
-              </div>
-              <Link href="/register" style={{ fontSize: 13, color: 'var(--amber)', fontWeight: 600 }}>
-                Devenir prestataire →
-              </Link>
-            </div>
+        {requests.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-mute)', fontSize: 14 }}>
+            {t('empty')}
           </div>
-
-          {/* Liste demandes */}
-          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 16, overflow: 'hidden' }}>
-            {/* Header liste */}
-            <div style={{
-              padding: '14px 20px',
-              borderBottom: '1px solid var(--line)',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--cyan)', display: 'inline-block' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--cyan)' }}>
-                  Direct · mise à jour {ago(lastUpdate.toISOString())}
-                </span>
-              </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-mute)' }}>
-                {requests.length} résultats
-              </span>
-            </div>
-
-            {/* Rows */}
-            {requests.length === 0 ? (
-              <div style={{ padding: '48px', textAlign: 'center', color: 'var(--text-mute)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
-                Aucune demande active pour le moment.
-              </div>
-            ) : requests.map((req, i) => {
-              const color = CATEGORY_COLORS[req.category] ?? 'var(--text-dim)'
-              return (
-                <Link key={req.id} href={`/requests/${req.id}`} style={{
-                  display: 'flex', alignItems: 'center', gap: 16,
-                  padding: '14px 20px',
-                  borderBottom: i < requests.length - 1 ? '1px solid var(--line)' : 'none',
-                  transition: 'background 0.15s',
-                }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-mute)', minWidth: 70, textAlign: 'right' }}>
-                    {ago(req.created_at)}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 500, fontSize: 14, marginBottom: 2 }}>{req.title}</div>
-                    <div style={{ fontSize: 12, color: 'var(--text-mute)' }}>
-                      {req.location} · {URGENCY_LABELS[req.urgency] ?? req.urgency}
-                    </div>
-                  </div>
+        ) : (
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: 16,
+          }}>
+            {requests.map(req => (
+              <Link key={req.id} href={`/requests/${req.id}`} style={{
+                background: 'var(--bg)',
+                border: '1px solid var(--line)',
+                borderRadius: 12,
+                padding: '18px 20px',
+                display: 'block',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                   <span style={{
-                    fontFamily: 'var(--font-mono)', fontSize: 11,
-                    padding: '3px 10px', borderRadius: 6,
-                    background: `${color}20`, color,
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {req.category.split(' ')[0]}
+                    fontFamily: 'var(--font-mono)', fontSize: 10,
+                    padding: '2px 8px', borderRadius: 6,
+                    background: 'var(--amber-soft)', color: 'var(--amber)',
+                  }}>{req.category}</span>
+                  <span style={{ fontSize: 11, color: 'var(--text-mute)', fontFamily: 'var(--font-mono)' }}>{ago(req.created_at)}</span>
+                </div>
+                <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{req.title}</h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-mute)' }}>
+                    📍 {req.location} · {urgencyLabel(req.urgency)}
                   </span>
                   {req.budget && (
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, color: 'var(--amber)', minWidth: 60, textAlign: 'right' }}>
-                      {req.budget}$<span style={{ fontSize: 10, color: 'var(--text-mute)', fontWeight: 400 }}> budget</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: 'var(--amber)', fontWeight: 700 }}>
+                      {req.budget}$
                     </span>
                   )}
-                </Link>
-              )
-            })}
+                </div>
+              </Link>
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </section>
   )

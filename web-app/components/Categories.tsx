@@ -1,19 +1,22 @@
 'use client'
-
-const CATEGORIES = [
-  { icon: '💻', label: 'Tech & Informatique' },
-  { icon: '🔧', label: 'Réparation & Bricolage' },
-  { icon: '🎵', label: 'Musique & Événements' },
-  { icon: '🚗', label: 'Transport & Livraison' },
-  { icon: '📚', label: 'Cours & Tutoriels' },
-  { icon: '✍️', label: 'Rédaction & Graphisme' },
-  { icon: '🌐', label: 'Web & Développement' },
-  { icon: '⚖️', label: 'Juridique & Admin' },
-  { icon: '❤️', label: 'Santé & Bien-être' },
-  { icon: '✨', label: 'Autres' },
-]
+import { useTranslations } from 'next-intl'
 
 export default function Categories() {
+  const t = useTranslations('categories')
+
+  const CATEGORIES = [
+    { icon: '💻', label: t('tech') },
+    { icon: '🔧', label: t('repair') },
+    { icon: '🎵', label: t('music') },
+    { icon: '🚗', label: t('transport') },
+    { icon: '📚', label: t('courses') },
+    { icon: '✍️', label: t('writing') },
+    { icon: '🌐', label: t('web') },
+    { icon: '⚖️', label: t('legal') },
+    { icon: '❤️', label: t('health') },
+    { icon: '✨', label: t('other') },
+  ]
+
   return (
     <section style={{ padding: '80px 24px' }}>
       <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -24,13 +27,15 @@ export default function Categories() {
             color: 'var(--amber)',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
-          }}>·CATÉGORIES·</span>
+          }}>{t('tag')}</span>
           <h2 style={{
             fontSize: 'clamp(28px, 4vw, 48px)',
             fontWeight: 700,
             marginTop: 12,
             letterSpacing: '-0.02em',
-          }}>Ce qu'on règle <span style={{ color: 'var(--amber)' }}>pour vous.</span></h2>
+          }}>
+            {t('title')} <span style={{ color: 'var(--amber)' }}>{t('title_accent')}</span>
+          </h2>
         </div>
 
         <div style={{

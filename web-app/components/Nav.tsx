@@ -1,12 +1,16 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { useTranslations, useLocale } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import { useNotifications } from '@/lib/useNotifications'
 
 export default function Nav() {
   const router = useRouter()
+  const pathname = usePathname()
+  const locale = useLocale()
+  const t = useTranslations('nav')
   const [user, setUser] = useState<any>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -48,6 +52,36 @@ export default function Nav() {
     router.push('/')
   }
 
+  function switchLocale(newLocale: string) {
+    const segments = pathname.split('/')
+    segments[1] = newLocale
+    router.push(segments.join('/'))
+  }
+
+  const LangToggle = () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 8 }}>
+      <button
+        onClick={() => switchLocale('fr')}
+        style={{
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
+          color: locale === 'fr' ? 'var(--amber)' : 'var(--text-mute)',
+          padding: '4px 2px',
+        }}
+      >FR</button>
+      <span style={{ color: 'var(--text-mute)', fontSize: 13 }}>|</span>
+      <button
+        onClick={() => switchLocale('en')}
+        style={{
+          background: 'transparent', border: 'none', cursor: 'pointer',
+          fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 700,
+          color: locale === 'en' ? 'var(--amber)' : 'var(--text-mute)',
+          padding: '4px 2px',
+        }}
+      >EN</button>
+    </div>
+  )
+
   return (
     <>
       <nav style={{
@@ -87,38 +121,39 @@ export default function Nav() {
                   fontSize: 14,
                   color: 'var(--red)',
                 }}>
-                  Admin
+                  {t('admin')}
                 </Link>
               )}
               <Link href="/explore" style={{ padding: '8px 18px', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 14, color: 'var(--text-dim)' }}>
-                Explorer
+                {t('explore')}
               </Link>
               <Link href="/dashboard" style={{ padding: '8px 18px', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 14, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                Dashboard
+                {t('dashboard')}
                 {notifCount > 0 && (
                   <span style={{ background: 'var(--red)', color: '#fff', borderRadius: '50%', width: 18, height: 18, fontSize: 11, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{notifCount}</span>
                 )}
               </Link>
               <Link href="/profile" style={{ padding: '8px 18px', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 14, color: 'var(--text-dim)' }}>
-                Profil
+                {t('profile')}
               </Link>
               <Link href="/requests/new" style={{ padding: '8px 18px', background: 'var(--amber)', color: '#000', borderRadius: 8, fontWeight: 600, fontSize: 14 }}>
-                + Lancer un SOS
+                {t('sos_btn')}
               </Link>
               <button onClick={handleLogout} style={{ padding: '8px 18px', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 14, color: 'var(--text-mute)', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--font-sans)' }}>
-                Déconnexion
+                {t('logout')}
               </button>
             </>
           ) : (
             <>
               <Link href="/requests/new" style={{ padding: '8px 18px', background: 'var(--amber)', color: '#000', borderRadius: 8, fontWeight: 600, fontSize: 14 }}>
-                + Lancer un SOS
+                {t('sos_btn')}
               </Link>
               <Link href="/login" style={{ padding: '8px 18px', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 14, color: 'var(--text-dim)' }}>
-                Connexion
+                {t('login')}
               </Link>
             </>
           )}
+          <LangToggle />
         </div>
 
         {/* Mobile: bouton hamburger */}
@@ -143,23 +178,24 @@ export default function Nav() {
           {user ? (
             <>
               {isAdmin && (
-                <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--red)', borderRadius: 8, fontSize: 15, color: 'var(--red)' }}>Admin</Link>
+                <Link href="/admin" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--red)', borderRadius: 8, fontSize: 15, color: 'var(--red)' }}>{t('admin')}</Link>
               )}
-              <Link href="/explore" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>Explorer</Link>
+              <Link href="/explore" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>{t('explore')}</Link>
               <Link href="/dashboard" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                Dashboard
+                {t('dashboard')}
                 {notifCount > 0 && <span style={{ background: 'var(--red)', color: '#fff', borderRadius: '50%', width: 20, height: 20, fontSize: 11, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{notifCount}</span>}
               </Link>
-              <Link href="/profile" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>Profil</Link>
-              <Link href="/requests/new" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', background: 'var(--amber)', color: '#000', borderRadius: 8, fontWeight: 600, fontSize: 15, textAlign: 'center' }}>+ Lancer un SOS</Link>
-              <button onClick={() => { handleLogout(); setMenuOpen(false) }} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-mute)', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--font-sans)', textAlign: 'left' }}>Déconnexion</button>
+              <Link href="/profile" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>{t('profile')}</Link>
+              <Link href="/requests/new" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', background: 'var(--amber)', color: '#000', borderRadius: 8, fontWeight: 600, fontSize: 15, textAlign: 'center' }}>{t('sos_btn')}</Link>
+              <button onClick={() => { handleLogout(); setMenuOpen(false) }} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-mute)', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--font-sans)', textAlign: 'left' }}>{t('logout')}</button>
             </>
           ) : (
             <>
-              <Link href="/requests/new" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', background: 'var(--amber)', color: '#000', borderRadius: 8, fontWeight: 600, fontSize: 15, textAlign: 'center' }}>+ Lancer un SOS</Link>
-              <Link href="/login" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>Connexion</Link>
+              <Link href="/requests/new" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', background: 'var(--amber)', color: '#000', borderRadius: 8, fontWeight: 600, fontSize: 15, textAlign: 'center' }}>{t('sos_btn')}</Link>
+              <Link href="/login" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>{t('login')}</Link>
             </>
           )}
+          <LangToggle />
         </div>
       )}
 
