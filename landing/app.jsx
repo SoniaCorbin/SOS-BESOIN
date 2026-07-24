@@ -3,27 +3,27 @@ const { useState: _useState } = React;
 const { Nav, Hero, Stats, Categories, HowItWorks, LiveBoard, WaitlistSection } = window;
 
 /* ===================== PROVIDERS ===================== */
-function ProvidersSection() {
+function ProvidersSection({ t }) {
   return (
     <section className="section" id="pros" data-screen-label="06 Providers">
       <div className="shell prov-grid">
         <div className="prov-copy">
-          <span className="section-tag" style={{ marginBottom: 16 }}>·POUR_LES_PROS·</span>
-          <h2>De l'urgence,<br/><span className="accent" style={{ color: '#84cc16' }}>du revenu prévisible.</span></h2>
-          <p>Rejoignez le réseau de pros qui captent les meilleures missions urgentes près de chez eux. Vous fixez vos prix. Vous choisissez ce que vous prenez.</p>
+          <span className="section-tag" style={{ marginBottom: 16 }}>{t.tag}</span>
+          <h2>{t.title}<br/><span className="accent" style={{ color: '#84cc16' }}>{t.title_accent}</span></h2>
+          <p>{t.subtitle}</p>
           <ul className="prov-bullets">
-            <li><Icon.Check size={18} /><span><b>10% de commission, tout inclus.</b> Paiement transféré 24h après validation.</span></li>
-            <li><Icon.Check size={18} /><span><b>Notifications ciblées.</b> Recevez uniquement les demandes dans vos catégories.</span></li>
-            <li><Icon.Check size={18} /><span><b>Argent sécurisé.</b> Le client a déjà déposé les fonds — vous êtes payé.</span></li>
-            <li><Icon.Check size={18} /><span><b>Statut KYC vérifié.</b> Une fois validé, badge visible sur toutes vos offres.</span></li>
+            <li><Icon.Check size={18} /><span><b>{t.bullet1_bold}</b>{t.bullet1}</span></li>
+            <li><Icon.Check size={18} /><span><b>{t.bullet2_bold}</b>{t.bullet2}</span></li>
+            <li><Icon.Check size={18} /><span><b>{t.bullet3_bold}</b>{t.bullet3}</span></li>
+            <li><Icon.Check size={18} /><span><b>{t.bullet4_bold}</b>{t.bullet4}</span></li>
           </ul>
           <div style={{ marginTop: 36, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
             <a className="btn btn-outline btn-lg" href="#">
               <Icon.Users size={16} />
-              Postuler comme pro
+              {t.apply_btn}
               <Icon.Arrow size={14} />
             </a>
-            <a className="btn btn-ghost btn-lg" href="#">Voir la grille tarifaire</a>
+            <a className="btn btn-ghost btn-lg" href="#">{t.pricing_btn}</a>
           </div>
         </div>
 
@@ -31,7 +31,7 @@ function ProvidersSection() {
           <div className="prov-card-head">
             <div className="prov-avatar">MD</div>
             <div>
-              <h4>Maxime D. <span style={{ color: 'var(--cyan-2)', fontSize: 13, marginLeft: 8 }}>● vérifié</span></h4>
+              <h4>Maxime D. <span style={{ color: 'var(--cyan-2)', fontSize: 13, marginLeft: 8 }}>● {t.verified}</span></h4>
               <div className="role">Tech · Réseau · Mac/PC</div>
             </div>
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--amber)', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
@@ -77,41 +77,41 @@ function ProvidersSection() {
 }
 
 /* ===================== TESTIMONIALS ===================== */
-const TESTIMONIALS = [
+const TESTIMONIALS = (t) => [
   {
-    quote: "Mon DJ a annulé 4h avant le mariage. J'ai posté à 14h, accepté une offre à 14h32, le pro était là à 17h. Ça a sauvé la soirée.",
+    quote: "{t.q1}",
     name: "Élodie L.", role: "Cliente · Mariage", initial: "EL", color: "var(--amber)",
   },
   {
-    quote: "En tant que technicien à mon compte, j'avais des trous dans mon agenda. SOS-BESOIN me remplit les créneaux libres avec des missions claires et payantes.",
+    quote: "{t.q2}",
     name: "Karim B.", role: "Prestataire · Tech", initial: "KB", color: "var(--cyan)",
   },
   {
-    quote: "Lave-vaisselle qui inonde la cuisine un dimanche soir. Trois offres reçues en 15 min. Réparé le lendemain matin. Payé seulement après vérif.",
+    quote: "{t.q3}",
     name: "Sophie M.", role: "Cliente · Réparation", initial: "SM", color: "var(--violet)",
   },
 ];
 
-function Testimonials() {
+function Testimonials({ t }) {
   return (
     <section className="section" data-screen-label="07 Testimonials">
       <div className="shell">
         <div className="section-head">
-          <span className="section-tag">·SOCIAL_PROOF·</span>
-          <h2 className="section-title">Quand <span style={{ color: 'var(--amber)' }}>chaque minute compte</span>,<br/>les gens reviennent.</h2>
+          <span className="section-tag">{t.tag}</span>
+          <h2 className="section-title">{t.title}<span style={{ color: 'var(--amber)' }}>{t.title_accent}</span>{t.title_end}</h2>
         </div>
         <div className="testi-grid">
-          {TESTIMONIALS.map((t, i) => (
+          {TESTIMONIALS(t).map((item, i) => (
             <div key={i} className="testi-card">
               <div className="testi-stars">
                 {[0,1,2,3,4].map(s => <Icon.Star key={s} size={14} />)}
               </div>
-              <div className="testi-quote">« {t.quote} »</div>
+              <div className="testi-quote">« {item.quote} »</div>
               <div className="testi-meta">
-                <div className="testi-avatar" style={{ background: t.color }}>{t.initial}</div>
+                <div className="testi-avatar" style={{ background: item.color }}>{item.initial}</div>
                 <div>
-                  <div className="testi-name">{t.name}</div>
-                  <div className="testi-role">{t.role}</div>
+                  <div className="testi-name">{item.name}</div>
+                  <div className="testi-role">{item.role}</div>
                 </div>
               </div>
             </div>
@@ -123,26 +123,26 @@ function Testimonials() {
 }
 
 /* ===================== FAQ ===================== */
-const FAQ = [
-  { q: "Combien de temps avant de recevoir une offre ?", a: "Le délai médian est de 28 minutes. Sur les catégories Tech, Musique et Transport, la majorité des demandes reçoivent au moins 2 offres en moins de 15 minutes en journée." },
-  { q: "Comment fonctionne le paiement séquestré ?", a: "Quand vous acceptez une offre, votre carte est débitée mais l'argent reste bloqué chez Stripe. Le prestataire ne reçoit le paiement qu'après votre validation. Si rien ne va, on rembourse." },
-  { q: "Que se passe-t-il si je dois annuler ma demande ?", a: "Tant qu'aucune offre n'est acceptée, vous pouvez annuler sans frais. Une fois une offre acceptée, des conditions s'appliquent selon le délai et la catégorie." },
-  { q: "Les pros sont-ils vérifiés ?", a: "Tous les prestataires passent un KYC (identité + adresse) avant de pouvoir soumettre des offres. Les pros notés moins de 3,5/5 après 10 missions sont suspendus automatiquement." },
-  { q: "Quelle est la commission de la plateforme ?", a: "10 % du montant de la mission, retenue automatiquement sur le paiement du prestataire. Aucun frais caché côté client : le prix affiché par le pro est le prix que vous payez." },
-  { q: "Puis-je utiliser un code promo ?", a: "Les codes promo arrivent bientôt ! Inscrivez-vous sur la liste d'attente pour être notifié en priorité." },
+const FAQ = (t) => [
+  { q: t.q1, a: t.a1 },
+  { q: t.q2, a: t.a2 },
+  { q: t.q3, a: t.a3 },
+  { q: t.q4, a: t.a4 },
+  { q: t.q5, a: t.a5 },
+  { q: t.q6, a: t.a6 },
 ];
 
-function FAQSection() {
+function FAQSection({ t }) {
   const [open, setOpen] = _useState(0);
   return (
     <section className="section" id="faq" data-screen-label="08 FAQ">
       <div className="shell">
         <div className="section-head">
-          <span className="section-tag">·QUESTIONS·</span>
-          <h2 className="section-title">Les choses qu'on<br/>nous demande le plus.</h2>
+          <span className="section-tag">{t.tag}</span>
+          <h2 className="section-title">{t.title}</h2>
         </div>
         <div className="faq-wrap">
-          {FAQ.map((item, i) => (
+          {FAQ(t).map((item, i) => (
             <div key={i} className={"faq-item" + (open === i ? " open" : "")}>
               <button className="faq-q" onClick={() => setOpen(open === i ? -1 : i)}>
                 <span>{item.q}</span>
@@ -158,31 +158,31 @@ function FAQSection() {
 }
 
 /* ===================== FINAL CTA ===================== */
-function FinalCTA() {
+function FinalCTA({ t }) {
   return (
     <section className="section" data-screen-label="09 Final CTA" style={{ paddingBottom: 60 }}>
       <div className="shell">
         <div className="cta-block">
           <div className="cta-ticker">
-            <div className="row"><span>Pros en ligne</span><span className="v">1 247</span></div>
-            <div className="row"><span>Demandes ouvertes</span><span className="v">121</span></div>
-            <div className="row"><span>Délai médian</span><span className="v">28 min</span></div>
+            <div className="row"><span>{t.pros_online}</span><span className="v">1 247</span></div>
+            <div className="row"><span>{t.open_requests}</span><span className="v">121</span></div>
+            <div className="row"><span>{t.median_delay}</span><span className="v">28 min</span></div>
           </div>
           <div className="cta-inner">
             <div className="eyebrow" style={{ marginBottom: 24 }}>
               <span className="dot"></span>
-              C'EST URGENT ? ON EST DESSUS.
+              {t.tag}
             </div>
-            <h2>Décrivez ce qu'il vous faut.<br/><span className="accent">Un pro répond.</span></h2>
-            <p>Ça prend moins de 90 secondes pour publier une demande. Vous ne payez que si vous acceptez une offre.</p>
+            <h2>{t.title}<br/><span className="accent">{t.title_accent}</span></h2>
+            <p>{t.subtitle1} {t.subtitle2}</p>
             <div className="cta-actions">
               <a className="btn btn-primary btn-lg" href="#">
                 <Icon.Alert size={18} />
-                Lancer un SOS maintenant
+                {t.btn_primary}
                 <Icon.Arrow size={16} />
               </a>
               <a className="btn btn-ghost btn-lg" href="#pros">
-                Devenir prestataire
+                {t.btn_secondary}
               </a>
             </div>
           </div>
@@ -193,7 +193,7 @@ function FinalCTA() {
 }
 
 /* ===================== FOOTER ===================== */
-function Footer() {
+function Footer({ t }) {
   return (
     <footer className="footer" data-screen-label="10 Footer">
       <div className="shell">
@@ -203,7 +203,7 @@ function Footer() {
               <div className="brand-mark"><Icon.Alert size={20} /></div>
               <span className="brand-name">SOS<b>·BESOIN</b></span>
             </div>
-            <p>La place de marché pour vos besoins urgents. Prestataires vérifiés. Paiement séquestré. Aucune mauvaise surprise.</p>
+            <p>{t.tagline}</p>
             <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
               <a href="https://www.tiktok.com/@sosbesoin.ca" target="_blank" style={{ width: 36, height: 36, borderRadius: 10, border: '1px solid var(--line-2)', display: 'grid', placeItems: 'center', color: 'var(--text-dim)' }}>
                 <Icon.Twitter size={16} />
@@ -217,35 +217,35 @@ function Footer() {
             </div>
           </div>
           <div>
-            <h5>Plateforme</h5>
+            <h5>{t.platform}</h5>
             <ul>
-              <li><a href="#how">Comment ça marche</a></li>
-              <li><a href="#categories">Catégories</a></li>
-              <li><a href="#live">Demandes en direct</a></li>
-              <li><a href="#pros">Devenir prestataire</a></li>
-              <li><a href="https://app.sosbesoin.ca">Lancer un SOS</a></li>
+              <li><a href="#how">{t.how_it_works}</a></li>
+              <li><a href="#categories">{t.categories}</a></li>
+              <li><a href="#live">{t.live}</a></li>
+              <li><a href="#pros">{t.become_provider}</a></li>
+              <li><a href="https://app.sosbesoin.ca">{t.send_sos}</a></li>
             </ul>
           </div>
           <div>
-            <h5>Support</h5>
+            <h5>{t.support}</h5>
             <ul>
-              <li><a href="mailto:support@sosbesoin.ca">Contacter le support</a></li>
-              <li><a href="#faq">FAQ</a></li>
-              <li><a href="https://app.sosbesoin.ca">Accéder à l'app</a></li>
+              <li><a href="mailto:{t.support_email}">{t.contact}</a></li>
+              <li><a href="#faq">{t.faq}</a></li>
+              <li><a href="https://app.sosbesoin.ca">{t.access_app}</a></li>
             </ul>
           </div>
           <div>
-            <h5>Légal</h5>
+            <h5>{t.legal}</h5>
             <ul>
-              <li><a href="#">Conditions générales</a></li>
-              <li><a href="#">Politique de confidentialité</a></li>
-              <li><a href="#">Politique de remboursement</a></li>
-              <li><a href="#">Cookies</a></li>
+              <li><a href="#">{t.terms}</a></li>
+              <li><a href="#">{t.privacy}</a></li>
+              <li><a href="#">{t.refund}</a></li>
+              <li><a href="#">{t.cookies}</a></li>
             </ul>
           </div>
         </div>
         <div className="footer-bottom">
-          <span>© 2026 SOS-BESOIN · Une marque de Corbin Creative Tech Inc. · Tous droits réservés</span>
+          <span>{t.copyright}</span>
           <span>support@sosbesoin.ca · app.sosbesoin.ca</span>
         </div>
       </div>
@@ -268,6 +268,8 @@ const ACCENT_MAP = {
 };
 
 function App() {
+  const [lang, setLang] = React.useState("fr");
+  const tr = translations[lang];
   const hasTweaks = typeof useTweaks === 'function';
   const [t, setTweak] = hasTweaks ? useTweaks(DEFAULTS) : [DEFAULTS, () => {}];
 
@@ -290,18 +292,33 @@ function App() {
       <div className="bg-glow-a"></div>
       <div className="bg-glow-b"></div>
 
-      <Nav />
-      <Hero accent={t.accent} />
-      <Stats />
-      <Categories />
-      <HowItWorks />
-      <LiveBoard />
-      <ProvidersSection />
-      <Testimonials />
-      <FAQSection />
-      <FinalCTA />
-      <WaitlistSection />
-      <Footer />
+      <Nav t={tr.nav} lang={lang} setLang={setLang} />
+      <div style={{
+        position: 'sticky', top: 64, zIndex: 90, margin: '0 200px', borderRadius: 8,
+        background: 'rgba(132,204,22,0.12)',
+        backdropFilter: 'blur(8px)',
+        borderBottom: '1px solid rgba(132,204,22,0.3)',
+        padding: '10px 24px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+        fontSize: 13, color: 'var(--text-dim)',
+      }}>
+        <span>{tr.banner.text}</span>
+        <a href="#waitlist" style={{
+          color: '#84cc16', fontWeight: 700,
+          textDecoration: 'none', fontSize: 13,
+        }}>{tr.banner.cta}</a>
+      </div>
+      <Hero t={tr.hero} lang={lang} accent={t.accent} />
+      <Stats t={tr.stats} />
+      <Categories t={tr.categories} />
+      <HowItWorks t={tr.how} />
+      <LiveBoard t={tr.liveboard} />
+      <ProvidersSection t={tr.providers} />
+      <Testimonials t={tr.testimonials} />
+      <FAQSection t={tr.faq} />
+      <FinalCTA t={tr.cta} />
+      <WaitlistSection t={tr.waitlist_section} />
+      <Footer t={tr.footer} />
 
       {typeof TweaksPanel === 'function' && (
         <TweaksPanel title="Tweaks">

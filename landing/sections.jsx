@@ -2,7 +2,7 @@
 const { useState, useEffect, useRef } = React;
 
 /* ===================== NAV ===================== */
-function Nav() {
+function Nav({ t, lang, setLang }) {
   return (
     <nav className="nav" data-screen-label="Nav">
       <div className="shell nav-inner">
@@ -13,17 +13,22 @@ function Nav() {
           <span className="brand-name">SOS<b>·BESOIN</b></span>
         </a>
         <div className="nav-links">
-          <a href="#how">Comment ça marche</a>
-          <a href="#categories">Catégories</a>
-          <a href="#live">Demandes en direct</a>
-          <a href="#pros">Pour les pros</a>
-          <a href="#faq">FAQ</a>
+          <a href="#how">{t.how_it_works}</a>
+          <a href="#categories">{t.categories}</a>
+          <a href="#live">{t.live}</a>
+          <a href="#pros">{t.providers}</a>
+          <a href="#faq">{t.faq}</a>
         </div>
         <div className="nav-cta">
-          <a href="#" className="btn btn-ghost btn-sm">Connexion</a>
-          <a href="#" className="btn btn-primary btn-sm">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: 8 }}>
+            <button onClick={() => setLang('fr')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, color: lang === 'fr' ? 'var(--amber)' : 'var(--text-mute)', padding: '4px 2px' }}>FR</button>
+            <span style={{ color: 'var(--text-mute)', fontSize: 13 }}>|</span>
+            <button onClick={() => setLang('en')} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 700, color: lang === 'en' ? 'var(--amber)' : 'var(--text-mute)', padding: '4px 2px' }}>EN</button>
+          </div>
+          <a href="https://app.sosbesoin.ca/login" className="btn btn-ghost btn-sm">{t.login}</a>
+          <a href="https://app.sosbesoin.ca/requests/new" className="btn btn-primary btn-sm">
             <Icon.Alert size={14} />
-            Lancer un SOS
+            {t.sos_btn}
           </a>
         </div>
       </div>
@@ -95,7 +100,7 @@ function HeroFeed() {
   );
 }
 
-function Hero({ accent }) {
+function Hero({ t, lang, accent }) {
   return (
     <section className="hero" data-screen-label="01 Hero">
       <div className="shell hero-grid">
@@ -105,29 +110,28 @@ function Hero({ accent }) {
             ALERTE · 1 247 PROS EN LIGNE MAINTENANT
           </span>
           <h1 className="hero-title">
-            Un pro <span className="crossout">disponible</span><br/>
-            <span className="accent">en 30 minutes</span>,<br/>
-            quand c'est urgent.
+            {t.title} <span className="crossout">{t.title_cross ?? "disponible"}</span><br/>
+            <span className="accent">{t.title_accent}</span>,<br/>
+            {t.title_end}
           </h1>
           <p className="hero-sub">
-            Décrivez votre besoin. Les pros disponibles près de chez vous répondent en direct.
-            Paiement séquestré jusqu'à validation — vous ne payez que si tout s'est bien passé.
+            {t.subtitle}
           </p>
           <div className="hero-actions">
             <a className="btn btn-primary btn-lg" href="#">
               <Icon.Alert size={18} />
-              Lancer un SOS
+              {t.cta_primary}
               <Icon.Arrow size={16} />
             </a>
             <a className="btn btn-ghost btn-lg" href="#pros">
               <Icon.Users size={16} />
-              Devenir prestataire
+              {t.cta_secondary}
             </a>
           </div>
           <div className="hero-trust">
-            <span className="pip"><Icon.Shield size={14} />Paiement séquestré Stripe</span>
-            <span className="pip"><Icon.Check size={14} />Pros vérifiés (KYC)</span>
-            <span className="pip"><Icon.Clock size={14} />Support 7j/7</span>
+            <span className="pip"><Icon.Shield size={14} />{t.trust_1}</span>
+            <span className="pip"><Icon.Check size={14} />{t.trust_2}</span>
+            <span className="pip"><Icon.Clock size={14} />{t.trust_3}</span>
           </div>
         </div>
         <HeroFeed />
@@ -137,28 +141,28 @@ function Hero({ accent }) {
 }
 
 /* ===================== STATS ===================== */
-function Stats() {
+function Stats({ t }) {
   return (
     <section className="shell" data-screen-label="02 Stats">
       <div className="stats-strip">
         <div className="stat-cell">
           <div className="num amber">2 047</div>
-          <div className="lbl">Missions complétées</div>
+          <div className="lbl">{t.completed}</div>
           <Icon.Trend size={20} className="arrow" />
         </div>
         <div className="stat-cell">
           <div className="num cyan">28 min</div>
-          <div className="lbl">Délai moyen de réponse</div>
+          <div className="lbl">{t.response}</div>
           <Icon.Clock size={20} className="arrow" />
         </div>
         <div className="stat-cell">
           <div className="num amber">512</div>
-          <div className="lbl">Pros vérifiés actifs</div>
+          <div className="lbl">{t.providers}</div>
           <Icon.Shield size={20} className="arrow" />
         </div>
         <div className="stat-cell">
           <div className="num cyan">4.84</div>
-          <div className="lbl">Note moyenne / 5</div>
+          <div className="lbl">{t.rating}</div>
           <Icon.Star size={20} className="arrow" />
         </div>
       </div>
@@ -167,28 +171,28 @@ function Stats() {
 }
 
 /* ===================== CATEGORIES ===================== */
-const CATS = [
-  { name: "Tech & IT", icon: "Cpu", count: "37 demandes ouvertes", accent: "cyan" },
-  { name: "Musique & Événements", icon: "Music", count: "12 demandes ouvertes", accent: "amber" },
-  { name: "Réparations", icon: "Wrench", count: "21 demandes ouvertes", accent: "cyan" },
-  { name: "Transport & Livraison", icon: "Truck", count: "18 demandes ouvertes", accent: "amber" },
-  { name: "Cours & Formation", icon: "Book", count: "9 demandes ouvertes", accent: "cyan" },
-  { name: "Design & Création", icon: "Pen", count: "14 demandes ouvertes", accent: "amber" },
-  { name: "Traduction", icon: "Globe", count: "6 demandes ouvertes", accent: "cyan" },
-  { name: "Juridique & Admin", icon: "Gavel", count: "4 demandes ouvertes", accent: "amber" },
+const CATS = (t) => [
+  { name: t.cat_tech, icon: "Cpu", count: "37", accent: "cyan" },
+  { name: t.cat_music, icon: "Music", count: "12", accent: "amber" },
+  { name: t.cat_repair, icon: "Wrench", count: "21", accent: "cyan" },
+  { name: t.cat_transport, icon: "Truck", count: "18", accent: "amber" },
+  { name: t.cat_courses, icon: "Book", count: "9", accent: "cyan" },
+  { name: t.cat_design, icon: "Pen", count: "14", accent: "amber" },
+  { name: t.cat_translate, icon: "Globe", count: "6", accent: "cyan" },
+  { name: t.cat_legal, icon: "Gavel", count: "4", accent: "amber" },
 ];
 
-function Categories() {
+function Categories({ t }) {
   return (
     <section className="section" id="categories" data-screen-label="03 Categories">
       <div className="shell">
         <div className="section-head">
-          <span className="section-tag">·CAT_LIST·</span>
-          <h2 className="section-title">Toutes les urgences,<br/>au même endroit.</h2>
-          <p className="section-sub">Du serveur planté au DJ qui annule la veille — il y a un pro pour ça.</p>
+          <span className="section-tag">{t.tag}</span>
+          <h2 className="section-title">{t.title}<br/>{t.title_accent}</h2>
+          <p className="section-sub">{t.subtitle}</p>
         </div>
         <div className="cats-grid">
-          {CATS.map(c => {
+          {CATS(t).map(c => {
             const I = Icon[c.icon];
             return (
               <div key={c.name} className={"cat-card " + c.accent}>
@@ -208,35 +212,35 @@ function Categories() {
 }
 
 /* ===================== HOW IT WORKS ===================== */
-const STEPS_CLIENT = [
-  { icon: "Send", t: "Publiez", d: "Décrivez votre besoin, choisissez une ou plusieurs catégories, indiquez quand." },
-  { icon: "Eye", t: "Recevez des offres", d: "Les pros disponibles vous envoient leur prix et leur dispo en direct." },
-  { icon: "Check", t: "Acceptez & payez", d: "Sélectionnez la meilleure offre. Paiement séquestré, sécurisé." },
-  { icon: "Star", t: "Validez", d: "Une fois la mission terminée, validez et notez le prestataire." },
+const STEPS_CLIENT = (t) => [
+  { icon: "Send", title: t.client_step1_title, d: t.client_step1_desc },
+  { icon: "Eye", title: t.client_step2_title, d: t.client_step2_desc },
+  { icon: "Check", title: t.client_step3_title, d: t.client_step3_desc },
+  { icon: "Star", title: t.client_step4_title, d: t.client_step4_desc },
 ];
-const STEPS_PRO = [
-  { icon: "Search", t: "Trouvez", d: "Parcourez les demandes ouvertes filtrées par catégorie et localisation." },
-  { icon: "Tag", t: "Soumettez votre offre", d: "Proposez votre prix et un court message au client." },
-  { icon: "Bolt", t: "Réalisez", d: "Si le client accepte, vous êtes notifié et la mission démarre." },
-  { icon: "Heart", t: "Encaissez", d: "Paiement transféré automatiquement après validation. Commission 10%." },
+const STEPS_PRO = (t) => [
+  { icon: "Search", title: t.pro_step1_title, d: t.pro_step1_desc },
+  { icon: "Tag", title: t.pro_step2_title, d: t.pro_step2_desc },
+  { icon: "Bolt", title: t.pro_step3_title, d: t.pro_step3_desc },
+  { icon: "Heart", title: t.pro_step4_title, d: t.pro_step4_desc },
 ];
 
-function HowItWorks() {
+function HowItWorks({ t }) {
   const [tab, setTab] = useState("client");
-  const steps = tab === "client" ? STEPS_CLIENT : STEPS_PRO;
+  const steps = tab === "client" ? STEPS_CLIENT(t) : STEPS_PRO(t);
   return (
     <section className="section" id="how" data-screen-label="04 How it works" style={{ paddingTop: 60 }}>
       <div className="shell">
         <div className="section-head">
-          <span className="section-tag">·WORKFLOW·</span>
-          <h2 className="section-title">Quatre étapes.<br/><span style={{ color: tab === 'client' ? 'var(--amber)' : 'var(--cyan-2)', transition: 'color .2s' }}>Pas une de plus.</span></h2>
+          <span className="section-tag">{t.tag}</span>
+          <h2 className="section-title">{t.title}<br/><span style={{ color: tab === 'client' ? 'var(--amber)' : 'var(--cyan-2)', transition: 'color .2s' }}>{t.title_accent}</span></h2>
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 28 }}>
             <div className="how-tabs">
               <button className={"how-tab client" + (tab === 'client' ? " active" : "")} onClick={() => setTab('client')}>
-                <Icon.Alert size={14} /> Pour les clients
+                <Icon.Alert size={14} /> {t.tab_client}
               </button>
               <button className={"how-tab pro" + (tab === 'pro' ? " active" : "")} onClick={() => setTab('pro')}>
-                <Icon.Users size={14} /> Pour les prestataires
+                <Icon.Users size={14} /> {t.tab_pro}
               </button>
             </div>
           </div>
@@ -249,7 +253,7 @@ function HowItWorks() {
               <div key={i} className={"step-card" + (tab === 'pro' ? ' pro' : '')}>
                 <div className="step-num">{i + 1}</div>
                 <div className="step-icon"><I size={18} /></div>
-                <div className="step-title">{s.t}</div>
+                <div className="step-title">{s.title}</div>
                 <div className="step-desc">{s.d}</div>
               </div>
             );
@@ -272,31 +276,31 @@ const LIVE_REQUESTS = [
   { time: "il y a 31 min", title: "Photographe événement corporatif vendredi", loc: "Centre-ville · 1 km", tag: "musique", cat: "Création", price: 480, urg: "Vendredi" },
 ];
 
-const LIVE_FILTERS = [
-  { k: "all", label: "Toutes", n: 121 },
-  { k: "tech", label: "Tech & IT", n: 37 },
-  { k: "musique", label: "Musique", n: 12 },
-  { k: "transport", label: "Transport", n: 18 },
-  { k: "réparation", label: "Réparation", n: 21 },
-  { k: "cours", label: "Cours", n: 9 },
+const LIVE_FILTERS = (t) => [
+  { k: "all", label: t.filter_all, n: 121 },
+  { k: "tech", label: t.filter_tech, n: 37 },
+  { k: "musique", label: t.filter_music, n: 12 },
+  { k: "transport", label: t.filter_transport, n: 18 },
+  { k: "réparation", label: t.filter_repair, n: 21 },
+  { k: "cours", label: t.filter_courses, n: 9 },
 ];
 
-function LiveBoard() {
+function LiveBoard({ t }) {
   const [filter, setFilter] = useState("all");
   const rows = filter === "all" ? LIVE_REQUESTS : LIVE_REQUESTS.filter(r => r.tag === filter);
   return (
     <section className="section" id="live" data-screen-label="05 Live board">
       <div className="shell">
         <div className="section-head">
-          <span className="section-tag">·LIVE_FEED·</span>
-          <h2 className="section-title">Ce qui s'est lancé<br/>dans les dernières minutes.</h2>
-          <p className="section-sub">Aperçu en temps réel des demandes ouvertes. Connectez-vous pour soumettre une offre.</p>
+          <span className="section-tag">{t.tag}</span>
+          <h2 className="section-title">{t.title}<br/>{t.title_accent}</h2>
+          <p className="section-sub">{t.subtitle}</p>
         </div>
         <div className="live-board">
           <aside className="lb-sidebar">
-            <div className="lbl">Filtres</div>
+            <div className="lbl">{t.filters}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {LIVE_FILTERS.map(f => (
+              {LIVE_FILTERS(t).map(f => (
                 <button key={f.k} className={"lb-filter" + (filter === f.k ? " active" : "")} onClick={() => setFilter(f.k)}>
                   <span>{f.label}</span>
                   <span className="count">{f.n}</span>
@@ -305,15 +309,15 @@ function LiveBoard() {
             </div>
             <div style={{ marginTop: 28, padding: 16, borderRadius: 12, border: '1px dashed var(--line-2)', fontSize: 13, color: 'var(--text-dim)' }}>
               <Icon.Bolt size={16} style={{ color: 'var(--amber)', marginBottom: 8 }} />
-              <div style={{ fontWeight: 600, color: 'var(--text)' }}>Mode pro</div>
-              <div style={{ marginTop: 4 }}>Recevez les nouvelles demandes par notification.</div>
-              <a href="#pros" style={{ color: 'var(--cyan-2)', fontSize: 13, fontWeight: 500, marginTop: 8, display: 'inline-block' }}>Devenir prestataire →</a>
+              <div style={{ fontWeight: 600, color: 'var(--text)' }}>{t.pro_mode}</div>
+              <div style={{ marginTop: 4 }}>{t.pro_mode_desc}</div>
+              <a href="#pros" style={{ color: 'var(--cyan-2)', fontSize: 13, fontWeight: 500, marginTop: 8, display: 'inline-block' }}>{t.become_provider}</a>
             </div>
           </aside>
           <div className="lb-feed">
             <div className="lb-feed-head">
-              <div className="lb-status"><span className="pulse"></span>Direct · mise à jour il y a quelques secondes</div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-mute)' }}>{rows.length} résultats</span>
+              <div className="lb-status"><span className="pulse"></span>{t.live_status}</div>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-mute)' }}>{rows.length} {t.results}</span>
             </div>
             <div>
               {rows.map((r, i) => (
@@ -335,7 +339,7 @@ function LiveBoard() {
   );
 }
 /* ===================== WAITLIST ===================== */
-function WaitlistSection() {
+function WaitlistSection({ t }) {
   const [email, setEmail]   = React.useState('');
   const [name, setName]     = React.useState('');
   const [role, setRole]     = React.useState('client');
@@ -398,12 +402,12 @@ function WaitlistSection() {
           padding: '48px 40px',
           textAlign: 'center',
         }}>
-          <span className="section-tag" style={{ marginBottom: 16 }}>·LISTE_D_ATTENTE·</span>
+          <span className="section-tag" style={{ marginBottom: 16 }}>{t.tag}</span>
           <h2 style={{ fontSize: 32, marginBottom: 12 }}>
-            Soyez parmi les <span style={{ color: 'var(--amber)' }}>premiers.</span>
+            {t.title}<span style={{ color: 'var(--amber)' }}>{t.title_accent}</span>
           </h2>
           <p style={{ color: 'var(--text-dim)', marginBottom: 32, lineHeight: 1.6 }}>
-            L'app arrive bientôt. Inscrivez-vous pour être notifié en priorité et obtenir un accès anticipé.
+            {t.subtitle}
           </p>
 
           {count !== null && count > 0 && (
@@ -425,7 +429,7 @@ function WaitlistSection() {
                 fontSize: 14,
                 fontWeight: 600,
               }}>
-                {count} personne{count > 1 ? 's' : ''} déjà inscrite{count > 1 ? 's' : ''}
+                {count} {t.count_label}
               </span>
             </div>
           )}
@@ -441,7 +445,7 @@ function WaitlistSection() {
               fontFamily: 'var(--font-mono)',
               fontSize: 14,
             }}>
-              ✅ Vous êtes sur la liste ! On vous contacte dès le lancement.
+              {t.success} On vous contacte dès le lancement.
             </div>
           ) : status === 'duplicate' ? (
             <div style={{
@@ -458,7 +462,7 @@ function WaitlistSection() {
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <input
                 type="text"
-                placeholder="Votre prénom"
+                placeholder={t.name_placeholder}
                 value={name}
                 onChange={e => setName(e.target.value)}
                 style={{
@@ -473,7 +477,7 @@ function WaitlistSection() {
               />
               <input
                 type="email"
-                placeholder="Votre courriel"
+                placeholder={t.email_placeholder}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
@@ -505,7 +509,7 @@ function WaitlistSection() {
                       cursor: 'pointer',
                     }}
                   >
-                    {r === 'client' ? '🔍 Je cherche un pro' : '💼 Je suis prestataire'}
+                    {r === 'client' ? `🔍 ${t.role_client}` : `💼 ${t.role_provider}`}
                   </button>
                 ))}
               </div>
@@ -515,7 +519,7 @@ function WaitlistSection() {
                 className="btn btn-primary"
                 style={{ marginTop: 8, height: 48, fontSize: 15, fontWeight: 700 }}
               >
-                {status === 'loading' ? 'Inscription...' : "M'inscrire sur la liste d'attente →"}
+                {status === 'loading' ? (t.loading ?? 'Inscription...') : t.submit_btn}
               </button>
               {status === 'error' && (
                 <p style={{ color: 'var(--red)', fontSize: 13 }}>
