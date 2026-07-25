@@ -294,7 +294,7 @@ function App() {
 
       <Nav t={tr.nav} lang={lang} setLang={setLang} />
       <div style={{
-        position: 'sticky', top: 64, zIndex: 90, margin: '0 200px', borderRadius: 8,
+        position: 'sticky', top: 64, zIndex: 90, margin: '8px 200px', borderRadius: 8,
         background: 'rgba(132,204,22,0.12)',
         backdropFilter: 'blur(8px)',
         borderBottom: '1px solid rgba(132,204,22,0.3)',
