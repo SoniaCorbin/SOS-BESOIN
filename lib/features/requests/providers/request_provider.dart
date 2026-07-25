@@ -38,24 +38,69 @@ final myRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
       .toList();
 });
 
-// ── Provider demandes ouvertes (live feed) ────────────────
-final openRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
+// ── Provider demandes ouvertes (live feed, temps réel) ────
+// StreamProvider: l'écran d'accueil prestataire se rafraîchit
+// automatiquement dès qu'une nouvelle demande est créée, sans
+// action de l'utilisateur (auparavant FutureProvider = un seul
+// chargement au montage de l'écran).
+final openRequestsProvider = StreamProvider<List<RequestModel>>((ref) {
   ref.watch(authProvider);
 
   final userId = _client.auth.currentUser?.id;
-  if (userId == null) return [];
+  if (userId == null) return Stream.value(<RequestModel>[]);
 
-  final data = await _client
+  // Le realtime Supabase ne permet qu'un seul filtre réseau (.eq) ;
+  // l'exclusion des demandes du client et le tri/limite se font
+  // donc côté client dans le .map().
+  return _client
       .from('requests')
-      .select()
+      .stream(primaryKey: ['id'])
       .eq('status', 'open')
-      .neq('client_id', userId) // exclure ses propres demandes
-      .order('created_at', ascending: false)
-      .limit(20);
+      .map((rows) {
+    final list = rows
+        .where((r) => r['client_id'] != userId)
+        .map((e) => RequestModel.fromMap(e))
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list.take(20).toList();
+  });
+});
+// ── Compteurs "mes demandes" du client (dérivés de myRequestsProvider) ──
+class ClientRequestStats {
+  final int total;
+  final int completed;
+  final int inProgress;
 
-  return (data as List)
-      .map((e) => RequestModel.fromMap(e))
-      .toList();
+  const ClientRequestStats({
+    required this.total,
+    required this.completed,
+    required this.inProgress,
+  });
+}
+
+final clientRequestStatsProvider = Provider<AsyncValue<ClientRequestStats>>((ref) {
+  final requestsAsync = ref.watch(myRequestsProvider);
+  return requestsAsync.whenData((requests) => ClientRequestStats(
+    total:      requests.length,
+    completed:  requests.where((r) => r.status == 'completed').length,
+    inProgress: requests.where((r) => r.status == 'in_progress').length,
+  ));
+});
+
+// ── Compteur d'offres en attente sur les demandes du client ────────
+// StreamProvider: la RLS 'offers_client_read' limite déjà les lignes
+// visibles aux offres sur les demandes du client connecté — pas besoin
+// de filtre supplémentaire ici, Supabase s'en charge.
+final pendingOffersCountProvider = StreamProvider<int>((ref) {
+  ref.watch(authProvider);
+
+  final userId = _client.auth.currentUser?.id;
+  if (userId == null) return Stream.value(0);
+
+  return _client
+      .from('offers')
+      .stream(primaryKey: ['id'])
+      .map((rows) => rows.where((o) => o['status'] == 'pending').length);
 });
 
 // ── Provider missions du prestataire ─────────────────────

@@ -47,6 +47,31 @@ class NotificationService {
     FirebaseMessaging.onMessage.listen((message) {
       debugPrint('Foreground message: ${message.notification?.title}');
     });
+
+    // Au démarrage de l'app, le token peut être récupéré AVANT que
+    // l'utilisateur soit connecté (session pas encore restaurée, ou
+    // écran de login). Dans ce cas _saveToken ci-dessus ne fait rien
+    // (userId == null). On écoute donc les changements d'auth pour
+    // sauvegarder le token dès qu'une session devient active
+    // (connexion, inscription, restauration de session).
+    _client.auth.onAuthStateChange.listen((data) async {
+      if (data.session != null) {
+        await _saveCurrentToken();
+      }
+    });
+  }
+
+  // ── Récupérer le token courant et le sauvegarder ─────
+  static Future<void> _saveCurrentToken() async {
+    if (kIsWeb) return;
+    try {
+      final token = await _messaging.getToken();
+      if (token != null) {
+        await _saveToken(token);
+      }
+    } catch (e) {
+      debugPrint('Erreur récupération token FCM: $e');
+    }
   }
 
   // ── Envoyer une notification ─────────────────────────

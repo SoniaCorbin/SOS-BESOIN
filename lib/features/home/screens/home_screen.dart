@@ -7,6 +7,8 @@ import '../../../../core/router/app_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../requests/providers/request_provider.dart';
+import '../../requests/models/request_model.dart';
+import '../../requests/screens/request_detail_screen.dart' show requestOffersProvider;
 import '../../../../core/services/geolocation_service.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -253,6 +255,10 @@ class _ClientDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(authProvider).user;
+    final statsAsync = ref.watch(clientRequestStatsProvider);
+    final pendingOffers = ref
+        .watch(pendingOffersCountProvider)
+        .maybeWhen(data: (n) => n, orElse: () => 0);
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -277,13 +283,33 @@ class _ClientDashboard extends ConsumerWidget {
           const SizedBox(height: 28),
           Row(
             children: [
-              _StatChip(icon: Icons.history_rounded, label: 'stat_requests'.tr(), value: '0', color: AppColors.amber),
+              _StatChip(
+                icon: Icons.history_rounded,
+                label: 'stat_requests'.tr(),
+                value: statsAsync.maybeWhen(
+                    data: (s) => '${s.total}', orElse: () => '0'),
+                color: AppColors.amber,
+              ),
               const SizedBox(width: 12),
-              _StatChip(icon: Icons.check_circle_outline_rounded, label: 'stat_completed'.tr(), value: '0', color: AppColors.green),
+              _StatChip(
+                icon: Icons.check_circle_outline_rounded,
+                label: 'stat_completed'.tr(),
+                value: statsAsync.maybeWhen(
+                    data: (s) => '${s.completed}', orElse: () => '0'),
+                color: AppColors.green,
+              ),
               const SizedBox(width: 12),
-              _StatChip(icon: Icons.pending_outlined, label: 'stat_in_progress'.tr(), value: '0', color: AppColors.cyan),
+              _StatChip(
+                icon: Icons.pending_outlined,
+                label: 'stat_in_progress'.tr(),
+                value: statsAsync.maybeWhen(
+                    data: (s) => '${s.inProgress}', orElse: () => '0'),
+                color: AppColors.cyan,
+              ),
             ],
           ),
+          const SizedBox(height: 12),
+          _PendingOffersBanner(count: pendingOffers),
           const SizedBox(height: 32),
           Text('home_popular_categories'.tr(),
               style: const TextStyle(
@@ -318,6 +344,83 @@ class _ClientDashboard extends ConsumerWidget {
           const SizedBox(height: 16),
           const _MyRequestsList(),
           const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+}
+
+// Bandeau "Offres en attente" — distinct visuellement des 3 carrés de
+// stats historiques : il s'illumine (fond/bordure amber + icône pleine)
+// quand des offres attendent une réponse, et reste discret sinon.
+class _PendingOffersBanner extends StatelessWidget {
+  final int count;
+  const _PendingOffersBanner({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasPending = count > 0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: hasPending ? AppColors.amberSoft : AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: hasPending ? AppColors.amber : AppColors.line2,
+          width: hasPending ? 1.5 : 1,
+        ),
+        boxShadow: hasPending
+            ? [
+          BoxShadow(
+            color: AppColors.amber.withValues(alpha: 0.25),
+            blurRadius: 16,
+            spreadRadius: 1,
+          ),
+        ]
+            : null,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            hasPending
+                ? Icons.local_offer_rounded
+                : Icons.local_offer_outlined,
+            size: 20,
+            color: hasPending ? AppColors.amber : AppColors.textMute,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              hasPending
+                  ? 'stat_pending_offers'.tr(namedArgs: {'count': '$count'})
+                  : 'stat_no_pending_offers'.tr(),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: hasPending ? FontWeight.w700 : FontWeight.w500,
+                color: hasPending ? AppColors.amber : AppColors.textMute,
+              ),
+            ),
+          ),
+          if (hasPending)
+            Container(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.amber,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '$count',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.bg,
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -420,76 +523,215 @@ class _ProviderMissionsList extends ConsumerWidget {
         ),
       )
           : Column(
-        children: requests.map((r) => GestureDetector(
-          onTap: () => context.push('/request/${r.id}'),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                  color: r.status == 'in_progress'
-                      ? AppColors.cyan
-                      : AppColors.line2),
+        children: requests
+            .map((r) => _ProviderMissionCard(request: r))
+            .toList(),
+      ),
+    );
+  }
+}
+
+// Carte d'une demande du client, avec badge "offres reçues" mis à jour
+// en temps réel (via requestOffersProvider) — visible sans avoir à
+// cliquer sur la demande.
+class _MyRequestCard extends ConsumerWidget {
+  final RequestModel request;
+  const _MyRequestCard({required this.request});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final r = request;
+    final offersCount = ref
+        .watch(requestOffersProvider(r.id))
+        .maybeWhen(data: (offers) => offers.length, orElse: () => 0);
+    final hasNewOffers = r.status == 'open' && offersCount > 0;
+
+    return GestureDetector(
+      onTap: () => context.push('/request/${r.id}'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+                color: hasNewOffers ? AppColors.amber : AppColors.line2,
+                width: hasNewOffers ? 1.5 : 1)),
+        child: Row(
+          children: [
+            Container(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                  color: AppColors.amberSoft,
+                  borderRadius: BorderRadius.circular(8)),
+              child: Text(r.category.toUpperCase(),
+                  style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.amber)),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: AppColors.cyanSoft,
-                      borderRadius: BorderRadius.circular(8)),
-                  child: Text(r.category.toUpperCase(),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(r.title,
                       style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.cyan)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(r.title,
-                          style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.text),
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 2),
-                      Text(r.location,
-                          style: const TextStyle(
-                              fontSize: 12, color: AppColors.textMute)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: r.status == 'in_progress'
-                        ? AppColors.cyanSoft
-                        : AppColors.greenSoft,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    r.status == 'in_progress'
-                        ? 'status_in_progress'.tr()
-                        : 'status_open'.tr(),
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: r.status == 'in_progress'
-                            ? AppColors.cyan
-                            : AppColors.green),
-                  ),
-                ),
-              ],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.text),
+                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(r.location,
+                      style: const TextStyle(
+                          fontSize: 12, color: AppColors.textMute)),
+                ],
+              ),
             ),
-          ),
-        )).toList(),
+            if (hasNewOffers) ...[
+              Container(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.amber,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.local_offer_rounded,
+                        size: 11, color: AppColors.bg),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$offersCount',
+                      style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.bg),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Container(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: r.status == 'open'
+                    ? AppColors.greenSoft
+                    : AppColors.surface2,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                r.status == 'open'
+                    ? 'status_open'.tr()
+                    : r.status == 'cancelled'
+                    ? 'request_status_cancelled'.tr()
+                    : r.status,
+                style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: r.status == 'open'
+                        ? AppColors.green
+                        : AppColors.textMute),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProviderMissionCard extends StatelessWidget {
+  final RequestModel request;
+  const _ProviderMissionCard({required this.request});
+
+  @override
+  Widget build(BuildContext context) {
+    final r = request;
+    return GestureDetector(
+      onTap: () => context.push('/request/${r.id}'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.line2),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.cyanSoft,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                r.category.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.cyan,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    r.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.text,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    r.location,
+                    style: const TextStyle(fontSize: 12, color: AppColors.textMute),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: r.status == 'open'
+                    ? AppColors.greenSoft
+                    : r.status == 'in_progress'
+                    ? AppColors.cyanSoft
+                    : AppColors.surface2,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                r.status == 'open'
+                    ? 'status_open'.tr()
+                    : r.status == 'in_progress'
+                    ? 'status_in_progress'.tr()
+                    : r.status == 'cancelled'
+                    ? 'request_status_cancelled'.tr()
+                    : r.status,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: r.status == 'open'
+                      ? AppColors.green
+                      : r.status == 'in_progress'
+                      ? AppColors.cyan
+                      : AppColors.textMute,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -530,72 +772,7 @@ class _MyRequestsList extends ConsumerWidget {
         ),
       )
           : Column(
-        children: requests.map((r) => GestureDetector(
-          onTap: () => context.push('/request/${r.id}'),
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.line2)),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                      color: AppColors.amberSoft,
-                      borderRadius: BorderRadius.circular(8)),
-                  child: Text(r.category.toUpperCase(),
-                      style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.amber)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(r.title,
-                          style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.text),
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 2),
-                      Text(r.location,
-                          style: const TextStyle(
-                              fontSize: 12, color: AppColors.textMute)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: r.status == 'open'
-                        ? AppColors.greenSoft
-                        : AppColors.surface2,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    r.status == 'open'
-                        ? 'status_open'.tr()
-                        : (r.status ?? 'status_unknown'.tr()),
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: r.status == 'open'
-                            ? AppColors.green
-                            : AppColors.textMute),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        )).toList(),
+        children: requests.map((r) => _MyRequestCard(request: r)).toList(),
       ),
     );
   }

@@ -10,26 +10,35 @@ import '../models/request_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../../../core/services/payment_service.dart';
+import '../../../../core/notifications/notification_service.dart';
 
 final _client = Supabase.instance.client;
 
 final requestDetailProvider =
-FutureProvider.family<RequestModel, String>((ref, id) async {
-  final data = await _client.from('requests').select().eq('id', id).single();
-  return RequestModel.fromMap(data);
+StreamProvider.family<RequestModel, String>((ref, id) {
+  return _client
+      .from('requests')
+      .stream(primaryKey: ['id'])
+      .eq('id', id)
+      .map((rows) {
+        if (rows.isEmpty) throw Exception('Request not found');
+        return RequestModel.fromMap(rows.first);
+      });
 });
 
+// StreamProvider: le client voit les offres apparaître (et leur statut
+// changer) en temps réel, sans avoir à quitter/revenir sur l'écran.
+// (auparavant FutureProvider = un seul chargement au montage de l'écran)
 final requestOffersProvider =
-FutureProvider.family<List<Map<String, dynamic>>, String>((ref, id) async {
-  print('FETCHING OFFERS FOR: $id');
-  try {
-    final offersData = await _client
-        .from('offers')
-        .select()
-        .eq('request_id', id)
-        .order('created_at', ascending: false);
-
-    final offers = List<Map<String, dynamic>>.from(offersData);
+StreamProvider.family<List<Map<String, dynamic>>, String>((ref, id) {
+  return _client
+      .from('offers')
+      .stream(primaryKey: ['id'])
+      .eq('request_id', id)
+      .asyncMap((offersData) async {
+    final offers = List<Map<String, dynamic>>.from(offersData)
+      ..sort((a, b) => (b['created_at'] as String)
+          .compareTo(a['created_at'] as String));
 
     for (int i = 0; i < offers.length; i++) {
       final providerId = offers[i]['provider_id'] as String;
@@ -44,13 +53,8 @@ FutureProvider.family<List<Map<String, dynamic>>, String>((ref, id) async {
         offers[i] = {...offers[i], 'profiles': null};
       }
     }
-
-    print('OFFRES RESULT: $offers');
     return offers;
-  } catch (e) {
-    print('OFFRES ERROR: $e');
-    rethrow;
-  }
+  });
 });
 
 class RequestDetailScreen extends ConsumerWidget {
@@ -191,8 +195,11 @@ class RequestDetailScreen extends ConsumerWidget {
                     isClient: !isProvider,
                     requestId: requestId,
                     onAccepted: () {
-                      ref.refresh(requestOffersProvider(requestId));
-                      ref.refresh(requestDetailProvider(requestId));
+                      ref.invalidate(requestOffersProvider(requestId));
+                      ref.invalidate(requestDetailProvider(requestId));
+                    },
+                    onWithdrawn: () {
+                      ref.invalidate(requestOffersProvider(requestId));
                     },
                   ),
                   childCount: offers.length,
@@ -237,7 +244,7 @@ class RequestDetailScreen extends ConsumerWidget {
       builder: (_) => _OfferSheet(
         requestId: requestId,
         onSubmitted: () {
-          ref.refresh(requestOffersProvider(requestId));
+          ref.invalidate(requestOffersProvider(requestId));
           Navigator.pop(context);
         },
       ),
@@ -245,13 +252,17 @@ class RequestDetailScreen extends ConsumerWidget {
   }
 }
 
-class _RequestCard extends StatelessWidget {
+class _RequestCard extends ConsumerWidget {
   final RequestModel request;
 
   const _RequestCard({required this.request});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isOwner =
+        request.clientId == Supabase.instance.client.auth.currentUser?.id;
+    final canManage = isOwner && request.status == 'open';
+
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
@@ -289,22 +300,70 @@ class _RequestCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: request.status == 'open'
                       ? AppColors.greenSoft
+                      : request.status == 'cancelled'
+                      ? AppColors.redSoft
                       : AppColors.surface2,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   request.status == 'open'
                       ? 'request_status_open'.tr()
+                      : request.status == 'cancelled'
+                      ? 'request_status_cancelled'.tr()
                       : request.status,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: request.status == 'open'
                         ? AppColors.green
+                        : request.status == 'cancelled'
+                        ? AppColors.red
                         : AppColors.textMute,
                   ),
                 ),
               ),
+              if (canManage) ...[
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert_rounded,
+                      color: AppColors.textMute, size: 20),
+                  color: AppColors.surface2,
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _showEditSheet(context, ref);
+                    } else if (value == 'cancel') {
+                      _cancelRequest(context, ref);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.edit_outlined,
+                              size: 16, color: AppColors.textDim),
+                          const SizedBox(width: 8),
+                          Text('request_edit_btn'.tr(),
+                              style:
+                              const TextStyle(color: AppColors.text)),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'cancel',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.cancel_outlined,
+                              size: 16, color: AppColors.red),
+                          const SizedBox(width: 8),
+                          Text('request_cancel_btn'.tr(),
+                              style: const TextStyle(color: AppColors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 14),
@@ -360,6 +419,80 @@ class _RequestCard extends StatelessWidget {
     );
   }
 
+  void _showEditSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _EditRequestSheet(
+        request: request,
+        onSaved: () {
+          ref.invalidate(requestDetailProvider(request.id));
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  Future<void> _cancelRequest(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'request_cancel_dialog_title'.tr(),
+          style: const TextStyle(
+              color: AppColors.text, fontFamily: 'SpaceGrotesk'),
+        ),
+        content: Text(
+          'request_cancel_dialog_content'.tr(),
+          style: const TextStyle(color: AppColors.textDim),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('cancel'.tr(),
+                style: const TextStyle(color: AppColors.textMute)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
+            child: Text('request_cancel_confirm_btn'.tr()),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await Supabase.instance.client
+          .from('requests')
+          .update({'status': 'cancelled'}).eq('id', request.id);
+
+      ref.invalidate
+        (requestDetailProvider(request.id));
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('request_cancelled_snack'.tr()),
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${'chat_error'.tr()}$e')),
+        );
+      }
+    }
+  }
+
   String _urgencyLabel(String urgency) {
     switch (urgency) {
       case 'asap':     return 'request_urgency_asap'.tr();
@@ -395,17 +528,252 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
+class _EditRequestSheet extends ConsumerStatefulWidget {
+  final RequestModel request;
+  final VoidCallback onSaved;
+
+  const _EditRequestSheet({
+    required this.request,
+    required this.onSaved,
+  });
+
+  @override
+  ConsumerState<_EditRequestSheet> createState() => _EditRequestSheetState();
+}
+
+class _EditRequestSheetState extends ConsumerState<_EditRequestSheet> {
+  late final _titleCtrl =
+  TextEditingController(text: widget.request.title);
+  late final _descCtrl =
+  TextEditingController(text: widget.request.description);
+  late final _budgetCtrl = TextEditingController(
+      text: widget.request.budget?.toStringAsFixed(0) ?? '');
+  late String _urgency = widget.request.urgency;
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _titleCtrl.dispose();
+    _descCtrl.dispose();
+    _budgetCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_titleCtrl.text.trim().length < 10 ||
+        _descCtrl.text.trim().length < 20) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('request_min_10'.tr())),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    try {
+      final budgetText = _budgetCtrl.text.trim();
+      double? budget;
+      if (budgetText.isNotEmpty) {
+        budget = double.tryParse(budgetText);
+        if (budget == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('request_budget_invalid'.tr())),
+            );
+            setState(() => _loading = false);
+          }
+          return;
+        }
+      }
+
+      await _client.from('requests').update({
+        'title':       _titleCtrl.text.trim(),
+        'description': _descCtrl.text.trim(),
+        'budget':      budget,
+        'urgency':     _urgency,
+      }).eq('id', widget.request.id);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('request_edit_saved'.tr()),
+            backgroundColor: AppColors.green,
+          ),
+        );
+        widget.onSaved();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${'chat_error'.tr()}$e')),
+        );
+      }
+    }
+
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.line2,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'request_edit_sheet_title'.tr(),
+                style: const TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _titleCtrl,
+                style: const TextStyle(color: AppColors.text),
+                decoration: InputDecoration(
+                  labelText: 'request_title_label'.tr(),
+                  hintText: 'request_title_hint'.tr(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _descCtrl,
+                style: const TextStyle(color: AppColors.text),
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: 'request_desc_label'.tr(),
+                  hintText: 'request_desc_hint'.tr(),
+                  alignLabelWithHint: true,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _budgetCtrl,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: AppColors.text),
+                decoration: InputDecoration(
+                  labelText: 'request_budget_label'.tr(),
+                  hintText: 'request_budget_hint'.tr(),
+                  prefixIcon: const Icon(Icons.attach_money_rounded,
+                      color: AppColors.textMute),
+                  suffixText: '\$',
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'request_urgency_label'.tr(),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textDim,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: kUrgencies.map((u) {
+                  final isSelected = _urgency == u['id'];
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _urgency = u['id']!),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? AppColors.amberSoft
+                              : AppColors.surface2,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.amber
+                                : AppColors.line2,
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(u['emoji']!,
+                                style: const TextStyle(fontSize: 16)),
+                            const SizedBox(height: 4),
+                            Text(
+                              u['label']!,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: isSelected
+                                    ? AppColors.amber
+                                    : AppColors.textMute,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (!_loading) _save();
+                  },
+                  child: _loading
+                      ? const SizedBox(
+                    width: 20, height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.bg,
+                    ),
+                  )
+                      : Text('request_edit_save_btn'.tr()),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _OfferCard extends StatelessWidget {
   final Map<String, dynamic> offer;
   final bool isClient;
   final String requestId;
   final VoidCallback onAccepted;
+  final VoidCallback onWithdrawn;
 
   const _OfferCard({
     required this.offer,
     required this.isClient,
     required this.requestId,
     required this.onAccepted,
+    required this.onWithdrawn,
   });
 
   @override
@@ -421,6 +789,9 @@ class _OfferCard extends StatelessWidget {
     final initials = name.split(' ').length >= 2
         ? '${name.split(' ')[0][0]}${name.split(' ')[1][0]}'.toUpperCase()
         : name.substring(0, 2).toUpperCase();
+
+    final currentUserId = _client.auth.currentUser?.id;
+    final isOwnOffer = !isClient && offer['provider_id'] == currentUserId;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
@@ -552,6 +923,37 @@ class _OfferCard extends StatelessWidget {
               ),
             ),
           ),
+          if (isOwnOffer && status == 'pending') ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showEditSheet(context),
+                    icon: const Icon(Icons.edit_outlined, size: 15),
+                    label: Text('offer_edit_btn'.tr()),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.textDim,
+                      side: const BorderSide(color: AppColors.line2),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _withdrawOffer(context),
+                    icon: const Icon(Icons.remove_circle_outline_rounded,
+                        size: 15),
+                    label: Text('offer_withdraw_btn'.tr()),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.red,
+                      side: const BorderSide(color: AppColors.red),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (isClient && status == 'pending') ...[
             const SizedBox(height: 12),
             SizedBox(
@@ -629,6 +1031,74 @@ class _OfferCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _showEditSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _EditOfferSheet(
+        offer: offer,
+        onSaved: () => Navigator.pop(context),
+      ),
+    );
+  }
+
+  Future<void> _withdrawOffer(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'offer_withdraw_dialog_title'.tr(),
+          style: const TextStyle(
+              color: AppColors.text, fontFamily: 'SpaceGrotesk'),
+        ),
+        content: Text(
+          'offer_withdraw_dialog_content'.tr(),
+          style: const TextStyle(color: AppColors.textDim),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('cancel'.tr(),
+                style: const TextStyle(color: AppColors.textMute)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
+            child: Text('offer_withdraw_confirm_btn'.tr()),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await _client.from('offers').delete().eq('id', offer['id'] as String);
+
+      onWithdrawn();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('offer_withdrawn_snack'.tr()),
+            backgroundColor: AppColors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${'chat_error'.tr()}$e')),
+        );
+      }
+    }
   }
 
   Future<void> _payAndAccept(BuildContext context) async {
@@ -867,6 +1337,179 @@ class _OfferCard extends StatelessWidget {
   }
 }
 
+class _EditOfferSheet extends ConsumerStatefulWidget {
+  final Map<String, dynamic> offer;
+  final VoidCallback onSaved;
+
+  const _EditOfferSheet({
+    required this.offer,
+    required this.onSaved,
+  });
+
+  @override
+  ConsumerState<_EditOfferSheet> createState() => _EditOfferSheetState();
+}
+
+class _EditOfferSheetState extends ConsumerState<_EditOfferSheet> {
+  late final _priceCtrl = TextEditingController(
+      text: (widget.offer['price'] as num).toDouble().toStringAsFixed(0));
+  late final _messageCtrl =
+  TextEditingController(text: widget.offer['message'] as String);
+  late final _availCtrl =
+  TextEditingController(text: widget.offer['availability'] as String);
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _priceCtrl.dispose();
+    _messageCtrl.dispose();
+    _availCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (_priceCtrl.text.isEmpty ||
+        _messageCtrl.text.isEmpty ||
+        _availCtrl.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('offer_all_fields_required'.tr())),
+      );
+      return;
+    }
+
+    final price = double.tryParse(_priceCtrl.text);
+    if (price == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('request_budget_invalid'.tr())),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    try {
+      await _client.from('offers').update({
+        'price':        price,
+        'message':      _messageCtrl.text.trim(),
+        'availability': _availCtrl.text.trim(),
+      }).eq('id', widget.offer['id'] as String);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('offer_edit_saved'.tr()),
+            backgroundColor: AppColors.green,
+          ),
+        );
+        widget.onSaved();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${'chat_error'.tr()}$e')),
+        );
+      }
+    }
+
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SingleChildScrollView(
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.line2,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'offer_edit_sheet_title'.tr(),
+                style: const TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text,
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _priceCtrl,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: AppColors.text),
+                decoration: InputDecoration(
+                  labelText: 'offer_price_label'.tr(),
+                  prefixIcon: const Icon(Icons.attach_money_rounded,
+                      color: AppColors.textMute),
+                  suffixText: '\$',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _availCtrl,
+                style: const TextStyle(color: AppColors.text),
+                decoration: InputDecoration(
+                  labelText: 'offer_availability_label'.tr(),
+                  hintText: 'offer_availability_hint'.tr(),
+                  prefixIcon: const Icon(Icons.schedule_rounded,
+                      color: AppColors.textMute),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _messageCtrl,
+                style: const TextStyle(color: AppColors.text),
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'offer_message_label'.tr(),
+                  hintText: 'offer_message_hint'.tr(),
+                  prefixIcon: const Icon(Icons.message_outlined,
+                      color: AppColors.textMute),
+                  alignLabelWithHint: true,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (!_loading) _save();
+                  },
+                  child: _loading
+                      ? const SizedBox(
+                    width: 20, height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.bg,
+                    ),
+                  )
+                      : Text('offer_edit_save_btn'.tr()),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _OfferSheet extends ConsumerStatefulWidget {
   final String requestId;
   final VoidCallback onSubmitted;
@@ -917,6 +1560,21 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
         'availability': _availCtrl.text.trim(),
         'status':       'pending',
       });
+
+      try {
+        final req = await _client
+            .from('requests')
+            .select('client_id, title')
+            .eq('id', widget.requestId)
+            .single();
+        await NotificationService.sendNotification(
+          userId: req['client_id'] as String,
+          title: 'notif_new_offer_title'.tr(),
+          body: 'notif_new_offer_body'
+              .tr(namedArgs: {'title': req['title'] as String}),
+          data: {'request_id': widget.requestId},
+        );
+      } catch (_) {}
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
