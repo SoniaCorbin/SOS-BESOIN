@@ -42,3 +42,19 @@ final providerInvoicesProvider = FutureProvider<List<InvoiceModel>>((ref) async 
       .map((e) => InvoiceModel.fromMap(e))
       .toList();
 });
+
+// ── Revenu du prestataire pour le mois en cours ───────────
+// Dérivé de providerInvoicesProvider : somme de providerAmount
+// (montant net après frais de plateforme) pour les factures du
+// mois calendaire courant.
+final providerMonthlyRevenueProvider = Provider<AsyncValue<double>>((ref) {
+  final invoicesAsync = ref.watch(providerInvoicesProvider);
+  final now = DateTime.now();
+
+  return invoicesAsync.whenData((invoices) => invoices
+      .where((inv) =>
+  inv.status == 'paid' &&
+      inv.createdAt.year == now.year &&
+      inv.createdAt.month == now.month)
+      .fold<double>(0, (sum, inv) => sum + inv.providerAmount));
+});
