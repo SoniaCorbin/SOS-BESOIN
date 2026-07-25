@@ -22,7 +22,7 @@ export default function PrivacyPage() {
             <section>
               <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>1. Responsable du traitement</h2>
               <p>Corbin Creative Tech Inc. (NEQ : 1182286402), ayant son siège au 1231 Rue De La Relève, Saint-Lazare, Québec, J7T 3G2, est responsable du traitement de vos renseignements personnels conformément à la <strong style={{ color: 'var(--text)' }}>Loi 25</strong> (Loi modernisant des dispositions législatives en matière de protection des renseignements personnels) et à la Loi sur la protection des renseignements personnels et les documents électroniques (LPRPDE).</p>
-              <p style={{ marginTop: 8 }}>Pour toute question relative à la protection de vos renseignements personnels, contactez notre responsable de la protection des renseignements personnels : <a href="mailto:sosbesoinapp@outlook.com" style={{ color: 'var(--amber)' }}>sosbesoinapp@outlook.com</a></p>
+              <p style={{ marginTop: 8 }}>Pour toute question relative à la protection de vos renseignements personnels, contactez notre responsable de la protection des renseignements personnels : <a href="mailto:support@sosbesoin.ca" style={{ color: 'var(--amber)' }}>support@sosbesoin.ca</a></p>
             </section>
 
             <section>
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
                 <li><strong style={{ color: 'var(--text)' }}>Retrait du consentement :</strong> à tout moment, sans préjudice</li>
                 <li><strong style={{ color: 'var(--text)' }}>Plainte :</strong> auprès de la Commission d'accès à l'information du Québec</li>
               </ul>
-              <p style={{ marginTop: 8 }}>Pour exercer vos droits : <a href="mailto:sosbesoinapp@outlook.com" style={{ color: 'var(--amber)' }}>sosbesoinapp@outlook.com</a></p>
+              <p style={{ marginTop: 8 }}>Pour exercer vos droits : <a href="mailto:support@sosbesoin.ca" style={{ color: 'var(--amber)' }}>support@sosbesoin.ca</a></p>
             </section>
 
             <section>
@@ -124,7 +124,7 @@ export default function PrivacyPage() {
                 <strong style={{ color: 'var(--text)' }}>Responsable de la protection des renseignements personnels</strong><br />
                 Corbin Creative Tech Inc.<br />
                 1231 Rue De La Relève, Saint-Lazare, Québec, J7T 3G2<br />
-                <a href="mailto:sosbesoinapp@outlook.com" style={{ color: 'var(--amber)' }}>sosbesoinapp@outlook.com</a><br />
+                <a href="mailto:support@sosbesoin.ca" style={{ color: 'var(--amber)' }}>support@sosbesoin.ca</a><br />
                 NEQ : 1182286402
               </p>
             </section>

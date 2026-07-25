@@ -96,7 +96,7 @@ export default function TermsPage() {
               <p>
                 <strong style={{ color: 'var(--text)' }}>Corbin Creative Tech Inc.</strong><br />
                 1231 Rue De La Relève, Saint-Lazare, Québec, J7T 3G2<br />
-                <a href="mailto:sosbesoinapp@outlook.com" style={{ color: 'var(--amber)' }}>sosbesoinapp@outlook.com</a><br />
+                <a href="mailto:support@sosbesoin.ca" style={{ color: 'var(--amber)' }}>support@sosbesoin.ca</a><br />
                 NEQ : 1182286402
               </p>
             </section>

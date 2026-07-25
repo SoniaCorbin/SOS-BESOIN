@@ -56,7 +56,7 @@ export default function RefundPage() {
 
             <section>
               <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)', marginBottom: 12 }}>6. Comment demander un remboursement</h2>
-              <p>Contactez notre support à <a href="mailto:sosbesoinapp@outlook.com" style={{ color: 'var(--amber)' }}>sosbesoinapp@outlook.com</a> en indiquant :</p>
+              <p>Contactez notre support à <a href="mailto:support@sosbesoin.ca" style={{ color: 'var(--amber)' }}>support@sosbesoin.ca</a> en indiquant :</p>
               <ul style={{ marginTop: 8, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <li>Votre numéro de demande</li>
                 <li>La raison de votre demande de remboursement</li>

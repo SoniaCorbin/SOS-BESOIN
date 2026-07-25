@@ -246,7 +246,7 @@ function Footer({ t }) {
         </div>
         <div className="footer-bottom">
           <span>{t.copyright}</span>
-          <span>sosbesoinapp@outlook.com · app.sosbesoin.ca</span>
+          <span>support@sosbesoin.ca · app.sosbesoin.ca</span>
         </div>
       </div>
     </footer>

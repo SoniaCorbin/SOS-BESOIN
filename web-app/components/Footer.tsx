@@ -77,7 +77,7 @@ export default function Footer() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
                 { label: t('help_center'), href: '#' },
-                { label: t('contact'), href: 'mailto:sosbesoinapp@outlook.com' },
+                { label: t('contact'), href: 'mailto:support@sosbesoin.ca' },
                 { label: t('faq'), href: '#faq' },
                 { label: t('access_app'), href: 'https://app.sosbesoin.ca' },
               ].map(link => (

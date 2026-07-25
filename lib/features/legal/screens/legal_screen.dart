@@ -117,7 +117,7 @@ Corbin Creative Tech Inc. se réserve le droit de modifier les présentes condit
 13. CONTACT
 Corbin Creative Tech Inc.
 1231 Rue De La Relève, Saint-Lazare, Québec, J7T 3G2
-sosbesoinapp@outlook.com
+support@sosbesoin.ca
 NEQ : 1182286402
 ''';
 
@@ -128,7 +128,7 @@ Dernière mise à jour : 23 juin 2026
 1. RESPONSABLE DU TRAITEMENT
 Corbin Creative Tech Inc. (NEQ : 1182286402), ayant son siège au 1231 Rue De La Relève, Saint-Lazare, Québec, J7T 3G2, est responsable du traitement de vos renseignements personnels conformément à la Loi 25 (Loi modernisant des dispositions législatives en matière de protection des renseignements personnels) et à la Loi sur la protection des renseignements personnels et les documents électroniques (LPRPDE).
 
-Pour toute question relative à la protection de vos renseignements personnels, contactez notre responsable : sosbesoinapp@outlook.com
+Pour toute question relative à la protection de vos renseignements personnels, contactez notre responsable : support@sosbesoin.ca
 
 2. RENSEIGNEMENTS COLLECTÉS
 Nous collectons les renseignements suivants :
@@ -177,7 +177,7 @@ Conformément à la Loi 25, vous avez le droit de :
 - Retrait du consentement : à tout moment, sans préjudice
 - Plainte : auprès de la Commission d'accès à l'information du Québec
 
-Pour exercer vos droits : sosbesoinapp@outlook.com
+Pour exercer vos droits : support@sosbesoin.ca
 
 8. SÉCURITÉ
 Nous mettons en œuvre des mesures de sécurité appropriées :
@@ -198,7 +198,7 @@ Toute modification importante de cette politique sera communiquée par notificat
 Responsable de la protection des renseignements personnels
 Corbin Creative Tech Inc.
 1231 Rue De La Relève, Saint-Lazare, Québec, J7T 3G2
-sosbesoinapp@outlook.com
+support@sosbesoin.ca
 NEQ : 1182286402
 ''';
 
@@ -229,7 +229,7 @@ Si le client ne valide pas la mission dans les 3 jours suivant la complétion, l
 
 5. PROCÉDURE DE REMBOURSEMENT
 Pour demander un remboursement :
-1. Contactez-nous à sosbesoinapp@outlook.com dans les 7 jours suivant l'incident
+1. Contactez-nous à support@sosbesoin.ca dans les 7 jours suivant l'incident
 2. Indiquez votre numéro de demande et une description détaillée du problème
 3. Notre équipe examinera votre demande dans un délai de 5 jours ouvrables
 4. Si approuvé, le remboursement sera effectué sur votre mode de paiement original dans un délai de 5 à 10 jours ouvrables
@@ -242,7 +242,7 @@ Les frais de service de Corbin Creative Tech Inc. ne sont pas remboursables une 
 
 8. CONTACT
 Corbin Creative Tech Inc.
-sosbesoinapp@outlook.com
+support@sosbesoin.ca
 Délai de réponse : 2 jours ouvrables
 ''';
 }
