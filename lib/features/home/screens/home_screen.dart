@@ -10,6 +10,7 @@ import '../../requests/providers/request_provider.dart';
 import '../../requests/models/request_model.dart';
 import '../../requests/screens/request_detail_screen.dart' show requestOffersProvider;
 import '../../../../core/services/geolocation_service.dart';
+import '../../invoices/providers/invoice_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -427,12 +428,16 @@ class _PendingOffersBanner extends StatelessWidget {
   }
 }
 
-class _ProviderDashboard extends StatelessWidget {
+class _ProviderDashboard extends ConsumerWidget {
   final dynamic user;
   const _ProviderDashboard({required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final monthlyRevenue = ref
+        .watch(providerMonthlyRevenueProvider)
+        .maybeWhen(data: (v) => v, orElse: () => 0.0);
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -456,7 +461,7 @@ class _ProviderDashboard extends StatelessWidget {
           const SizedBox(height: 28),
           Row(
             children: [
-              _StatChip(icon: Icons.attach_money_rounded, label: 'stat_this_month'.tr(), value: '0\$', color: AppColors.green),
+              _StatChip(icon: Icons.attach_money_rounded, label: 'stat_this_month'.tr(), value: '${monthlyRevenue.toStringAsFixed(0)}\$', color: AppColors.green),
               const SizedBox(width: 12),
               _StatChip(icon: Icons.star_rounded, label: 'stat_rating'.tr(), value: user?.rating.toStringAsFixed(1) ?? '—', color: AppColors.amber),
               const SizedBox(width: 12),
