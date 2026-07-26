@@ -10,6 +10,7 @@ import '../models/request_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../../../core/services/payment_service.dart';
+import '../../invoices/providers/invoice_provider.dart';
 import '../../../../core/notifications/notification_service.dart';
 
 final _client = Supabase.instance.client;
@@ -413,6 +414,32 @@ class _RequestCard extends ConsumerWidget {
                 label: timeago.format(request.createdAt, locale: 'fr'),
               ),
             ],
+          ),
+          Consumer(
+            builder: (context, ref, _) {
+              final invoiceAsync =
+              ref.watch(invoiceForRequestProvider(request.id));
+              return invoiceAsync.maybeWhen(
+                data: (invoice) => invoice == null
+                    ? const SizedBox()
+                    : Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () =>
+                          context.push('/invoice/${invoice.id}'),
+                      icon: const Icon(Icons.receipt_long_outlined,
+                          size: 16),
+                      label: Text('request_view_invoice_btn'.tr()),
+                      style: TextButton.styleFrom(
+                          foregroundColor: AppColors.amber),
+                    ),
+                  ),
+                ),
+                orElse: () => const SizedBox(),
+              );
+            },
           ),
         ],
       ),

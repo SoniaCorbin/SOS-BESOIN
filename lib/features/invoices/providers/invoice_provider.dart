@@ -58,3 +58,18 @@ final providerMonthlyRevenueProvider = Provider<AsyncValue<double>>((ref) {
       inv.createdAt.month == now.month)
       .fold<double>(0, (sum, inv) => sum + inv.providerAmount));
 });
+
+// ── Facture liée à un SOS donné (s'il y en a une) ─────────
+// Utilisé pour afficher un bouton "Voir la facture" sur l'écran de
+// détail du SOS quand une facture existe déjà pour cette demande.
+final invoiceForRequestProvider =
+FutureProvider.family<InvoiceModel?, String>((ref, requestId) async {
+  final data = await _client
+      .from('invoices')
+      .select()
+      .eq('request_id', requestId)
+      .maybeSingle();
+
+  if (data == null) return null;
+  return InvoiceModel.fromMap(data);
+});
