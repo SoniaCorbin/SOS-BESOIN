@@ -114,6 +114,8 @@
   "stat_this_month": "Ce mois",
   "stat_rating": "Note",
   "stat_missions": "Missions",
+  "invoice_view_sos_btn": "Voir le SOS",
+  "request_view_invoice_btn": "Voir la facture",
   "stat_pending_offers": "{count} offre(s) en attente de réponse",
   "stat_no_pending_offers": "Aucune offre en attente",
   "status_open": "Ouvert",

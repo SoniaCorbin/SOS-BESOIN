@@ -154,7 +154,17 @@ class InvoiceDetailScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () => context.push('/request/${invoice.requestId}'),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: Text('invoice_view_sos_btn'.tr()),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.amber),
+                ),
+              ),
+              const SizedBox(height: 8),
               _Section(
                 title: 'invoice_section_parties'.tr(),
                 children: [
