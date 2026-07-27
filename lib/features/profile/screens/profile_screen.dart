@@ -8,6 +8,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../auth/models/user_model.dart';
 import '../../../../core/router/app_router.dart';
 import '../../../../core/services/geolocation_service.dart';
+import '../../requests/providers/request_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -26,6 +27,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   double? _longitude;
   bool _locating   = false;
   int _maxDistanceKm = 50;
+  Set<String> _selectedCategories = {};
 
   @override
   void initState() {
@@ -36,6 +38,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _latitude       = user?.latitude;
     _longitude      = user?.longitude;
     _maxDistanceKm  = user?.maxDistanceKm ?? 50;
+    _selectedCategories = (user?.providerCategories ?? []).toSet();
   }
 
   @override
@@ -85,6 +88,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         'latitude':        _latitude,
         'longitude':       _longitude,
         'max_distance_km': _maxDistanceKm,
+        'provider_categories':
+            _selectedCategories.isEmpty ? null : _selectedCategories.toList(),
       }).eq('id', userId!);
 
       await ref.read(authProvider.notifier).init();
@@ -424,6 +429,87 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         onChanged: (val) =>
                             setState(() => _maxDistanceKm = val.round()),
                       ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Icon(Icons.category_outlined,
+                              size: 16, color: AppColors.textMute),
+                          const SizedBox(width: 8),
+                          Text(
+                            'profile_categories_label'.tr(),
+                            style: const TextStyle(
+                                fontSize: 13, color: AppColors.textDim),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _selectedCategories.isEmpty
+                            ? 'profile_categories_all'.tr()
+                            : 'profile_categories_hint'.tr(),
+                        style: const TextStyle(
+                            fontSize: 11, color: AppColors.textMute),
+                      ),
+                      const SizedBox(height: 10),
+                      Builder(builder: (context) {
+                        final categoriesAsync =
+                        ref.watch(categoriesProvider);
+                        return categoriesAsync.when(
+                          loading: () => const SizedBox(),
+                          error: (_, __) => const SizedBox(),
+                          data: (categories) => Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: categories.map((cat) {
+                              final isSelected =
+                              _selectedCategories.contains(cat.slug);
+                              return GestureDetector(
+                                onTap: () => setState(() {
+                                  if (isSelected) {
+                                    _selectedCategories.remove(cat.slug);
+                                  } else {
+                                    _selectedCategories.add(cat.slug);
+                                  }
+                                }),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.cyanSoft
+                                        : AppColors.surface2,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? AppColors.cyan
+                                          : AppColors.line2,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(cat.emoji,
+                                          style:
+                                          const TextStyle(fontSize: 13)),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        cat.label,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: isSelected
+                                              ? AppColors.cyan
+                                              : AppColors.textDim,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        );
+                      }),
                     ],
                   ],
                 ],
