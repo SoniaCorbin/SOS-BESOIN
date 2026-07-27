@@ -18,9 +18,13 @@ final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
       .toList();
 });
 
+// ── Toggle "Actifs / Archivés" pour la liste du client ────
+final showArchivedRequestsProvider = StateProvider<bool>((ref) => false);
+
 // ── Provider demandes du client connecté ──────────────────
 final myRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
   ref.watch(authProvider);
+  final showArchived = ref.watch(showArchivedRequestsProvider);
 
   final userId = _client.auth.currentUser?.id;
   if (userId == null) return [];
@@ -29,14 +33,21 @@ final myRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
       .from('requests')
       .select()
       .eq('client_id', userId)
+      .eq('archived_by_client', showArchived)
       .order('created_at', ascending: false);
-
-  print('MY REQUESTS DATA: $data');
 
   return (data as List)
       .map((e) => RequestModel.fromMap(e))
       .toList();
 });
+
+// ── Archiver / désarchiver un SOS (côté client) ───────────
+Future<void> setRequestArchivedByClient(String requestId, bool archived) async {
+  await _client
+      .from('requests')
+      .update({'archived_by_client': archived})
+      .eq('id', requestId);
+}
 
 // ── Provider demandes ouvertes (live feed, temps réel) ────
 // StreamProvider: l'écran d'accueil prestataire se rafraîchit
@@ -84,13 +95,28 @@ class ClientRequestStats {
   });
 }
 
-final clientRequestStatsProvider = Provider<AsyncValue<ClientRequestStats>>((ref) {
-  final requestsAsync = ref.watch(myRequestsProvider);
-  return requestsAsync.whenData((requests) => ClientRequestStats(
-    total:      requests.length,
-    completed:  requests.where((r) => r.status == 'completed').length,
-    inProgress: requests.where((r) => r.status == 'in_progress').length,
-  ));
+final clientRequestStatsProvider = FutureProvider<ClientRequestStats>((ref) async {
+  ref.watch(authProvider);
+
+  final userId = _client.auth.currentUser?.id;
+  if (userId == null) {
+    return const ClientRequestStats(total: 0, completed: 0, inProgress: 0);
+  }
+
+  // Indépendant du toggle Actifs/Archivés — les stats reflètent
+  // toujours l'ensemble des SOS actifs (non archivés) du client.
+  final data = await _client
+      .from('requests')
+      .select('status')
+      .eq('client_id', userId)
+      .eq('archived_by_client', false);
+
+  final rows = data as List;
+  return ClientRequestStats(
+    total:      rows.length,
+    completed:  rows.where((r) => r['status'] == 'completed').length,
+    inProgress: rows.where((r) => r['status'] == 'in_progress').length,
+  );
 });
 
 // ── Compteur d'offres en attente sur les demandes du client ────────
@@ -109,9 +135,12 @@ final pendingOffersCountProvider = StreamProvider<int>((ref) {
       .map((rows) => rows.where((o) => o['status'] == 'pending').length);
 });
 
-// ── Provider missions du prestataire ─────────────────────
+// ── Toggle "Actifs / Archivés" pour la liste du prestataire ────
+final showArchivedMissionsProvider = StateProvider<bool>((ref) => false);
+
 final myProviderRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
   ref.watch(authProvider);
+  final showArchived = ref.watch(showArchivedMissionsProvider);
 
   final userId = _client.auth.currentUser?.id;
   if (userId == null) return [];
@@ -131,12 +160,21 @@ final myProviderRequestsProvider = FutureProvider<List<RequestModel>>((ref) asyn
       .from('requests')
       .select()
       .inFilter('id', requestIds)
+      .eq('archived_by_provider', showArchived)
       .order('created_at', ascending: false);
 
   return (data as List)
       .map((e) => RequestModel.fromMap(e))
       .toList();
 });
+
+// ── Archiver / désarchiver une mission (côté prestataire) ─
+Future<void> setRequestArchivedByProvider(String requestId, bool archived) async {
+  await _client
+      .from('requests')
+      .update({'archived_by_provider': archived})
+      .eq('id', requestId);
+}
 
 // ── Notifier pour créer une demande ──────────────────────
 class RequestNotifier extends StateNotifier<AsyncValue<void>> {

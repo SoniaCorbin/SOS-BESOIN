@@ -13,6 +13,8 @@ class RequestModel {
   final DateTime expiresAt;
   final double? latitude;
   final double? longitude;
+  final bool archivedByClient;
+  final bool archivedByProvider;
 
 
   const RequestModel({
@@ -30,6 +32,8 @@ class RequestModel {
     required this.expiresAt,
     this.latitude,
     this.longitude,
+    this.archivedByClient = false,
+    this.archivedByProvider = false,
   });
 
   factory RequestModel.fromMap(Map<String, dynamic> map) => RequestModel(
@@ -47,6 +51,8 @@ class RequestModel {
     expiresAt:    DateTime.parse(map['expires_at'] as String),
     latitude:     (map['latitude'] as num?)?.toDouble(),
     longitude:    (map['longitude'] as num?)?.toDouble(),
+    archivedByClient:   map['archived_by_client'] as bool? ?? false,
+    archivedByProvider: map['archived_by_provider'] as bool? ?? false,
   );
 
   Map<String, dynamic> toMap() => {
@@ -61,6 +67,8 @@ class RequestModel {
     'status':       status,
     'latitude':     latitude,
     'longitude':    longitude,
+    'archived_by_client':   archivedByClient,
+    'archived_by_provider': archivedByProvider,
   };
 }
 
