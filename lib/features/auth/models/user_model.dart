@@ -17,6 +17,7 @@ class AppUser {
   final double? latitude;
   final double? longitude;
   final int maxDistanceKm;
+  final List<String>? providerCategories;
 
   const AppUser({
     required this.id,
@@ -34,6 +35,7 @@ class AppUser {
     this.latitude,
     this.longitude,
     this.maxDistanceKm = 50,
+    this.providerCategories,
     required this.createdAt,
   });
 
@@ -55,6 +57,9 @@ class AppUser {
     latitude:  (map['latitude'] as num?)?.toDouble(),
     longitude: (map['longitude'] as num?)?.toDouble(),
     maxDistanceKm: map['max_distance_km'] as int? ?? 50,
+    providerCategories: (map['provider_categories'] as List?)
+        ?.map((e) => e as String)
+        .toList(),
     createdAt:      DateTime.parse(map['created_at'] as String),
   );
 
@@ -75,9 +80,9 @@ class AppUser {
     'latitude':  latitude,
     'longitude': longitude,
     'max_distance_km': maxDistanceKm,
+    'provider_categories': providerCategories,
     'created_at':       createdAt.toIso8601String(),
   };
-
   // ── CopyWith ─────────────────────────────────────────
   AppUser copyWith({
     String? fullName,

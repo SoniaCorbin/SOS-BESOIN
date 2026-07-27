@@ -44,14 +44,18 @@ final myRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
 // action de l'utilisateur (auparavant FutureProvider = un seul
 // chargement au montage de l'écran).
 final openRequestsProvider = StreamProvider<List<RequestModel>>((ref) {
-  ref.watch(authProvider);
+  final authState = ref.watch(authProvider);
 
   final userId = _client.auth.currentUser?.id;
   if (userId == null) return Stream.value(<RequestModel>[]);
 
+  // Filtre catégories du prestataire (null/vide = toutes catégories).
+  final myCategories = authState.user?.providerCategories;
+  final hasCategoryFilter = myCategories != null && myCategories.isNotEmpty;
+
   // Le realtime Supabase ne permet qu'un seul filtre réseau (.eq) ;
-  // l'exclusion des demandes du client et le tri/limite se font
-  // donc côté client dans le .map().
+  // l'exclusion des demandes du client, le filtre catégories et le
+  // tri/limite se font donc côté client dans le .map().
   return _client
       .from('requests')
       .stream(primaryKey: ['id'])
@@ -59,6 +63,8 @@ final openRequestsProvider = StreamProvider<List<RequestModel>>((ref) {
       .map((rows) {
     final list = rows
         .where((r) => r['client_id'] != userId)
+        .where((r) =>
+    !hasCategoryFilter || myCategories!.contains(r['category']))
         .map((e) => RequestModel.fromMap(e))
         .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));

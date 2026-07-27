@@ -6,6 +6,21 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY")!;
 
 const serviceAccount = JSON.parse(Deno.env.get("FIREBASE_SERVICE_ACCOUNT")!);
 
+function haversineDistance(
+  lat1: number, lon1: number, lat2: number, lon2: number
+): number {
+  const R = 6371; // rayon de la Terre en km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 async function getAccessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   const payload = {
@@ -139,8 +154,45 @@ serve(async (req) => {
       }
     }
 
-    // ── Nouveau message → notifier le destinataire ───
-    if (table === "messages" && type === "INSERT") {
+    // ── Nouveau SOS → notifier les prestataires à proximité ──
+        if (table === "requests" && type === "INSERT") {
+          if (record.latitude != null && record.longitude != null) {
+            const { data: providers } = await supabase
+              .from("profiles")
+              .select("id, fcm_token, latitude, longitude, max_distance_km, provider_categories")
+              .eq("role", "provider")
+              .not("fcm_token", "is", null)
+              .not("latitude", "is", null)
+              .not("longitude", "is", null);
+
+            if (providers) {
+              for (const provider of providers) {
+                const distanceKm = haversineDistance(
+                  record.latitude, record.longitude,
+                  provider.latitude, provider.longitude
+                );
+
+                const maxDist = provider.max_distance_km ?? 50;
+                if (distanceKm > maxDist) continue;
+
+                const categories: string[] | null = provider.provider_categories;
+                if (categories && categories.length > 0 && !categories.includes(record.category)) {
+                  continue;
+                }
+
+                await sendPushNotification(
+                  provider.fcm_token,
+                  "🚨 Nouveau SOS près de vous",
+                  record.title,
+                  { type: "new_request", request_id: record.id }
+                );
+              }
+            }
+          }
+        }
+
+        // ── Nouveau message → notifier le destinataire ───
+        if (table === "messages" && type === "INSERT") {
       const { data: offer } = await supabase
         .from("offers")
         .select("*, requests(title, client_id)")
