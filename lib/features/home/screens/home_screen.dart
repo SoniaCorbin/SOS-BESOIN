@@ -11,6 +11,7 @@ import '../../requests/models/request_model.dart';
 import '../../requests/screens/request_detail_screen.dart' show requestOffersProvider;
 import '../../../../core/services/geolocation_service.dart';
 import '../../invoices/providers/invoice_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -336,12 +337,18 @@ class _ClientDashboard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 32),
-          Text('home_recent_requests'.tr(),
-              style: const TextStyle(
-                  fontFamily: 'SpaceGrotesk',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.text)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('home_recent_requests'.tr(),
+                  style: const TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.text)),
+              _ArchiveToggle(provider: showArchivedRequestsProvider),
+            ],
+          ),
           const SizedBox(height: 16),
           const _MyRequestsList(),
           const SizedBox(height: 100),
@@ -478,12 +485,18 @@ class _ProviderDashboard extends ConsumerWidget {
           const SizedBox(height: 16),
           const _OpenRequestsList(),
           const SizedBox(height: 32),
-          Text('home_my_missions'.tr(),
-              style: const TextStyle(
-                  fontFamily: 'SpaceGrotesk',
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.text)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('home_my_missions'.tr(),
+                  style: const TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.text)),
+              _ArchiveToggle(provider: showArchivedMissionsProvider),
+            ],
+          ),
           const SizedBox(height: 16),
           const _ProviderMissionsList(),
           const SizedBox(height: 100),
@@ -499,6 +512,7 @@ class _ProviderMissionsList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final requestsAsync = ref.watch(myProviderRequestsProvider);
+    final isArchivedView = ref.watch(showArchivedMissionsProvider);
 
     return requestsAsync.when(
       loading: () => const Center(
@@ -518,10 +532,16 @@ class _ProviderMissionsList extends ConsumerWidget {
             border: Border.all(color: AppColors.line2)),
         child: Column(
           children: [
-            const Icon(Icons.search_off_rounded,
+            Icon(
+                isArchivedView
+                    ? Icons.archive_outlined
+                    : Icons.search_off_rounded,
                 size: 40, color: AppColors.textMute),
             const SizedBox(height: 12),
-            Text('home_no_missions'.tr(),
+            Text(
+                isArchivedView
+                    ? 'mission_no_archived'.tr()
+                    : 'home_no_missions'.tr(),
                 style: const TextStyle(
                     color: AppColors.textMute, fontSize: 14)),
           ],
@@ -550,6 +570,7 @@ class _MyRequestCard extends ConsumerWidget {
         .watch(requestOffersProvider(r.id))
         .maybeWhen(data: (offers) => offers.length, orElse: () => 0);
     final hasNewOffers = r.status == 'open' && offersCount > 0;
+    final isArchivedView = ref.watch(showArchivedRequestsProvider);
 
     return GestureDetector(
       onTap: () => context.push('/request/${r.id}'),
@@ -643,20 +664,52 @@ class _MyRequestCard extends ConsumerWidget {
                         : AppColors.textMute),
               ),
             ),
+            const SizedBox(width: 4),
+            IconButton(
+              onPressed: () => _toggleArchive(context, ref, r.id, isArchivedView),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              icon: Icon(
+                isArchivedView
+                    ? Icons.unarchive_outlined
+                    : Icons.archive_outlined,
+                size: 16,
+                color: AppColors.textMute,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+
+  Future<void> _toggleArchive(
+      BuildContext context, WidgetRef ref, String requestId, bool currentlyArchived) async {
+    await setRequestArchivedByClient(requestId, !currentlyArchived);
+    ref.invalidate(myRequestsProvider);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(currentlyArchived
+              ? 'request_unarchived_snack'.tr()
+              : 'request_archived_snack'.tr()),
+          backgroundColor: AppColors.surface2,
+        ),
+      );
+    }
+  }
 }
 
-class _ProviderMissionCard extends StatelessWidget {
+class _ProviderMissionCard extends ConsumerWidget {
   final RequestModel request;
   const _ProviderMissionCard({required this.request});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final r = request;
+    final isArchivedView = ref.watch(showArchivedMissionsProvider);
+
     return GestureDetector(
       onTap: () => context.push('/request/${r.id}'),
       child: Container(
@@ -735,10 +788,40 @@ class _ProviderMissionCard extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(width: 4),
+            IconButton(
+              onPressed: () => _toggleArchive(context, ref, r.id, isArchivedView),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              icon: Icon(
+                isArchivedView
+                    ? Icons.unarchive_outlined
+                    : Icons.archive_outlined,
+                size: 16,
+                color: AppColors.textMute,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _toggleArchive(BuildContext context, WidgetRef ref,
+      String requestId, bool currentlyArchived) async {
+    await setRequestArchivedByProvider(requestId, !currentlyArchived);
+    ref.invalidate(myProviderRequestsProvider);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(currentlyArchived
+              ? 'mission_unarchived_snack'.tr()
+              : 'mission_archived_snack'.tr()),
+          backgroundColor: AppColors.surface2,
+        ),
+      );
+    }
   }
 }
 
@@ -748,36 +831,43 @@ class _MyRequestsList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final requestsAsync = ref.watch(myRequestsProvider);
+    final isArchivedView = ref.watch(showArchivedRequestsProvider);
 
     return requestsAsync.when(
-      loading: () => const Center(
-          child: Padding(
-              padding: EdgeInsets.all(32),
-              child: CircularProgressIndicator(
-                  color: AppColors.amber, strokeWidth: 2))),
-      error: (e, _) => Text('${'chat_error'.tr()}$e',
-          style: const TextStyle(color: AppColors.red)),
-      data: (requests) => requests.isEmpty
-          ? Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.line2)),
-        child: Column(
-          children: [
-            const Icon(Icons.inbox_outlined,
-                size: 40, color: AppColors.textMute),
-            const SizedBox(height: 12),
-            Text('home_no_requests'.tr(),
-                style: const TextStyle(
-                    color: AppColors.textMute, fontSize: 14)),
-          ],
-        ),
-      )
-          : Column(
-        children: requests.map((r) => _MyRequestCard(request: r)).toList(),
+        loading: () => const Center(
+            child: Padding(
+                padding: EdgeInsets.all(32),
+                child: CircularProgressIndicator(
+                    color: AppColors.amber, strokeWidth: 2))),
+        error: (e, _) => Text('${'chat_error'.tr()}$e',
+            style: const TextStyle(color: AppColors.red)),
+        data: (requests) => requests.isEmpty
+            ? Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.line2)),
+          child: Column(
+            children: [
+              Icon(
+                  isArchivedView
+                      ? Icons.archive_outlined
+                      : Icons.inbox_outlined,
+                  size: 40, color: AppColors.textMute),
+              const SizedBox(height: 12),
+              Text(
+                  isArchivedView
+                      ? 'request_no_archived'.tr()
+                      : 'home_no_requests'.tr(),
+                  style: const TextStyle(
+                      color: AppColors.textMute, fontSize: 14)),
+            ],
+          ),
+        )
+            : Column(
+          children: requests.map((r) => _MyRequestCard(request: r)).toList(),
       ),
     );
   }
@@ -926,6 +1016,77 @@ class _OpenRequestsListState extends ConsumerState<_OpenRequestsList> {
           )).toList(),
         );
       },
+    );
+  }
+}
+
+// Toggle réutilisable "Actifs / Archivés" — prend le StateProvider<bool>
+// à contrôler en paramètre pour être réutilisé sur les listes SOS,
+// missions et conversations.
+class _ArchiveToggle extends ConsumerWidget {
+  final StateProvider<bool> provider;
+  const _ArchiveToggle({required this.provider});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final showArchived = ref.watch(provider);
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.line2),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ArchiveToggleTab(
+            label: 'toggle_active'.tr(),
+            selected: !showArchived,
+            onTap: () => ref.read(provider.notifier).state = false,
+          ),
+          _ArchiveToggleTab(
+            label: 'toggle_archived'.tr(),
+            selected: showArchived,
+            onTap: () => ref.read(provider.notifier).state = true,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ArchiveToggleTab extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ArchiveToggleTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.amber : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: selected ? AppColors.bg : AppColors.textMute,
+          ),
+        ),
+      ),
     );
   }
 }
