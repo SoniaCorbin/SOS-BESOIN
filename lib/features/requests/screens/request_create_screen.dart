@@ -30,6 +30,8 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
   double? _latitude;
   double? _longitude;
   bool    _locating        = false;
+  final _customCategoryCtrl = TextEditingController();
+  bool    _addingCategory  = false;
 
   @override
   void dispose() {
@@ -38,7 +40,30 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
     _locationCtrl.dispose();
     _neighCtrl.dispose();
     _budgetCtrl.dispose();
+    _customCategoryCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _addCustomCategory() async {
+    if (_customCategoryCtrl.text.trim().isEmpty) return;
+
+    setState(() => _addingCategory = true);
+    try {
+      final slug = await findOrCreateCategory(_customCategoryCtrl.text);
+      ref.invalidate(categoriesProvider);
+      setState(() {
+        _selectedCategory = slug;
+        _customCategoryCtrl.clear();
+        if (_currentStep < 1) _currentStep = 1;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${'chat_error'.tr()}$e')),
+        );
+      }
+    }
+    if (mounted) setState(() => _addingCategory = false);
   }
 
   Future<void> _useMyLocation() async {
@@ -152,68 +177,205 @@ class _RequestCreateScreenState extends ConsumerState<RequestCreateScreen> {
                   'request_load_error'.tr(),
                   style: const TextStyle(color: AppColors.red),
                 ),
-                data: (categories) => GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 2.8,
-                  ),
-                  itemCount: categories.length,
-                  itemBuilder: (context, i) {
-                    final cat        = categories[i];
-                    final isSelected = _selectedCategory == cat.slug;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedCategory = cat.slug;
-                          if (_currentStep < 1) _currentStep = 1;
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.amberSoft
-                              : AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
+                data: (categories) {
+                  final baseCategories =
+                  categories.where((c) => !c.isCustom).toList();
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 2.8,
+                    ),
+                    itemCount: baseCategories.length,
+                    itemBuilder: (context, i) {
+                      final cat        = baseCategories[i];
+                      final isSelected = _selectedCategory == cat.slug;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedCategory = cat.slug;
+                            if (_currentStep < 1) _currentStep = 1;
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.amber
-                                : AppColors.line2,
-                            width: isSelected ? 1.5 : 1,
+                                ? AppColors.amberSoft
+                                : AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.amber
+                                  : AppColors.line2,
+                              width: isSelected ? 1.5 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(cat.emoji,
+                                  style: const TextStyle(fontSize: 18)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  cat.label,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: isSelected
+                                        ? AppColors.amber
+                                        : AppColors.textDim,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Text(cat.emoji,
-                                style: const TextStyle(fontSize: 18)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                cat.label,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: isSelected
-                                      ? AppColors.amber
-                                      : AppColors.textDim,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                      );
+                    },
+                  );
+                },
               ),
+              if (_selectedCategory == 'other')
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.line2),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'request_custom_category_label'.tr(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textDim,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        categoriesAsync.maybeWhen(
+                          data: (categories) {
+                            final customCats = categories
+                                .where((c) => c.isCustom)
+                                .toList();
+                            if (customCats.isEmpty) {
+                              return const Text(
+                                'Aucune catégorie personnalisée encore.',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppColors.textMute),
+                              );
+                            }
+                            return DropdownButtonFormField<String>(
+                              value: customCats.any(
+                                      (c) => c.slug == _selectedCategory)
+                                  ? _selectedCategory
+                                  : null,
+                              dropdownColor: AppColors.surface2,
+                              icon: const Icon(Icons.keyboard_arrow_down_rounded,
+                                  color: AppColors.amber),
+                              style: const TextStyle(
+                                  color: AppColors.text, fontSize: 14),
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: AppColors.surface2,
+                                hintText:
+                                'request_custom_category_dropdown'.tr(),
+                                hintStyle: const TextStyle(
+                                    color: AppColors.textMute, fontSize: 13),
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 12),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                  const BorderSide(color: AppColors.line2),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                  const BorderSide(color: AppColors.line2),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                  const BorderSide(color: AppColors.amber, width: 1.5),
+                                ),
+                              ),
+                              items: customCats
+                                  .map((cat) => DropdownMenuItem(
+                                value: cat.slug,
+                                child: Text('${cat.emoji}  ${cat.label}'),
+                              ))
+                                  .toList(),
+                              onChanged: (slug) {
+                                if (slug != null) {
+                                  setState(() {
+                                    _selectedCategory = slug;
+                                    if (_currentStep < 1) _currentStep = 1;
+                                  });
+                                }
+                              },
+                            );
+                          },
+                          orElse: () => const SizedBox(),
+                        ),
+                        const SizedBox(height: 14),
+                        const Divider(color: AppColors.line2),
+                        const SizedBox(height: 10),
+                        Text(
+                          'request_custom_category_new'.tr(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textDim,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _customCategoryCtrl,
+                          style: const TextStyle(color: AppColors.text),
+                          decoration: InputDecoration(
+                            hintText: 'request_custom_category_hint'.tr(),
+                            isDense: true,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed:
+                            _addingCategory ? null : _addCustomCategory,
+                            icon: _addingCategory
+                                ? const SizedBox(
+                              width: 14, height: 14,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.amber),
+                            )
+                                : const Icon(Icons.add_rounded, size: 16),
+                            label: Text('request_add_category_btn'.tr()),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.amber,
+                              side: const BorderSide(color: AppColors.amber),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               const SizedBox(height: 32),
               _SectionTitle(
                 step: 2,

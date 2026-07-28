@@ -45,6 +45,10 @@ class PaymentService {
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: clientSecret,
           merchantDisplayName: 'SOS-BESOIN',
+          billingDetailsCollectionConfiguration:
+              const BillingDetailsCollectionConfiguration(
+            address: AddressCollectionMode.never,
+          ),
           style: ThemeMode.dark,
           appearance: const PaymentSheetAppearance(
             colors: PaymentSheetAppearanceColors(
@@ -52,7 +56,11 @@ class PaymentService {
               background:          Color(0xFF0B1220),
               componentBackground: Color(0xFF111C33),
               componentText:       Color(0xFFF1F5F9),
+              componentBorder:     Color(0xFF1E293B),
               placeholderText:     Color(0xFF64748B),
+              primaryText:         Color(0xFFF1F5F9),
+              secondaryText:       Color(0xFF94A3B8),
+              icon:                Color(0xFFF59E0B),
             ),
           ),
         ),

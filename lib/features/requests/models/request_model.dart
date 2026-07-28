@@ -80,6 +80,7 @@ class CategoryModel {
   final String emoji;
   final bool isActive;
   final int sortOrder;
+  final bool isCustom;
 
   const CategoryModel({
     required this.id,
@@ -88,6 +89,7 @@ class CategoryModel {
     required this.emoji,
     required this.isActive,
     required this.sortOrder,
+    this.isCustom = false,
   });
 
   factory CategoryModel.fromMap(Map<String, dynamic> map) => CategoryModel(
@@ -97,6 +99,7 @@ class CategoryModel {
     emoji:     map['emoji'] as String,
     isActive:  map['is_active'] as bool? ?? true,
     sortOrder: map['sort_order'] as int? ?? 0,
+    isCustom:  map['is_custom'] as bool? ?? false,
   );
 }
 
