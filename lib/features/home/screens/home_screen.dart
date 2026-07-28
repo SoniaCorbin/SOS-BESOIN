@@ -722,18 +722,24 @@ class _ProviderMissionCard extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.cyanSoft,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                r.category.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.cyan,
+            Flexible(
+              flex: 0,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 90),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.cyanSoft,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  r.category.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.cyan,
+                  ),
                 ),
               ),
             ),
@@ -954,17 +960,23 @@ class _OpenRequestsListState extends ConsumerState<_OpenRequestsList> {
                   border: Border.all(color: AppColors.line2)),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                        color: AppColors.cyanSoft,
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Text(r.category.toUpperCase(),
-                        style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.cyan)),
+                  Flexible(
+                    flex: 0,
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 90),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                          color: AppColors.cyanSoft,
+                          borderRadius: BorderRadius.circular(8)),
+                      child: Text(r.category.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.cyan)),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
