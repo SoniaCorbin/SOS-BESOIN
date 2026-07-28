@@ -1,7 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/request_model.dart';
 import '../../auth/providers/auth_provider.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final _client = Supabase.instance.client;
 
@@ -214,6 +215,7 @@ class RequestNotifier extends StateNotifier<AsyncValue<void>> {
       state = const AsyncValue.data(null);
       return null;
     } catch (e) {
+      debugPrint('🔴 ERREUR CREATE REQUEST: $e');
       state = AsyncValue.error(e, StackTrace.current);
       return 'Erreur lors de la création. Réessayez.';
     }
