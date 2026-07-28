@@ -45,6 +45,26 @@ final adminReportsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) as
   return reports;
 });
 
+final adminCategoriesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  final data = await _client
+      .from('categories')
+      .select()
+      .order('is_custom')
+      .order('sort_order');
+  return List<Map<String, dynamic>>.from(data);
+});
+
+// Supprime une catégorie personnalisée et rebascule les SOS qui
+// l'utilisaient vers "Autre" (jamais de SOS orphelin).
+Future<void> deleteCustomCategory(String categoryId, String slug) async {
+  await _client
+      .from('requests')
+      .update({'category': 'other'})
+      .eq('category', slug);
+
+  await _client.from('categories').delete().eq('id', categoryId);
+}
+
 final adminStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final users        = await _client.from('profiles').select('id');
   final requests     = await _client.from('requests').select('id');
@@ -79,7 +99,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 4, vsync: this);
+    _tabCtrl = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -120,6 +140,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
             Tab(text: 'Utilisateurs'),
             Tab(text: 'Signalements'),
             Tab(text: 'Waitlist'),
+            Tab(text: 'Catégories'),
           ],
         ),
       ),
@@ -134,6 +155,8 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
           const _ReportsTab(),
           // — Waitlist ————————————————————————————————
           const _WaitlistTab(),
+          // ── Catégories ─────────────────────────────
+          const _CategoriesTab(),
         ],
       ),
     );
@@ -819,5 +842,186 @@ class _WaitlistTab extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+// ── Onglet Catégories ─────────────────────────────────────
+class _CategoriesTab extends ConsumerWidget {
+  const _CategoriesTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categoriesAsync = ref.watch(adminCategoriesProvider);
+
+    return categoriesAsync.when(
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: AppColors.amber),
+      ),
+      error: (e, _) => Center(
+        child: Text('Erreur: $e',
+            style: const TextStyle(color: AppColors.red)),
+      ),
+      data: (categories) {
+        final baseCats = categories.where((c) => c['is_custom'] != true).toList();
+        final customCats = categories.where((c) => c['is_custom'] == true).toList();
+
+        return ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text(
+              'Catégories de base (${baseCats.length})',
+              style: const TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.text,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Ne peuvent pas être supprimées.',
+              style: TextStyle(fontSize: 12, color: AppColors.textMute),
+            ),
+            const SizedBox(height: 12),
+            ...baseCats.map((cat) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.line2),
+              ),
+              child: Row(
+                children: [
+                  Text(cat['emoji'] as String? ?? '🏷️',
+                      style: const TextStyle(fontSize: 18)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      cat['label'] as String? ?? cat['slug'] as String,
+                      style: const TextStyle(
+                          fontSize: 14, color: AppColors.text),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 24),
+            Text(
+              'Catégories ajoutées par les utilisateurs (${customCats.length})',
+              style: const TextStyle(
+                fontFamily: 'SpaceGrotesk',
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.text,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (customCats.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.line2),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Aucune catégorie personnalisée pour l\'instant.',
+                    style: TextStyle(color: AppColors.textMute, fontSize: 13),
+                  ),
+                ),
+              )
+            else
+              ...customCats.map((cat) => Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.line2),
+                ),
+                child: Row(
+                  children: [
+                    Text(cat['emoji'] as String? ?? '🏷️',
+                        style: const TextStyle(fontSize: 18)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        cat['label'] as String? ?? cat['slug'] as String,
+                        style: const TextStyle(
+                            fontSize: 14, color: AppColors.text),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _confirmDelete(
+                        context, ref,
+                        cat['id'] as String,
+                        cat['slug'] as String,
+                        cat['label'] as String? ?? cat['slug'] as String,
+                      ),
+                      icon: const Icon(Icons.delete_outline_rounded,
+                          color: AppColors.red, size: 20),
+                    ),
+                  ],
+                ),
+              )),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref,
+      String categoryId, String slug, String label) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Supprimer "$label" ?',
+          style: const TextStyle(
+              color: AppColors.text, fontFamily: 'SpaceGrotesk'),
+        ),
+        content: const Text(
+          'Les SOS existants avec cette catégorie seront rebasculés vers "Autre". Cette action est irréversible.',
+          style: TextStyle(color: AppColors.textDim),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler',
+                style: TextStyle(color: AppColors.textMute)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
+            child: const Text('Oui, supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await deleteCustomCategory(categoryId, slug);
+      ref.invalidate(adminCategoriesProvider);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Catégorie supprimée.'),
+            backgroundColor: AppColors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e')),
+        );
+      }
+    }
   }
 }

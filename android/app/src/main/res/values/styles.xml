@@ -5,5 +5,9 @@
     </style>
     <style name="NormalTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="android:windowBackground">?android:colorBackground</item>
+        <item name="colorPrimary">#FFF59E0B</item>
+        <item name="colorAccent">#FFF59E0B</item>
+        <item name="android:textCursorDrawable">@null</item>
+        <item name="colorControlActivated">#FFF59E0B</item>
     </style>
 </resources>

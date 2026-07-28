@@ -1,7 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/request_model.dart';
 import '../../auth/providers/auth_provider.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final _client = Supabase.instance.client;
 
@@ -17,6 +18,60 @@ final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
       .map((e) => CategoryModel.fromMap(e))
       .toList();
 });
+
+// ── Trouver ou créer une catégorie personnalisée ──────────
+// Utilisé quand un utilisateur choisit "Autre" et tape un nouveau nom.
+// Vérifie d'abord si une catégorie similaire existe déjà (insensible à
+// la casse) pour éviter les doublons ("Plomberie" / "plomberie ").
+String _slugifyLabel(String label) {
+  var s = label.trim().toLowerCase()
+      .replaceAll(RegExp(r'[àáâãäå]'), 'a')
+      .replaceAll(RegExp(r'[èéêë]'), 'e')
+      .replaceAll(RegExp(r'[ìíîï]'), 'i')
+      .replaceAll(RegExp(r'[òóôõö]'), 'o')
+      .replaceAll(RegExp(r'[ùúûü]'), 'u')
+      .replaceAll(RegExp(r'[ç]'), 'c')
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'^-+|-+$'), '');
+  return s.isEmpty ? 'autre-${DateTime.now().millisecondsSinceEpoch}' : s;
+}
+
+Future<String> findOrCreateCategory(String label) async {
+  final trimmed = label.trim();
+  if (trimmed.isEmpty) return 'other';
+
+  final existing = await _client
+      .from('categories')
+      .select('slug')
+      .ilike('label', trimmed)
+      .maybeSingle();
+  if (existing != null) return existing['slug'] as String;
+
+  final baseSlug = _slugifyLabel(trimmed);
+  var slug = baseSlug;
+  var suffix = 0;
+  while (true) {
+    final clash = await _client
+        .from('categories')
+        .select('slug')
+        .eq('slug', slug)
+        .maybeSingle();
+    if (clash == null) break;
+    suffix++;
+    slug = '$baseSlug-$suffix';
+  }
+
+  await _client.from('categories').insert({
+    'slug':       slug,
+    'label':      trimmed,
+    'emoji':      '🏷️',
+    'is_active':  true,
+    'is_custom':  true,
+    'sort_order': 999,
+  });
+
+  return slug;
+}
 
 // ── Toggle "Actifs / Archivés" pour la liste du client ────
 final showArchivedRequestsProvider = StateProvider<bool>((ref) => false);
@@ -214,6 +269,7 @@ class RequestNotifier extends StateNotifier<AsyncValue<void>> {
       state = const AsyncValue.data(null);
       return null;
     } catch (e) {
+      debugPrint('🔴 ERREUR CREATE REQUEST: $e');
       state = AsyncValue.error(e, StackTrace.current);
       return 'Erreur lors de la création. Réessayez.';
     }
