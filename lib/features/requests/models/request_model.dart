@@ -15,7 +15,7 @@ class RequestModel {
   final double? longitude;
   final bool archivedByClient;
   final bool archivedByProvider;
-
+  final bool archivedByAdmin;
 
   const RequestModel({
     required this.id,
@@ -34,6 +34,7 @@ class RequestModel {
     this.longitude,
     this.archivedByClient = false,
     this.archivedByProvider = false,
+    this.archivedByAdmin = false,
   });
 
   factory RequestModel.fromMap(Map<String, dynamic> map) => RequestModel(
@@ -53,6 +54,7 @@ class RequestModel {
     longitude:    (map['longitude'] as num?)?.toDouble(),
     archivedByClient:   map['archived_by_client'] as bool? ?? false,
     archivedByProvider: map['archived_by_provider'] as bool? ?? false,
+    archivedByAdmin:    map['archived_by_admin'] as bool? ?? false,
   );
 
   Map<String, dynamic> toMap() => {
@@ -69,6 +71,7 @@ class RequestModel {
     'longitude':    longitude,
     'archived_by_client':   archivedByClient,
     'archived_by_provider': archivedByProvider,
+    'archived_by_admin':    archivedByAdmin,
   };
 }
 

@@ -38,6 +38,8 @@ dependencies:
   uuid: ^4.4.0
   image_picker: ^1.1.2
   permission_handler: ^11.3.1
+  easy_localization: ^3.0.7
+  fl_chart: ^0.70.2
 
   # Stockage local
   shared_preferences: ^2.3.1
@@ -55,7 +57,6 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.1
   build_runner: ^2.4.11
   riverpod_generator: ^2.4.3
-  easy_localization: ^3.0.7
   geolocator: ^14.0.2
 
 flutter:
