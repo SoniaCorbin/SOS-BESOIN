@@ -53,9 +53,9 @@ Future<void> main() async {
   await initOnboarding();
 
   if (!kIsWeb) {
-    PaymentService.init(
-      const String.fromEnvironment('STRIPE_PUBLISHABLE_KEY'),
-    );
+    const stripeKey = String.fromEnvironment('STRIPE_PUBLISHABLE_KEY');
+    debugPrint("STRIPE KEY USED: $stripeKey");
+    PaymentService.init(stripeKey);
   }
 
   timeago.setLocaleMessages('fr', timeago.FrMessages());

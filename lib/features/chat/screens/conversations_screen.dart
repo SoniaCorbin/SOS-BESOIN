@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +15,34 @@ final _client = Supabase.instance.client;
 // ── Toggle "Actifs / Archivés" pour la liste des conversations ────
 final showArchivedConversationsProvider = StateProvider<bool>((ref) => false);
 
+// Déclencheur Realtime pour rafraîchir la liste automatiquement
+final conversationsRealtimeTriggerProvider = StreamProvider<int>((ref) {
+  final controller = StreamController<int>.broadcast();
+  int count = 0;
+  final channel = _client.channel('public:conversations_updates');
+  
+  void notify() {
+    count++;
+    if (!controller.isClosed) controller.add(count);
+  }
+
+  // On écoute les changements sur les offres (statut/archive) et les messages (nouveaux messages)
+  channel
+      .onPostgresChanges(schema: 'public', table: 'offers', event: PostgresChangeEvent.all, callback: (_) => notify())
+      .onPostgresChanges(schema: 'public', table: 'messages', event: PostgresChangeEvent.all, callback: (_) => notify())
+      .subscribe();
+
+  ref.onDispose(() {
+    _client.removeChannel(channel);
+    controller.close();
+  });
+  return controller.stream;
+});
+
 final conversationsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+  // On "watch" le trigger : dès qu'il change, ce FutureProvider s'exécute à nouveau
+  ref.watch(conversationsRealtimeTriggerProvider);
+
   final authState = ref.watch(authProvider);
   final showArchived = ref.watch(showArchivedConversationsProvider);
   final isProvider = authState.activeRole == UserRole.provider;
