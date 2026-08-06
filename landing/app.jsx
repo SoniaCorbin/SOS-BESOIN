@@ -79,15 +79,15 @@ function ProvidersSection({ t }) {
 /* ===================== TESTIMONIALS ===================== */
 const TESTIMONIALS = (t) => [
   {
-    quote: "{t.q1}",
+    quote: t.q1,
     name: "Élodie L.", role: "Cliente · Mariage", initial: "EL", color: "var(--amber)",
   },
   {
-    quote: "{t.q2}",
+    quote: t.q2,
     name: "Karim B.", role: "Prestataire · Tech", initial: "KB", color: "var(--cyan)",
   },
   {
-    quote: "{t.q3}",
+    quote: t.q3,
     name: "Sophie M.", role: "Cliente · Réparation", initial: "SM", color: "var(--violet)",
   },
 ];
@@ -293,14 +293,15 @@ function App() {
       <div className="bg-glow-b"></div>
 
       <Nav t={tr.nav} lang={lang} setLang={setLang} />
-      <div style={{
-        position: 'sticky', top: 64, zIndex: 90, margin: '8px 200px', borderRadius: 8,
+      <div className="sticky-banner" style={{
+        position: 'sticky', top: 64, zIndex: 90, borderRadius: 8,
         background: 'rgba(132,204,22,0.12)',
         backdropFilter: 'blur(8px)',
         borderBottom: '1px solid rgba(132,204,22,0.3)',
         padding: '10px 24px',
         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
         fontSize: 13, color: 'var(--text-dim)',
+        margin: '8px 20px',
       }}>
         <span>{tr.banner.text}</span>
         <a href="#waitlist" style={{
