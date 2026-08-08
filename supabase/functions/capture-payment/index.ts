@@ -161,7 +161,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success:        true,
-        amount,
+        amount:         totalAmount,
         platformFee,
         providerAmount,
         invoiceNumber,
@@ -172,11 +172,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
           success:         true,
-          amount:          totalAmount,
-          baseAmount:      baseAmount,
-          clientformFee,
-          providerAmount,
-          invoiceNumber,
+          error:           error.message || 'Capture payment failed',
       }),
       { headers: { "Content-Type": "application/json" } }
     );
