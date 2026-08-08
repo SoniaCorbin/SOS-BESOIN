@@ -13,11 +13,49 @@ import '../../../../core/services/geolocation_service.dart';
 import '../../invoices/providers/invoice_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      debugPrint('🔄 App resumed — reconnexion Realtime');
+      // Forcer la reconnexion du WebSocket Supabase
+      Supabase.instance.client.realtime.disconnect();
+      Supabase.instance.client.realtime.connect();
+
+      // Invalider les stream providers pour qu'ils se réabonnent
+      ref.invalidate(openRequestsProvider);
+      ref.invalidate(myRequestsProvider);
+      ref.invalidate(myProviderRequestsProvider);
+      ref.invalidate(pendingOffersCountProvider);
+      ref.invalidate(clientRequestStatsProvider);
+      ref.invalidate(providerMonthlyRevenueProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final authState  = ref.watch(authProvider);
     final user       = authState.user;
     final isProvider = authState.activeRole == UserRole.provider;
@@ -840,40 +878,40 @@ class _MyRequestsList extends ConsumerWidget {
     final isArchivedView = ref.watch(showArchivedRequestsProvider);
 
     return requestsAsync.when(
-        loading: () => const Center(
-            child: Padding(
-                padding: EdgeInsets.all(32),
-                child: CircularProgressIndicator(
-                    color: AppColors.amber, strokeWidth: 2))),
-        error: (e, _) => Text('${'chat_error'.tr()}$e',
-            style: const TextStyle(color: AppColors.red)),
-        data: (requests) => requests.isEmpty
-            ? Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.line2)),
-          child: Column(
-            children: [
-              Icon(
-                  isArchivedView
-                      ? Icons.archive_outlined
-                      : Icons.inbox_outlined,
-                  size: 40, color: AppColors.textMute),
-              const SizedBox(height: 12),
-              Text(
-                  isArchivedView
-                      ? 'request_no_archived'.tr()
-                      : 'home_no_requests'.tr(),
-                  style: const TextStyle(
-                      color: AppColors.textMute, fontSize: 14)),
-            ],
-          ),
-        )
-            : Column(
-          children: requests.map((r) => _MyRequestCard(request: r)).toList(),
+      loading: () => const Center(
+          child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(
+                  color: AppColors.amber, strokeWidth: 2))),
+      error: (e, _) => Text('${'chat_error'.tr()}$e',
+          style: const TextStyle(color: AppColors.red)),
+      data: (requests) => requests.isEmpty
+          ? Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.line2)),
+        child: Column(
+          children: [
+            Icon(
+                isArchivedView
+                    ? Icons.archive_outlined
+                    : Icons.inbox_outlined,
+                size: 40, color: AppColors.textMute),
+            const SizedBox(height: 12),
+            Text(
+                isArchivedView
+                    ? 'request_no_archived'.tr()
+                    : 'home_no_requests'.tr(),
+                style: const TextStyle(
+                    color: AppColors.textMute, fontSize: 14)),
+          ],
+        ),
+      )
+          : Column(
+        children: requests.map((r) => _MyRequestCard(request: r)).toList(),
       ),
     );
   }

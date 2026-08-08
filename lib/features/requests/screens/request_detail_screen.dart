@@ -22,9 +22,9 @@ StreamProvider.family<RequestModel, String>((ref, id) {
       .stream(primaryKey: ['id'])
       .eq('id', id)
       .map((rows) {
-        if (rows.isEmpty) throw Exception('Request not found');
-        return RequestModel.fromMap(rows.first);
-      });
+    if (rows.isEmpty) throw Exception('Request not found');
+    return RequestModel.fromMap(rows.first);
+  });
 });
 
 // StreamProvider: le client voit les offres apparaître (et leur statut
@@ -58,14 +58,45 @@ StreamProvider.family<List<Map<String, dynamic>>, String>((ref, id) {
   });
 });
 
-class RequestDetailScreen extends ConsumerWidget {
+class RequestDetailScreen extends ConsumerStatefulWidget {
   final String requestId;
 
   const RequestDetailScreen({super.key, required this.requestId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    print('REQUEST ID: $requestId');
+  ConsumerState<RequestDetailScreen> createState() =>
+      _RequestDetailScreenState();
+}
+
+class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen>
+    with WidgetsBindingObserver {
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      Supabase.instance.client.realtime.disconnect();
+      Supabase.instance.client.realtime.connect();
+      ref.invalidate(requestDetailProvider(widget.requestId));
+      ref.invalidate(requestOffersProvider(widget.requestId));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final requestId = widget.requestId;
+    final ref = this.ref;
     final requestAsync = ref.watch(requestDetailProvider(requestId));
     final offersAsync  = ref.watch(requestOffersProvider(requestId));
     final authState    = ref.watch(authProvider);
@@ -235,6 +266,7 @@ class RequestDetailScreen extends ConsumerWidget {
   }
 
   void _showOfferSheet(BuildContext context, WidgetRef ref) {
+    final requestId = widget.requestId;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
