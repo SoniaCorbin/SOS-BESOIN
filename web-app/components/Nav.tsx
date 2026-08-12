@@ -136,6 +136,9 @@ export default function Nav() {
               <Link href="/conversations" style={{ padding: '8px 18px', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 14, color: 'var(--text-dim)' }}>
                               {t('messages')}
               </Link>
+              <Link href="/invoices" style={{ padding: '8px 18px', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 14, color: 'var(--text-dim)' }}>
+                {t('invoices')}
+              </Link>
               <Link href="/profile" style={{ padding: '8px 18px', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 14, color: 'var(--text-dim)' }}>
                 {t('profile')}
               </Link>
@@ -189,6 +192,7 @@ export default function Nav() {
                 {notifCount > 0 && <span style={{ background: 'var(--red)', color: '#fff', borderRadius: '50%', width: 20, height: 20, fontSize: 11, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{notifCount}</span>}
               </Link>
               <Link href="/conversations" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>{t('messages')}</Link>
+              <Link href="/invoices" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>{t('invoices')}</Link>
               <Link href="/profile" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>{t('profile')}</Link>
               <Link href="/requests/new" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', background: 'var(--amber)', color: '#000', borderRadius: 8, fontWeight: 600, fontSize: 15, textAlign: 'center' }}>{t('sos_btn')}</Link>
               <button onClick={() => { handleLogout(); setMenuOpen(false) }} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-mute)', background: 'transparent', cursor: 'pointer', fontFamily: 'var(--font-sans)', textAlign: 'left' }}>{t('logout')}</button>

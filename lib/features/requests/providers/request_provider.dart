@@ -269,7 +269,6 @@ class RequestNotifier extends StateNotifier<AsyncValue<void>> {
       state = const AsyncValue.data(null);
       return null;
     } catch (e) {
-      debugPrint('🔴 ERREUR CREATE REQUEST: $e');
       state = AsyncValue.error(e, StackTrace.current);
       return 'Erreur lors de la création. Réessayez.';
     }
