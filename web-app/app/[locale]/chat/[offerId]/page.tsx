@@ -44,11 +44,26 @@ export default function ChatPage() {
 
   async function fetchMessages() {
     const { data } = await supabase
-      .from('messages')
-      .select('*, profiles(full_name)')
-      .eq('offer_id', offerId)
-      .order('created_at', { ascending: true })
-    setMessages(data ?? [])
+          .from('messages')
+          .select('*')
+          .eq('offer_id', offerId)
+          .order('created_at', { ascending: true })
+
+        // Enrich with sender names (FK points to auth.users, not profiles)
+        const enriched = []
+        for (const msg of data ?? []) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', msg.sender_id)
+              .single()
+            enriched.push({ ...msg, profiles: profile })
+          } catch {
+            enriched.push({ ...msg, profiles: null })
+          }
+        }
+        setMessages(enriched)
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
   }
 
