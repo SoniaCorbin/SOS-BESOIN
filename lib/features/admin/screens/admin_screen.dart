@@ -1274,12 +1274,32 @@ class _CompletedSOSCard extends StatelessWidget {
           Text(timeago.format(createdAt, locale: 'fr'), style: const TextStyle(fontSize: 11, color: AppColors.textMute)),
         ],
         const SizedBox(height: 10),
-        SizedBox(width: double.infinity, child: OutlinedButton.icon(
-            onPressed: () => _openLitigeForm(context),
-            icon: const Icon(Icons.gavel_rounded, size: 15),
-            label: const Text('Ouvrir un litige'),
-            style: OutlinedButton.styleFrom(foregroundColor: AppColors.red, side: const BorderSide(color: AppColors.red)))),
+        Row(children: [
+          Expanded(child: OutlinedButton.icon(
+              onPressed: () => _openDetail(context),
+              icon: const Icon(Icons.visibility_outlined, size: 15),
+              label: const Text('Voir le détail'),
+              style: OutlinedButton.styleFrom(foregroundColor: AppColors.cyan, side: const BorderSide(color: AppColors.cyan)))),
+          const SizedBox(width: 8),
+          Expanded(child: OutlinedButton.icon(
+              onPressed: () => _openLitigeForm(context),
+              icon: const Icon(Icons.gavel_rounded, size: 15),
+              label: const Text('Ouvrir un litige'),
+              style: OutlinedButton.styleFrom(foregroundColor: AppColors.red, side: const BorderSide(color: AppColors.red)))),
+        ]),
       ]),
+    );
+  }
+
+  void _openDetail(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _SOSDetailSheet(requestId: request['id'] as String),
     );
   }
 
@@ -1472,5 +1492,258 @@ class _LitigeCard extends StatelessWidget {
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur: $e')));
     }
+  }
+}
+
+// ── Bottom sheet détail complet d'un SOS (admin) ──────────
+class _SOSDetailSheet extends StatefulWidget {
+  final String requestId;
+  const _SOSDetailSheet({required this.requestId});
+
+  @override
+  State<_SOSDetailSheet> createState() => _SOSDetailSheetState();
+}
+
+class _SOSDetailSheetState extends State<_SOSDetailSheet> {
+  Map<String, dynamic>? request;
+  List<Map<String, dynamic>> offers = [];
+  Map<String, dynamic>? invoice;
+  List<Map<String, dynamic>> messages = [];
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    // Request
+    final reqData = await _client
+        .from('requests')
+        .select()
+        .eq('id', widget.requestId)
+        .single();
+
+    // Client name
+    String clientName = 'Inconnu';
+    try {
+      final cp = await _client
+          .from('profiles')
+          .select('full_name')
+          .eq('id', reqData['client_id'] as String)
+          .single();
+      clientName = cp['full_name'] as String? ?? 'Inconnu';
+    } catch (_) {}
+
+    request = {...reqData, 'client_name': clientName};
+
+    // Offers
+    final offersData = await _client
+        .from('offers')
+        .select()
+        .eq('request_id', widget.requestId)
+        .order('created_at', ascending: false);
+
+    final enrichedOffers = <Map<String, dynamic>>[];
+    for (final offer in List<Map<String, dynamic>>.from(offersData)) {
+      final providerId = offer['provider_id'] as String?;
+      if (providerId != null) {
+        try {
+          final profile = await _client
+              .from('profiles')
+              .select('full_name')
+              .eq('id', providerId)
+              .single();
+          enrichedOffers.add({...offer, 'profiles': profile});
+        } catch (_) {
+          enrichedOffers.add({...offer, 'profiles': null});
+        }
+      } else {
+        enrichedOffers.add(offer);
+      }
+    }
+    offers = enrichedOffers;
+
+    // Invoice
+    final invData = await _client
+        .from('invoices')
+        .select()
+        .eq('request_id', widget.requestId)
+        .maybeSingle();
+    invoice = invData;
+
+    // Messages
+    final offerIds = offers.map((o) => o['id'] as String).toList();
+    if (offerIds.isNotEmpty) {
+      final msgsData = await _client
+          .from('messages')
+          .select()
+          .inFilter('offer_id', offerIds)
+          .order('created_at');
+
+      final enrichedMsgs = <Map<String, dynamic>>[];
+      for (final msg in List<Map<String, dynamic>>.from(msgsData)) {
+        final senderId = msg['sender_id'] as String?;
+        if (senderId != null) {
+          try {
+            final profile = await _client
+                .from('profiles')
+                .select('full_name')
+                .eq('id', senderId)
+                .single();
+            enrichedMsgs.add({...msg, 'profiles': profile});
+          } catch (_) {
+            enrichedMsgs.add({...msg, 'profiles': null});
+          }
+        } else {
+          enrichedMsgs.add(msg);
+        }
+      }
+      messages = enrichedMsgs;
+    }
+
+    if (mounted) setState(() => loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      maxChildSize: 0.95,
+      minChildSize: 0.4,
+      builder: (context, scrollController) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: loading
+            ? const Center(child: CircularProgressIndicator(color: AppColors.amber))
+            : ListView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(24),
+          children: [
+            Center(child: Container(width: 40, height: 4,
+                decoration: BoxDecoration(color: AppColors.line2, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 20),
+
+            // ── Détail du SOS ──
+            const Text('Détail du SOS', style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.text)),
+            const SizedBox(height: 16),
+            _DetailRow(label: 'Titre', value: request?['title'] as String? ?? '—'),
+            _DetailRow(label: 'Client', value: request?['client_name'] as String? ?? '—'),
+            _DetailRow(label: 'Catégorie', value: request?['category'] as String? ?? '—'),
+            _DetailRow(label: 'Statut', value: request?['status'] as String? ?? '—'),
+            _DetailRow(label: 'Lieu', value: request?['location'] as String? ?? '—'),
+            _DetailRow(label: 'Urgence', value: request?['urgency'] as String? ?? '—'),
+            if (request?['budget'] != null)
+              _DetailRow(label: 'Budget', value: '${request!['budget']}\$'),
+            _DetailRow(label: 'Description', value: request?['description'] as String? ?? '—'),
+            const SizedBox(height: 24),
+
+            // ── Offres ──
+            Text('Offres (${offers.length})', style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.text)),
+            const SizedBox(height: 10),
+            if (offers.isEmpty)
+              const Text('Aucune offre.', style: TextStyle(fontSize: 13, color: AppColors.textMute))
+            else
+              ...offers.map((offer) {
+                final provName = (offer['profiles'] as Map<String, dynamic>?)?['full_name'] as String? ?? '—';
+                final status = offer['status'] as String? ?? '';
+                final statusColor = status == 'accepted' || status == 'completed' ? AppColors.green : AppColors.textMute;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: status == 'accepted' || status == 'completed' ? AppColors.greenSoft : AppColors.surface2,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text(provName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.text)),
+                      Text('${offer['price']}\$', style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.amber)),
+                    ]),
+                    const SizedBox(height: 4),
+                    Text(offer['message'] as String? ?? '', style: const TextStyle(fontSize: 12, color: AppColors.textDim)),
+                    const SizedBox(height: 4),
+                    Row(children: [
+                      Text(status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor)),
+                      const SizedBox(width: 8),
+                      Text('🕐 ${offer['availability'] ?? ''}', style: const TextStyle(fontSize: 11, color: AppColors.textMute)),
+                    ]),
+                  ]),
+                );
+              }),
+            const SizedBox(height: 24),
+
+            // ── Facture ──
+            const Text('Facture', style: TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.text)),
+            const SizedBox(height: 10),
+            if (invoice == null)
+              const Text('Aucune facture.', style: TextStyle(fontSize: 13, color: AppColors.textMute))
+            else
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: AppColors.surface2, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppColors.line2)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  _DetailRow(label: 'Numéro', value: '#${invoice!['invoice_number'] ?? '—'}'),
+                  _DetailRow(label: 'Montant', value: '${invoice!['amount'] ?? 0}\$'),
+                  _DetailRow(label: 'Prestataire', value: '${invoice!['provider_amount'] ?? 0}\$'),
+                  _DetailRow(label: 'Statut', value: invoice!['status'] as String? ?? '—'),
+                ]),
+              ),
+            const SizedBox(height: 24),
+
+            // ── Messages ──
+            Text('Messages (${messages.length})', style: const TextStyle(fontFamily: 'SpaceGrotesk', fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.text)),
+            const SizedBox(height: 10),
+            if (messages.isEmpty)
+              const Text('Aucun message.', style: TextStyle(fontSize: 13, color: AppColors.textMute))
+            else
+              ...messages.map((msg) {
+                final senderName = (msg['profiles'] as Map<String, dynamic>?)?['full_name'] as String? ?? '—';
+                final content = msg['content'] as String? ?? '';
+                final createdAt = msg['created_at'] != null ? DateTime.tryParse(msg['created_at'] as String) : null;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: AppColors.surface2, borderRadius: BorderRadius.circular(8)),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text(senderName, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.cyan)),
+                      if (createdAt != null)
+                        Text(timeago.format(createdAt, locale: 'fr'), style: const TextStyle(fontSize: 10, color: AppColors.textMute)),
+                    ]),
+                    const SizedBox(height: 4),
+                    Text(content, style: const TextStyle(fontSize: 13, color: AppColors.text, height: 1.4)),
+                  ]),
+                );
+              }),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _DetailRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(width: 100, child: Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textMute))),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 14, color: AppColors.text))),
+        ],
+      ),
+    );
   }
 }
