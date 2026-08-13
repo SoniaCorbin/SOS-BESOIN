@@ -17,8 +17,14 @@ export default function AdminPage() {
   const [categories, setCategories] = useState<any[]>([])
   const [litiges, setLitiges] = useState<any[]>([])
   const [completedRequests, setCompletedRequests] = useState<any[]>([])
-  const [litigeForm, setLitigeForm] = useState({ requestId: '', offerId: '', reason: 'plainte_client', description: '' })
+  const [litigeForm, setLitigeForm] = useState({ reason: 'plainte_client', description: '' })
   const [showLitigeForm, setShowLitigeForm] = useState<string | null>(null)
+  const [detailRequest, setDetailRequest] = useState<any>(null)
+  const [detailOffers, setDetailOffers] = useState<any[]>([])
+  const [detailInvoice, setDetailInvoice] = useState<any>(null)
+  const [detailMessages, setDetailMessages] = useState<any[]>([])
+  const [showDetail, setShowDetail] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -117,7 +123,7 @@ export default function AdminPage() {
         description: litigeForm.description.trim(), status: 'open',
       })
       setShowLitigeForm(null)
-      setLitigeForm({ requestId: '', offerId: '', reason: 'plainte_client', description: '' })
+      setLitigeForm({ reason: 'plainte_client', description: '' })
       await fetchLitiges()
     } catch (e) { console.error(e) }
     setSubmitting(false)
@@ -127,6 +133,53 @@ export default function AdminPage() {
     if (!confirm(t('litige_resolve_confirm'))) return
     await supabase.from('litiges').update({ status: 'resolved', resolved_at: new Date().toISOString() }).eq('id', litigeId)
     await fetchLitiges()
+  }
+
+  async function openDetail(requestId: string) {
+    setDetailLoading(true)
+    setShowDetail(true)
+
+    // Request + client name
+    const { data: req } = await supabase.from('requests').select('*').eq('id', requestId).single()
+    let clientName = 'Inconnu'
+    try {
+      const { data: cp } = await supabase.from('profiles').select('full_name').eq('id', req.client_id).single()
+      clientName = cp?.full_name ?? 'Inconnu'
+    } catch {}
+    setDetailRequest({ ...req, client_name: clientName })
+
+    // Offers with provider names
+    const { data: offersData } = await supabase.from('offers').select('*').eq('request_id', requestId).order('created_at', { ascending: false })
+    const enrichedOffers = []
+    for (const offer of offersData ?? []) {
+      try {
+        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', offer.provider_id).single()
+        enrichedOffers.push({ ...offer, provider_name: profile?.full_name ?? '—' })
+      } catch { enrichedOffers.push({ ...offer, provider_name: '—' }) }
+    }
+    setDetailOffers(enrichedOffers)
+
+    // Invoice
+    const { data: inv } = await supabase.from('invoices').select('*').eq('request_id', requestId).maybeSingle()
+    setDetailInvoice(inv)
+
+    // Messages
+    const offerIds = enrichedOffers.map((o: any) => o.id)
+    if (offerIds.length > 0) {
+      const { data: msgsData } = await supabase.from('messages').select('*').in('offer_id', offerIds).order('created_at')
+      const enrichedMsgs = []
+      for (const msg of msgsData ?? []) {
+        try {
+          const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', msg.sender_id).single()
+          enrichedMsgs.push({ ...msg, sender_name: profile?.full_name ?? '—' })
+        } catch { enrichedMsgs.push({ ...msg, sender_name: '—' }) }
+      }
+      setDetailMessages(enrichedMsgs)
+    } else {
+      setDetailMessages([])
+    }
+
+    setDetailLoading(false)
   }
 
   if (loading) return (
@@ -190,7 +243,7 @@ export default function AdminPage() {
               {[
                 { label: t('stat_users'), value: stats.users, color: 'var(--amber)' },
                 { label: t('stat_providers'), value: stats.providers, color: 'var(--cyan)' },
-                { label: t('stat_requests'), value: stats.requests, color: 'var(--violet)' },
+                { label: t('stat_requests'), value: stats.requests, color: 'var(--violet, var(--amber))' },
                 { label: t('stat_completed'), value: stats.completed, color: 'var(--green)' },
               ].map((s, i) => (
                 <div key={i} style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '24px' }}>
@@ -264,7 +317,6 @@ export default function AdminPage() {
                   <span style={{ fontSize: 14, color: 'var(--text)' }}>{cat.label}</span>
                 </div>
               ))}
-
               <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 32, marginBottom: 12 }}>{t('cat_custom_title')} ({categories.filter(c => c.is_custom).length})</h2>
               {categories.filter(c => c.is_custom).length === 0 ? (
                 <div style={{ ...cardStyle, textAlign: 'center', padding: '24px', color: 'var(--text-mute)' }}>{t('cat_custom_empty')}</div>
@@ -275,9 +327,7 @@ export default function AdminPage() {
                       <span style={{ fontSize: 18, marginRight: 10 }}>{cat.emoji}</span>
                       <span style={{ fontSize: 14, color: 'var(--text)' }}>{cat.label}</span>
                     </div>
-                    <button onClick={() => deleteCategory(cat.id, cat.slug)} style={{
-                      background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer', fontSize: 16,
-                    }}>🗑</button>
+                    <button onClick={() => deleteCategory(cat.id, cat.slug)} style={{ background: 'none', border: 'none', color: 'var(--red)', cursor: 'pointer', fontSize: 16 }}>🗑</button>
                   </div>
                 ))
               )}
@@ -334,7 +384,6 @@ export default function AdminPage() {
               <div style={{ borderTop: '1px solid var(--line)', marginTop: 32, paddingTop: 24 }}>
                 <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 4 }}>{t('litiges_completed_title')}</h2>
                 <p style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 16 }}>{t('litiges_completed_hint')}</p>
-
                 {completedRequests.length === 0 ? (
                   <div style={{ ...cardStyle, textAlign: 'center', padding: '24px', color: 'var(--text-mute)' }}>{t('litiges_no_completed')}</div>
                 ) : (
@@ -351,37 +400,43 @@ export default function AdminPage() {
                       <div style={{ fontSize: 12, color: 'var(--text-mute)', marginBottom: 8 }}>
                         👤 Client: {r.client_name} · 🔧 Pro: {r.provider_name} · {timeAgo(r.created_at)}
                       </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => openDetail(r.id)} style={{
+                          flex: 1, padding: '8px 16px', background: 'none', border: '1px solid var(--cyan)',
+                          borderRadius: 8, fontSize: 13, color: 'var(--cyan)', cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                        }}>🔍 {t('detail_btn')}</button>
 
-                      {showLitigeForm === r.id ? (
-                        <div style={{ background: 'var(--bg-3)', borderRadius: 10, padding: 16, marginTop: 8 }}>
-                          <select value={litigeForm.reason} onChange={e => setLitigeForm(f => ({ ...f, reason: e.target.value }))} style={{
-                            width: '100%', padding: '8px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 8,
-                            color: 'var(--text)', fontSize: 13, marginBottom: 10, outline: 'none', fontFamily: 'var(--font-sans)',
-                          }}>
-                            {REASONS.map(re => <option key={re.id} value={re.id}>{re.label}</option>)}
-                          </select>
-                          <textarea value={litigeForm.description} onChange={e => setLitigeForm(f => ({ ...f, description: e.target.value }))}
-                            placeholder={t('litige_desc_placeholder')} rows={3} style={{
+                        {showLitigeForm === r.id ? (
+                          <div style={{ flex: 2, background: 'var(--bg-3)', borderRadius: 10, padding: 16 }}>
+                            <select value={litigeForm.reason} onChange={e => setLitigeForm(f => ({ ...f, reason: e.target.value }))} style={{
                               width: '100%', padding: '8px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 8,
-                              color: 'var(--text)', fontSize: 13, marginBottom: 10, outline: 'none', resize: 'vertical' as const, fontFamily: 'var(--font-sans)',
-                            }} />
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button onClick={() => createLitige(r.id, r.offer_id)} disabled={submitting} style={{
-                              padding: '8px 16px', background: 'var(--red)', color: '#fff', border: 'none',
-                              borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                            }}>{submitting ? '...' : t('litige_confirm_btn')}</button>
-                            <button onClick={() => setShowLitigeForm(null)} style={{
-                              padding: '8px 16px', background: 'none', border: '1px solid var(--line)',
-                              borderRadius: 8, fontSize: 13, color: 'var(--text-mute)', cursor: 'pointer', fontFamily: 'var(--font-sans)',
-                            }}>{t('litige_cancel_btn')}</button>
+                              color: 'var(--text)', fontSize: 13, marginBottom: 10, outline: 'none', fontFamily: 'var(--font-sans)',
+                            }}>
+                              {REASONS.map(re => <option key={re.id} value={re.id}>{re.label}</option>)}
+                            </select>
+                            <textarea value={litigeForm.description} onChange={e => setLitigeForm(f => ({ ...f, description: e.target.value }))}
+                              placeholder={t('litige_desc_placeholder')} rows={3} style={{
+                                width: '100%', padding: '8px 12px', background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 8,
+                                color: 'var(--text)', fontSize: 13, marginBottom: 10, outline: 'none', resize: 'vertical' as const, fontFamily: 'var(--font-sans)',
+                              }} />
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button onClick={() => createLitige(r.id, r.offer_id)} disabled={submitting} style={{
+                                padding: '8px 16px', background: 'var(--red)', color: '#fff', border: 'none',
+                                borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                              }}>{submitting ? '...' : t('litige_confirm_btn')}</button>
+                              <button onClick={() => setShowLitigeForm(null)} style={{
+                                padding: '8px 16px', background: 'none', border: '1px solid var(--line)',
+                                borderRadius: 8, fontSize: 13, color: 'var(--text-mute)', cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                              }}>{t('litige_cancel_btn')}</button>
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <button onClick={() => { setShowLitigeForm(r.id); setLitigeForm({ requestId: r.id, offerId: r.offer_id, reason: 'plainte_client', description: '' }) }} style={{
-                          padding: '8px 16px', background: 'none', border: '1px solid var(--red)',
-                          borderRadius: 8, fontSize: 13, color: 'var(--red)', cursor: 'pointer', fontFamily: 'var(--font-sans)', width: '100%',
-                        }}>⚖️ {t('litige_open_btn')}</button>
-                      )}
+                        ) : (
+                          <button onClick={() => { setShowLitigeForm(r.id); setLitigeForm({ reason: 'plainte_client', description: '' }) }} style={{
+                            flex: 1, padding: '8px 16px', background: 'none', border: '1px solid var(--red)',
+                            borderRadius: 8, fontSize: 13, color: 'var(--red)', cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                          }}>⚖️ {t('litige_open_btn')}</button>
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
@@ -390,6 +445,107 @@ export default function AdminPage() {
           )}
         </div>
       </main>
+
+      {/* ═══ DETAIL MODAL ═══ */}
+      {showDetail && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'grid', placeItems: 'center', padding: 24 }}
+          onClick={() => setShowDetail(false)}>
+          <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 16, padding: 28,
+            maxWidth: 700, width: '100%', maxHeight: '85vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}>
+            {detailLoading ? (
+              <div style={{ textAlign: 'center', padding: 40, color: 'var(--amber)' }}>{t('loading')}</div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <h2 style={{ fontSize: 20, fontWeight: 700 }}>{t('detail_title')}</h2>
+                  <button onClick={() => setShowDetail(false)} style={{ background: 'none', border: 'none', color: 'var(--text-mute)', fontSize: 20, cursor: 'pointer' }}>✕</button>
+                </div>
+
+                {/* SOS info */}
+                <div style={{ marginBottom: 24 }}>
+                  {[
+                    [t('detail_label_title'), detailRequest?.title],
+                    [t('detail_label_client'), detailRequest?.client_name],
+                    [t('detail_label_category'), detailRequest?.category],
+                    [t('detail_label_status'), detailRequest?.status],
+                    [t('detail_label_location'), detailRequest?.location],
+                    [t('detail_label_urgency'), detailRequest?.urgency],
+                    ...(detailRequest?.budget ? [[t('detail_label_budget'), `${detailRequest.budget}$`]] : []),
+                    [t('detail_label_description'), detailRequest?.description],
+                  ].map(([label, value], i) => (
+                    <div key={i} style={{ display: 'flex', gap: 16, padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
+                      <span style={{ fontSize: 13, color: 'var(--text-mute)', minWidth: 100 }}>{label}</span>
+                      <span style={{ fontSize: 14, color: 'var(--text)' }}>{value ?? '—'}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Offers */}
+                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>{t('detail_offers')} ({detailOffers.length})</h3>
+                {detailOffers.length === 0 ? (
+                  <p style={{ fontSize: 13, color: 'var(--text-mute)', marginBottom: 20 }}>{t('detail_no_offers')}</p>
+                ) : (
+                  <div style={{ marginBottom: 20 }}>
+                    {detailOffers.map((offer: any) => (
+                      <div key={offer.id} style={{
+                        padding: 12, marginBottom: 8, borderRadius: 10,
+                        background: offer.status === 'accepted' || offer.status === 'completed' ? 'var(--green-soft)' : 'var(--bg-3)',
+                        border: `1px solid ${offer.status === 'accepted' || offer.status === 'completed' ? 'var(--green)' : 'var(--line)'}`,
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontWeight: 600 }}>{offer.provider_name}</span>
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--amber)' }}>{offer.price}$</span>
+                        </div>
+                        <p style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>{offer.message}</p>
+                        <div style={{ fontSize: 11, color: 'var(--text-mute)', marginTop: 4 }}>{offer.status} · 🕐 {offer.availability}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Invoice */}
+                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>{t('detail_invoice')}</h3>
+                {!detailInvoice ? (
+                  <p style={{ fontSize: 13, color: 'var(--text-mute)', marginBottom: 20 }}>{t('detail_no_invoice')}</p>
+                ) : (
+                  <div style={{ padding: 12, borderRadius: 10, background: 'var(--bg-3)', border: '1px solid var(--line)', marginBottom: 20 }}>
+                    {[
+                      [t('detail_invoice_number'), `#${detailInvoice.invoice_number}`],
+                      [t('detail_invoice_amount'), `${detailInvoice.amount}$`],
+                      [t('detail_invoice_provider'), `${detailInvoice.provider_amount}$`],
+                      [t('detail_invoice_status'), detailInvoice.status],
+                    ].map(([label, value], i) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                        <span style={{ fontSize: 13, color: 'var(--text-mute)' }}>{label}</span>
+                        <span style={{ fontSize: 14, fontWeight: 600 }}>{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Messages */}
+                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 10 }}>{t('detail_messages')} ({detailMessages.length})</h3>
+                {detailMessages.length === 0 ? (
+                  <p style={{ fontSize: 13, color: 'var(--text-mute)' }}>{t('detail_no_messages')}</p>
+                ) : (
+                  <div>
+                    {detailMessages.map((msg: any) => (
+                      <div key={msg.id} style={{ padding: 10, marginBottom: 6, borderRadius: 8, background: 'var(--bg-3)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--cyan)' }}>{msg.sender_name}</span>
+                          {msg.created_at && <span style={{ fontSize: 10, color: 'var(--text-mute)' }}>{timeAgo(msg.created_at)}</span>}
+                        </div>
+                        <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.4 }}>{msg.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </>
   )
 }
