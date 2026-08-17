@@ -38,10 +38,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      debugPrint('🔄 App resumed — reconnexion Realtime');
-      // Forcer la reconnexion du WebSocket Supabase
-      Supabase.instance.client.realtime.disconnect();
-      Supabase.instance.client.realtime.connect();
+      debugPrint('🔄 App resumed — vérification Realtime');
+      // Ne reconnecter que si vraiment déconnecté — éviter de couper
+      // des canaux (ex: chat) déjà actifs et fonctionnels
+      if (!Supabase.instance.client.realtime.isConnected) {
+        debugPrint('🔄 Realtime déconnecté — reconnexion');
+        Supabase.instance.client.realtime.connect();
+      }
 
       // Invalider les stream providers pour qu'ils se réabonnent
       ref.invalidate(openRequestsProvider);

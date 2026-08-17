@@ -86,8 +86,9 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      Supabase.instance.client.realtime.disconnect();
-      Supabase.instance.client.realtime.connect();
+      if (!Supabase.instance.client.realtime.isConnected) {
+        Supabase.instance.client.realtime.connect();
+      }
       ref.invalidate(requestDetailProvider(widget.requestId));
       ref.invalidate(requestOffersProvider(widget.requestId));
     }
