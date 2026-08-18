@@ -174,7 +174,10 @@ class _TransactionCard extends StatelessWidget {
 
     final formatter = DateFormat('d MMM yyyy', 'fr_CA');
 
-    return Container(
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => context.push('/request/${transaction.requestId}'),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -267,6 +270,7 @@ class _TransactionCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
       ),
     );
   }

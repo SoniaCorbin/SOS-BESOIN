@@ -93,6 +93,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (isAuth && state.matchedLocation == AppRoutes.login) {
         return AppRoutes.home;
       }
+
+      // Écran admin : accès refusé par défaut tant que le profil
+      // n'est pas chargé et confirmé admin (fail closed).
+      if (state.matchedLocation == '/admin' && authState.user?.isAdmin != true) {
+        return AppRoutes.home;
+      }
       return null;
     },
     routes: [
