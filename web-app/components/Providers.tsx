@@ -12,7 +12,7 @@ export default function Providers() {
   useEffect(() => {
     async function load() {
       const { data } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id, full_name, role, rating, total_missions, is_kyc_verified')
         .eq('role', 'provider')
         .eq('is_kyc_verified', true)

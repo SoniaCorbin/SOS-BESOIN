@@ -45,7 +45,7 @@ StreamProvider.family<List<Map<String, dynamic>>, String>((ref, id) {
       final providerId = offers[i]['provider_id'] as String;
       try {
         final profile = await _client
-            .from('profiles')
+            .from('public_profiles')
             .select('full_name, rating, total_missions, is_kyc_verified')
             .eq('id', providerId)
             .single();

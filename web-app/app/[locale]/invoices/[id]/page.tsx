@@ -34,13 +34,13 @@ export default function InvoiceDetailPage() {
       }
       if (inv?.client_id) {
         try {
-          const { data: p } = await supabase.from('profiles').select('full_name').eq('id', inv.client_id).single()
+          const { data: p } = await supabase.from('public_profiles').select('full_name').eq('id', inv.client_id).single()
           setClientName(p?.full_name ?? '—')
         } catch {}
       }
       if (inv?.provider_id) {
         try {
-          const { data: p } = await supabase.from('profiles').select('full_name').eq('id', inv.provider_id).single()
+          const { data: p } = await supabase.from('public_profiles').select('full_name').eq('id', inv.provider_id).single()
           setProviderName(p?.full_name ?? '—')
         } catch {}
       }

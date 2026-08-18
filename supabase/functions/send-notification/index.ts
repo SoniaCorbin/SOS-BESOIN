@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const serviceAccount = JSON.parse(Deno.env.get("FIREBASE_SERVICE_ACCOUNT")!);
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+);
 
 async function getAccessToken(): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
@@ -57,7 +62,25 @@ async function getAccessToken(): Promise<string> {
 
 serve(async (req) => {
   try {
-    const { token, title, body, data } = await req.json();
+    const { userId, title, body, data } = await req.json();
+
+    // Le token FCM est lu ici, côté serveur, avec la clé service_role
+    // qui contourne RLS — le client n'a jamais besoin de lire le
+    // token FCM de quelqu'un d'autre.
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("fcm_token")
+      .eq("id", userId)
+      .single();
+
+    if (error || !profile?.fcm_token) {
+      return new Response(
+        JSON.stringify({ success: false, error: "No FCM token found" }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const token = profile.fcm_token;
     const accessToken = await getAccessToken();
     const projectId = serviceAccount.project_id;
 
