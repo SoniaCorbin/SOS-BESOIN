@@ -28,7 +28,6 @@
     "status_pending": "Pending",
     "role_client": "Client",
     "role_provider": "Provider",
-    "fee": "Fee",
     "not_found": "Invoice not found.",
     "back": "← Back to invoices",
     "invoice_label": "INVOICE",
@@ -36,7 +35,6 @@
     "detail_client": "Client",
     "detail_provider": "Provider",
     "detail_amount": "Total amount",
-    "detail_fee": "Service fee",
     "detail_provider_amount": "Provider amount",
     "detail_paid_at": "Paid on"
   },

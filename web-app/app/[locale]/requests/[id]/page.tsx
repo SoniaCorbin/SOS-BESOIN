@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
+import RatingForm from '@/components/RatingForm'
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -23,6 +24,7 @@ export default function RequestDetailPage() {
   const [editForm, setEditForm] = useState({ title: '', description: '', budget: '', urgency: '' })
   const [editingOfferId, setEditingOfferId] = useState<string | null>(null)
   const [editOfferForm, setEditOfferForm] = useState({ price: '', availability: '', message: '' })
+  const [ratingOffer, setRatingOffer] = useState<{ offerId: string; providerId: string } | null>(null)
 
   const fetchRequest = useCallback(async () => {
     const { data } = await supabase.from('requests').select('*').eq('id', id).single()
@@ -140,12 +142,12 @@ export default function RequestDetailPage() {
     } catch (e) { console.error(e) }
   }
 
-  async function validateMission(offerId: string) {
+  async function validateMission(offer: any) {
     if (!confirm(t('validate_confirm'))) return
-    await supabase.from('offers').update({ status: 'completed' }).eq('id', offerId)
+    await supabase.from('offers').update({ status: 'completed' }).eq('id', offer.id)
     await supabase.from('requests').update({ status: 'completed' }).eq('id', id)
-    alert(t('validate_success'))
     await fetchRequest(); await fetchOffers()
+    setRatingOffer({ offerId: offer.id, providerId: offer.provider_id })
   }
 
   async function cancelRequest() {
@@ -396,7 +398,7 @@ export default function RequestDetailPage() {
                               {t('offer_open_chat')}
                             </Link>
                             {isClient && offer.status === 'accepted' && (
-                              <button onClick={() => validateMission(offer.id)} style={{ ...btnAmber, background: 'var(--green)' }}>
+                              <button onClick={() => validateMission(offer)} style={{ ...btnAmber, background: 'var(--green)' }}>
                                 {t('offer_validate')}
                               </button>
                             )}
@@ -407,6 +409,16 @@ export default function RequestDetailPage() {
                           {t('offer_report')}
                         </Link>
                       </div>
+
+                      {isClient && ratingOffer?.offerId === offer.id && (
+                        <RatingForm
+                          requestId={id}
+                          offerId={offer.id}
+                          clientId={userId ?? ''}
+                          providerId={offer.provider_id}
+                          onRated={() => {}}
+                        />
+                      )}
                     </div>
                   )
                 })}

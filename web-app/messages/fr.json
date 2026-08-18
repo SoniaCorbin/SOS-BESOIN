@@ -28,7 +28,6 @@
     "status_pending": "En attente",
     "role_client": "Client",
     "role_provider": "Prestataire",
-    "fee": "Frais",
     "not_found": "Facture introuvable.",
     "back": "← Retour aux factures",
     "invoice_label": "FACTURE",
@@ -36,7 +35,6 @@
     "detail_client": "Client",
     "detail_provider": "Prestataire",
     "detail_amount": "Montant total",
-    "detail_fee": "Frais de service",
     "detail_provider_amount": "Montant prestataire",
     "detail_paid_at": "Payée le"
   },

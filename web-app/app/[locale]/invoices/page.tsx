@@ -107,11 +107,6 @@ export default function InvoicesPage() {
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 20, fontWeight: 700, color: 'var(--green)' }}>
                         {isClient ? `${inv.amount}$` : `${inv.provider_amount}$`}
                       </div>
-                      {isClient && inv.client_fee > 0 && (
-                        <div style={{ fontSize: 11, color: 'var(--text-mute)' }}>
-                          {t('fee')}: {inv.client_fee}$
-                        </div>
-                      )}
                     </div>
                   </Link>
                 )

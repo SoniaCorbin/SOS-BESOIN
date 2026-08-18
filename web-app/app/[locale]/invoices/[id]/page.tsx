@@ -106,12 +106,6 @@ export default function InvoiceDetailPage() {
               <span style={labelStyle}>{t('detail_amount')}</span>
               <span style={{ ...valueStyle, fontFamily: 'var(--font-mono)', fontSize: 18, color: 'var(--green)' }}>{invoice.amount}$</span>
             </div>
-            {invoice.client_fee > 0 && (
-              <div style={rowStyle}>
-                <span style={labelStyle}>{t('detail_fee')}</span>
-                <span style={valueStyle}>{invoice.client_fee}$</span>
-              </div>
-            )}
             <div style={rowStyle}>
               <span style={labelStyle}>{t('detail_provider_amount')}</span>
               <span style={{ ...valueStyle, color: 'var(--cyan)' }}>{invoice.provider_amount}$</span>
