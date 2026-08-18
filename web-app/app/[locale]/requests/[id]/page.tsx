@@ -49,7 +49,7 @@ export default function RequestDetailPage() {
     for (const offer of data ?? []) {
       try {
         const { data: profile } = await supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('full_name, rating, total_missions')
           .eq('id', offer.provider_id)
           .single()

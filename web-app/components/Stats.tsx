@@ -20,10 +20,10 @@ export default function Stats() {
         { count: completed },
         { data: ratings },
       ] = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'provider').eq('is_kyc_verified', true),
+        supabase.from('public_profiles').select('*', { count: 'exact', head: true }).eq('role', 'provider').eq('is_kyc_verified', true),
         supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'open'),
         supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
-        supabase.from('profiles').select('rating').eq('role', 'provider').gt('rating', 0),
+        supabase.from('public_profiles').select('rating').eq('role', 'provider').gt('rating', 0),
       ])
 
       const avg = ratings && ratings.length > 0

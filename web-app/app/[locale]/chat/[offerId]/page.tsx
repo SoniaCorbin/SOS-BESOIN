@@ -54,7 +54,7 @@ export default function ChatPage() {
         for (const msg of data ?? []) {
           try {
             const { data: profile } = await supabase
-              .from('profiles')
+              .from('public_profiles')
               .select('full_name')
               .eq('id', msg.sender_id)
               .single()
