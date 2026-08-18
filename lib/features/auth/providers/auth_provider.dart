@@ -30,10 +30,13 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier() : super(const AuthState()) {
-    init();
+    ready = init();
   }
 
   final _client = Supabase.instance.client;
+
+  /// Se résout une fois l'initialisation (session + profil) terminée.
+  late final Future<void> ready;
 
   Future<void> init() async {
     final session = _client.auth.currentSession;
@@ -47,7 +50,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     final user = await _fetchUser(session.user.id);
 
-    state = const AuthState();
     state = AuthState(user: user, activeRole: role);
   }
 

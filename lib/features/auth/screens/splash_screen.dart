@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/router/app_router.dart';
+import '../providers/auth_provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -38,7 +39,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   Future<void> _checkSession() async {
-    await Future.delayed(const Duration(milliseconds: 2000));
+    final minDelay = Future.delayed(const Duration(milliseconds: 900));
+    await ref.read(authProvider.notifier).ready.timeout(
+          const Duration(seconds: 6),
+          onTimeout: () {},
+        );
+    await minDelay;
     if (!mounted) return;
 
     final session = Supabase.instance.client.auth.currentSession;
