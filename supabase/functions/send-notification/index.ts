@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCallerId } from "../_shared/auth.ts";
 
 const serviceAccount = JSON.parse(Deno.env.get("FIREBASE_SERVICE_ACCOUNT")!);
 const supabase = createClient(
@@ -62,7 +63,40 @@ async function getAccessToken(): Promise<string> {
 
 serve(async (req) => {
   try {
+    const callerId = getCallerId(req);
+    if (!callerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const { userId, title, body, data } = await req.json();
+
+    // On n'autorise l'envoi que si l'appelant et la cible sont liés par une
+    // offre (client <-> prestataire) — sinon n'importe qui pourrait spammer
+    // n'importe quel utilisateur.
+    if (callerId !== userId) {
+      const [{ data: asProvider }, { data: asClient }] = await Promise.all([
+        supabase
+          .from("offers")
+          .select("id, requests!inner(client_id)")
+          .eq("provider_id", callerId)
+          .eq("requests.client_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("offers")
+          .select("id, requests!inner(client_id)")
+          .eq("provider_id", userId)
+          .eq("requests.client_id", callerId)
+          .maybeSingle(),
+      ]);
+
+      if (!asProvider && !asClient) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
 
     // Le token FCM est lu ici, côté serveur, avec la clé service_role
     // qui contourne RLS — le client n'a jamais besoin de lire le

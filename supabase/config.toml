@@ -409,7 +409,7 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 [functions.send-notification]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 import_map = "./functions/send-notification/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
@@ -420,7 +420,7 @@ entrypoint = "./functions/send-notification/index.ts"
 
 [functions.create-payment-intent]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 import_map = "./functions/create-payment-intent/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
@@ -431,7 +431,7 @@ entrypoint = "./functions/create-payment-intent/index.ts"
 
 [functions.capture-payment]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 import_map = "./functions/capture-payment/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
@@ -453,7 +453,7 @@ entrypoint = "./functions/notify-user/index.ts"
 
 [functions.create-connect-account]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 import_map = "./functions/create-connect-account/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
@@ -464,7 +464,7 @@ entrypoint = "./functions/create-connect-account/index.ts"
 
 [functions.transfer-to-provider]
 enabled = true
-verify_jwt = false
+verify_jwt = true
 import_map = "./functions/transfer-to-provider/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
@@ -472,3 +472,10 @@ entrypoint = "./functions/transfer-to-provider/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/transfer-to-provider/*.html" ]
+
+[functions.auto-validate-missions]
+enabled = true
+# Appelée par un Cron Job (pas d'utilisateur connecté) — protégée par un
+# secret partagé (x-webhook-secret / WEBHOOK_SECRET) plutôt que par un JWT.
+verify_jwt = false
+entrypoint = "./functions/auto-validate-missions/index.ts"

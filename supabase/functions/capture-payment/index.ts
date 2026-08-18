@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCallerId } from "../_shared/auth.ts";
 
 const STRIPE_SECRET_KEY    = Deno.env.get("STRIPE_SECRET_KEY")!;
 const SUPABASE_URL         = Deno.env.get("SUPABASE_URL")!;
@@ -7,6 +8,13 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY")!;
 
 serve(async (req) => {
   try {
+    const callerId = getCallerId(req);
+    if (!callerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const { paymentIntentId, offerId, requestId } = await req.json();
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
@@ -31,6 +39,34 @@ serve(async (req) => {
 
     if (requestError || !request) {
       throw new Error(`Request not found: ${requestError?.message}`);
+    }
+
+    if (callerId !== request.client_id) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403, headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Idempotence : si cette offre a déjà une transaction complétée, ne pas
+    // recapturer/recréer (évite une double facture + un double transfert).
+    const { data: existingTransaction } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("offer_id", offerId)
+      .eq("status", "completed")
+      .maybeSingle();
+
+    if (existingTransaction) {
+      return new Response(
+        JSON.stringify({
+          success:        true,
+          amount:         existingTransaction.amount,
+          platformFee:    existingTransaction.platform_fee,
+          providerAmount: existingTransaction.provider_amount,
+          alreadyProcessed: true,
+        }),
+        { headers: { "Content-Type": "application/json" } }
+      );
     }
 
     // 3. Récupérer le profil du prestataire

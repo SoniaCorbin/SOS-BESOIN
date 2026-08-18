@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCallerId } from "../_shared/auth.ts";
 
 const STRIPE_SECRET_KEY    = Deno.env.get("STRIPE_SECRET_KEY")!;
 const SUPABASE_URL         = Deno.env.get("SUPABASE_URL")!;
@@ -7,7 +8,17 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY")!;
 
 serve(async (req) => {
   try {
-    const { userId, email } = await req.json();
+    const callerId = getCallerId(req);
+    if (!callerId) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Le userId ne vient jamais du body — sinon n'importe qui pourrait
+    // lier son compte Stripe à un autre profil.
+    const { email } = await req.json();
+    const userId = callerId;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 

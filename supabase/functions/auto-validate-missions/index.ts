@@ -1,6 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { checkWebhookSecret } from '../_shared/auth.ts'
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  // Appelée par un Cron Job (pas d'utilisateur connecté) — on vérifie un
+  // secret partagé plutôt qu'un JWT.
+  if (!checkWebhookSecret(req)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+  }
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -24,14 +31,24 @@ Deno.serve(async () => {
 
   for (const offer of offers ?? []) {
     // Valider l'offre
-    await supabase.from('offers')
+    const { error: offerError } = await supabase.from('offers')
       .update({ status: 'completed' })
       .eq('id', offer.id)
 
+    if (offerError) {
+      console.error(`Failed to complete offer ${offer.id}:`, offerError.message)
+      continue
+    }
+
     // Compléter la demande
-    await supabase.from('requests')
+    const { error: requestError } = await supabase.from('requests')
       .update({ status: 'completed' })
       .eq('id', offer.request_id)
+
+    if (requestError) {
+      console.error(`Failed to complete request ${offer.request_id}:`, requestError.message)
+      continue
+    }
 
     validated++
   }
