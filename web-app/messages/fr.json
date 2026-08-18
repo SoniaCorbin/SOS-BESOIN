@@ -109,7 +109,15 @@
     "detail_invoice_provider": "Prestataire",
     "detail_invoice_status": "Statut",
     "detail_messages": "Messages",
-    "detail_no_messages": "Aucun message."
+    "detail_no_messages": "Aucun message.",
+    "tab_waitlist": "📋 Liste d'attente",
+    "waitlist_empty": "Aucune inscription pour l'instant.",
+    "waitlist_registered": "inscrits",
+    "waitlist_pros": "pros",
+    "waitlist_clients": "clients",
+    "waitlist_no_name": "Sans nom",
+    "waitlist_pro_badge": "PRO",
+    "waitlist_client_badge": "CLIENT"
   },
   "chat": {
     "loading": "Chargement...",

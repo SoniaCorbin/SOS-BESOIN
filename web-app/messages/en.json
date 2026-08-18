@@ -109,7 +109,15 @@
     "detail_invoice_provider": "Provider",
     "detail_invoice_status": "Status",
     "detail_messages": "Messages",
-    "detail_no_messages": "No messages."
+    "detail_no_messages": "No messages.",
+    "tab_waitlist": "📋 Waitlist",
+    "waitlist_empty": "No registrations yet.",
+    "waitlist_registered": "registered",
+    "waitlist_pros": "pros",
+    "waitlist_clients": "clients",
+    "waitlist_no_name": "No name",
+    "waitlist_pro_badge": "PRO",
+    "waitlist_client_badge": "CLIENT"
   },
   "conversations": {
     "tag": "·MESSAGES·",

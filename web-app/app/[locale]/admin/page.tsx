@@ -10,13 +10,14 @@ export default function AdminPage() {
   const router = useRouter()
   const t = useTranslations('admin')
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'requests' | 'categories' | 'litiges'>('stats')
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'requests' | 'categories' | 'litiges' | 'waitlist'>('stats')
   const [stats, setStats] = useState({ users: 0, providers: 0, requests: 0, completed: 0 })
   const [users, setUsers] = useState<any[]>([])
   const [requests, setRequests] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const [litiges, setLitiges] = useState<any[]>([])
   const [completedRequests, setCompletedRequests] = useState<any[]>([])
+  const [waitlist, setWaitlist] = useState<any[]>([])
   const [litigeForm, setLitigeForm] = useState({ reason: 'plainte_client', description: '' })
   const [showLitigeForm, setShowLitigeForm] = useState<string | null>(null)
   const [detailRequest, setDetailRequest] = useState<any>(null)
@@ -33,7 +34,7 @@ export default function AdminPage() {
       if (!session) { router.push('/login'); return }
       const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single()
       if (!profile?.is_admin) { router.push('/dashboard'); return }
-      await Promise.all([fetchStats(), fetchUsers(), fetchRequests(), fetchCategories(), fetchLitiges(), fetchCompletedRequests()])
+      await Promise.all([fetchStats(), fetchUsers(), fetchRequests(), fetchCategories(), fetchLitiges(), fetchCompletedRequests(), fetchWaitlist()])
       setLoading(false)
     }
     load()
@@ -62,6 +63,11 @@ export default function AdminPage() {
   async function fetchCategories() {
     const { data } = await supabase.from('categories').select('*').order('is_custom').order('sort_order')
     setCategories(data ?? [])
+  }
+
+  async function fetchWaitlist() {
+    const { data } = await supabase.from('waitlist').select('*').order('created_at', { ascending: false })
+    setWaitlist(data ?? [])
   }
 
   async function fetchLitiges() {
@@ -235,6 +241,7 @@ export default function AdminPage() {
             <button style={tabStyle('requests')} onClick={() => setActiveTab('requests')}>{t('tab_requests')}</button>
             <button style={tabStyle('categories')} onClick={() => setActiveTab('categories')}>{t('tab_categories')}</button>
             <button style={tabStyle('litiges')} onClick={() => setActiveTab('litiges')}>{t('tab_litiges')}</button>
+            <button style={tabStyle('waitlist')} onClick={() => setActiveTab('waitlist')}>{t('tab_waitlist')}</button>
           </div>
 
           {/* ═══ STATS ═══ */}
@@ -441,6 +448,71 @@ export default function AdminPage() {
                   ))
                 )}
               </div>
+            </div>
+          )}
+
+          {/* ═══ WAITLIST ═══ */}
+          {activeTab === 'waitlist' && (
+            <div>
+              {waitlist.length === 0 ? (
+                <div style={{ ...cardStyle, textAlign: 'center', padding: '48px', color: 'var(--text-mute)' }}>
+                  {t('waitlist_empty')}
+                </div>
+              ) : (
+                <>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16,
+                    background: 'var(--amber-soft)', border: '1px solid var(--amber)',
+                    borderRadius: 12, padding: 16,
+                  }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 20, fontWeight: 700, color: 'var(--amber)' }}>
+                      {waitlist.length}
+                    </span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--amber)' }}>
+                      {t('waitlist_registered')}
+                    </span>
+                    <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--amber)' }}>
+                      {waitlist.filter(w => w.role === 'prestataire').length} {t('waitlist_pros')} · {waitlist.filter(w => w.role === 'client').length} {t('waitlist_clients')}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {waitlist.map((w, i) => {
+                      const isProvider = w.role === 'prestataire'
+                      const name = w.name || t('waitlist_no_name')
+                      return (
+                        <div key={w.id ?? i} style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          background: 'var(--bg-2)', border: '1px solid var(--line)',
+                          borderRadius: 12, padding: '12px 16px',
+                        }}>
+                          <div style={{
+                            width: 40, height: 40, borderRadius: '50%',
+                            background: isProvider ? 'var(--cyan-soft)' : 'var(--amber-soft)',
+                            border: `1px solid ${isProvider ? 'var(--cyan)' : 'var(--amber)'}`,
+                            display: 'grid', placeItems: 'center', flexShrink: 0,
+                            fontSize: 16, fontWeight: 700,
+                            color: isProvider ? 'var(--cyan)' : 'var(--amber)',
+                          }}>
+                            {name[0]?.toUpperCase() ?? '?'}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{name}</div>
+                            <div style={{ fontSize: 12, color: 'var(--text-mute)' }}>{w.email}</div>
+                          </div>
+                          <span style={{
+                            fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 6,
+                            background: isProvider ? 'var(--cyan-soft)' : 'var(--amber-soft)',
+                            color: isProvider ? 'var(--cyan)' : 'var(--amber)',
+                          }}>
+                            {isProvider ? t('waitlist_pro_badge') : t('waitlist_client_badge')}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
