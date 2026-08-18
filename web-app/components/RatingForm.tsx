@@ -11,7 +11,7 @@ type Props = {
   onRated: () => void
 }
 
-export default function RatingForm({ requestId, offerId, clientId, providerId, onRated }: Props) {
+export default function RatingForm({ requestId, offerId, onRated }: Props) {
   const t = useTranslations('rating')
   const [rating, setRating] = useState(0)
   const [hover, setHover] = useState(0)
@@ -23,27 +23,12 @@ export default function RatingForm({ requestId, offerId, clientId, providerId, o
     if (rating === 0) return
     setLoading(true)
 
-    await supabase.from('ratings').insert({
-      request_id:  requestId,
-      offer_id:    offerId,
-      client_id:   clientId,
-      provider_id: providerId,
-      rating,
-      comment,
+    await supabase.rpc('submit_rating', {
+      p_request_id: requestId,
+      p_offer_id:   offerId,
+      p_rating:     rating,
+      p_comment:    comment || null,
     })
-
-    const { data: ratings } = await supabase
-      .from('ratings')
-      .select('rating')
-      .eq('provider_id', providerId)
-
-    if (ratings && ratings.length > 0) {
-      const avg = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
-      await supabase.from('profiles').update({
-        rating:         Math.round(avg * 10) / 10,
-        total_missions: ratings.length,
-      }).eq('id', providerId)
-    }
 
     setLoading(false)
     setDone(true)

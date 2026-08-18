@@ -101,7 +101,7 @@ serve(async (req) => {
 
     // 8. Créer la facture
     const invoiceNumber = `INV-${Date.now()}`;
-    await supabase.from("invoices").insert({
+    const { error: invoiceError } = await supabase.from("invoices").insert({
       transaction_id:   transaction.id,
       request_id:       requestId,
       client_id:        request.client_id,
@@ -113,11 +113,14 @@ serve(async (req) => {
       request_title:    request.title,
       request_category: request.category,
       provider_name:    providerProfile?.full_name ?? "Prestataire",
-      client_fee:       clientFee,
       client_name:      clientProfile?.full_name ?? "Client",
       status:           "paid",
       paid_at:          new Date().toISOString(),
     });
+
+    if (invoiceError) {
+      throw new Error(`Invoice error: ${invoiceError.message}`);
+    }
 
     // 9. Mettre à jour le statut de la demande
     await supabase
@@ -169,12 +172,13 @@ serve(async (req) => {
       { headers: { "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error("capture-payment failed:", error);
     return new Response(
       JSON.stringify({
-          success:         true,
+          success:         false,
           error:           error.message || 'Capture payment failed',
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { "Content-Type": "application/json" }, status: 500 }
     );
   }
 });

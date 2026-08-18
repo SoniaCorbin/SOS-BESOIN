@@ -1371,30 +1371,12 @@ class _OfferCard extends StatelessWidget {
     required String comment,
   }) async {
     try {
-      await _client.from('ratings').insert({
-        'request_id':  requestId,
-        'offer_id':    offer['id'],
-        'client_id':   _client.auth.currentUser?.id,
-        'provider_id': offer['provider_id'],
-        'rating':      rating,
-        'comment':     comment.isEmpty ? null : comment,
+      await _client.rpc('submit_rating', params: {
+        'p_request_id': requestId,
+        'p_offer_id':   offer['id'],
+        'p_rating':     rating,
+        'p_comment':    comment.isEmpty ? null : comment,
       });
-
-      final ratings = await _client
-          .from('ratings')
-          .select('rating')
-          .eq('provider_id', offer['provider_id'] as String);
-
-      if (ratings.isNotEmpty) {
-        final avg = ratings
-            .map((r) => r['rating'] as int)
-            .reduce((a, b) => a + b) /
-            ratings.length;
-        await _client.from('profiles').update({
-          'rating':         (avg * 10).round() / 10,
-          'total_missions': ratings.length,
-        }).eq('id', offer['provider_id'] as String);
-      }
     } catch (e) {
       debugPrint('Erreur notation: $e');
     }
