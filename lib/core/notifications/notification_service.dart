@@ -82,22 +82,14 @@ class NotificationService {
     Map<String, String>? data,
   }) async {
     try {
-      // Récupérer le token FCM de l'utilisateur
-      final profile = await _client
-          .from('profiles')
-          .select('fcm_token')
-          .eq('id', userId)
-          .single();
-
-      final token = profile['fcm_token'] as String?;
-      if (token == null) return;
-
-      // Appeler une Supabase Edge Function pour envoyer la notif
+      // Le token FCM est maintenant lu côté serveur (fonction Edge),
+      // pas ici — un client n'a plus besoin de lire le token de
+      // quelqu'un d'autre.
       await _client.functions.invoke('send-notification', body: {
-        'token': token,
-        'title': title,
-        'body':  body,
-        'data':  data ?? {},
+        'userId': userId,
+        'title':  title,
+        'body':   body,
+        'data':   data ?? {},
       });
     } catch (e) {
       debugPrint('Erreur envoi notification: $e');
