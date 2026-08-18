@@ -56,15 +56,24 @@ Future<void> initOnboarding() async {
   _onboardingChecked = true;
 }
 
+// ── Refresh du router sur changement d'auth (sans le recréer) ──
+class _AuthRouterRefresh extends ChangeNotifier {
+  _AuthRouterRefresh(Ref ref) {
+    ref.listen(authProvider, (_, __) => notifyListeners());
+  }
+}
+
 // ── Provider router ──────────────────────────────────────
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final refresh = _AuthRouterRefresh(ref);
 
   return GoRouter(
     initialLocation: (_onboardingChecked && !_onboardingDone)
         ? '/onboarding'
         : AppRoutes.splash,
+    refreshListenable: refresh,
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
       final isAuth    = authState.user != null ||
           Supabase.instance.client.auth.currentSession != null;
       final isLoading = authState.loading;
