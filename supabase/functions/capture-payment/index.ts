@@ -6,12 +6,22 @@ const STRIPE_SECRET_KEY    = Deno.env.get("STRIPE_SECRET_KEY")!;
 const SUPABASE_URL         = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SB_SERVICE_ROLE_KEY")!;
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
   try {
     const callerId = getCallerId(req);
     if (!callerId) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401, headers: { "Content-Type": "application/json" },
+        status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -43,7 +53,7 @@ serve(async (req) => {
 
     if (callerId !== request.client_id) {
       return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403, headers: { "Content-Type": "application/json" },
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -65,7 +75,7 @@ serve(async (req) => {
           providerAmount: existingTransaction.provider_amount,
           alreadyProcessed: true,
         }),
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -205,7 +215,7 @@ serve(async (req) => {
         providerAmount,
         invoiceNumber,
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("capture-payment failed:", error);
@@ -214,7 +224,7 @@ serve(async (req) => {
           success:         false,
           error:           error.message || 'Capture payment failed',
       }),
-      { headers: { "Content-Type": "application/json" }, status: 500 }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });
