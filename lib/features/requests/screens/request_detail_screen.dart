@@ -1622,20 +1622,9 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
         'status':       'pending',
       });
 
-      try {
-        final req = await _client
-            .from('requests')
-            .select('client_id, title')
-            .eq('id', widget.requestId)
-            .single();
-        await NotificationService.sendNotification(
-          userId: req['client_id'] as String,
-          title: 'notif_new_offer_title'.tr(),
-          body: 'notif_new_offer_body'
-              .tr(namedArgs: {'title': req['title'] as String}),
-          data: {'request_id': widget.requestId},
-        );
-      } catch (_) {}
+      // La notification au client est déjà envoyée automatiquement
+      // par le trigger DB "on-new-offer" (côté serveur, couvre mobile
+      // et web) — pas besoin de la déclencher ici aussi.
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

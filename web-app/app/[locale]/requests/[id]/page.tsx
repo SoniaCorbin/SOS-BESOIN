@@ -142,13 +142,25 @@ export default function RequestDetailPage() {
     } catch (e) { console.error(e) }
   }
 
-  async function validateMission(offer: any) {
-    if (!confirm(t('validate_confirm'))) return
-    await supabase.from('offers').update({ status: 'completed' }).eq('id', offer.id)
-    await supabase.from('requests').update({ status: 'completed' }).eq('id', id)
-    await fetchRequest(); await fetchOffers()
-    setRatingOffer({ offerId: offer.id, providerId: offer.provider_id })
-  }
+    async function validateMission(offer: any) {
+      if (!confirm(t('validate_confirm'))) return
+      await supabase.from('offers').update({ status: 'completed' }).eq('id', offer.id)
+      await supabase.from('requests').update({ status: 'completed' }).eq('id', id)
+
+      try {
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            userId: offer.provider_id,
+            title: t('notif_mission_validated_title'),
+            body: t('notif_mission_validated_body', { title: request?.title ?? '' }),
+            data: { request_id: id },
+          },
+        })
+      } catch {}
+
+      await fetchRequest(); await fetchOffers()
+      setRatingOffer({ offerId: offer.id, providerId: offer.provider_id })
+    }
 
   async function cancelRequest() {
     if (!confirm(t('cancel_confirm'))) return

@@ -334,6 +334,8 @@
     "offer_duplicate": "You already submitted an offer.",
     "offer_fields_required": "Fill in all fields.",
     "validate_confirm": "Confirm validation?",
+    "notif_mission_validated_title": "Mission validated! ✅",
+    "notif_mission_validated_body": "The client confirmed that the mission \"{title}\" is complete.",
     "validate_content": "Payment will be released to the provider. Irreversible action.",
     "validate_btn": "Confirm",
     "validate_success": "✅ Mission validated!",

@@ -334,6 +334,8 @@
     "offer_duplicate": "Vous avez déjà soumis une offre.",
     "offer_fields_required": "Remplissez tous les champs.",
     "validate_confirm": "Confirmer la validation ?",
+    "notif_mission_validated_title": "Mission validée ! ✅",
+    "notif_mission_validated_body": "Le client a confirmé que la mission \"{title}\" est terminée.",
     "validate_content": "Le paiement sera libéré au prestataire. Action irréversible.",
     "validate_btn": "Confirmer",
     "validate_success": "✅ Mission validée !",
