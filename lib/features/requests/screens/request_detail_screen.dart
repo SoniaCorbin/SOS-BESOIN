@@ -465,7 +465,7 @@ class _RequestCard extends ConsumerWidget {
                     alignment: Alignment.centerLeft,
                     child: TextButton.icon(
                       onPressed: () =>
-                          context.push('/invoice/${invoice.id}'),
+                          context.push('/invoices/${invoice.id}'),
                       icon: const Icon(Icons.receipt_long_outlined,
                           size: 16),
                       label: Text('request_view_invoice_btn'.tr()),
@@ -1264,6 +1264,21 @@ class _OfferCard extends StatelessWidget {
       await _client
           .from('requests')
           .update({'status': 'completed'}).eq('id', requestId);
+
+      try {
+        final req = await _client
+            .from('requests')
+            .select('title')
+            .eq('id', requestId)
+            .single();
+        await NotificationService.sendNotification(
+          userId: offer['provider_id'] as String,
+          title: 'notif_mission_validated_title'.tr(),
+          body: 'notif_mission_validated_body'
+              .tr(namedArgs: {'title': req['title'] as String}),
+          data: {'request_id': requestId},
+        );
+      } catch (_) {}
 
       onAccepted();
 

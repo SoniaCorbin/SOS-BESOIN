@@ -311,5 +311,7 @@
   "payment_success": "✅ Payment successful! Invoice {invoice}",
   "payment_cancelled": "Payment cancelled.",
   "notif_new_offer_title": "New offer received 🎉",
-  "notif_new_offer_body": "A provider submitted an offer for \"{title}\""
+  "notif_new_offer_body": "A provider submitted an offer for \"{title}\"",
+  "notif_mission_validated_title": "Mission validated! ✅",
+  "notif_mission_validated_body": "The client confirmed that the mission \"{title}\" is complete."
 }

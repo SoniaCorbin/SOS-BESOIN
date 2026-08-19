@@ -311,6 +311,8 @@
   "payment_success": "✅ Paiement réussi ! Facture {invoice}",
   "payment_cancelled": "Paiement annulé.",
   "notif_new_offer_title": "Nouvelle offre reçue 🎉",
-  "notif_new_offer_body": "Un prestataire a soumis une offre pour \"{title}\""
+  "notif_new_offer_body": "Un prestataire a soumis une offre pour \"{title}\"",
+  "notif_mission_validated_title": "Mission validée ! ✅",
+  "notif_mission_validated_body": "Le client a confirmé que la mission \"{title}\" est terminée."
 }
 
