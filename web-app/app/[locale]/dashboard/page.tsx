@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
+import { useActiveRole } from '@/lib/useActiveRole'
+import { setActiveRole } from '@/lib/activeRole'
 
 type Profile = {
   id: string
@@ -22,7 +24,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const t = useTranslations('dashboard')
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [activeRole, setActiveRole] = useState<'client' | 'provider'>('client')
+  const activeRole = useActiveRole()
   const [requests, setRequests] = useState<any[]>([])
   const [offers, setOffers] = useState<any[]>([])
   const [pendingOffersCount, setPendingOffersCount] = useState(0)
@@ -203,7 +205,7 @@ export default function DashboardPage() {
                   padding: '8px 20px',
                   borderRadius: 8,
                   border: 'none',
-                  background: activeRole === r ? 'var(--amber)' : 'transparent',
+                  background: activeRole === r ? (r === 'provider' ? 'var(--cyan)' : 'var(--amber)') : 'transparent',
                   color: activeRole === r ? '#000' : 'var(--text-dim)',
                   fontWeight: activeRole === r ? 600 : 400,
                   fontSize: 14,

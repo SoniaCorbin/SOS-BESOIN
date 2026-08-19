@@ -5,6 +5,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import { useNotifications } from '@/lib/useNotifications'
+import { useFcmToken } from '@/lib/useFcmToken'
+import { useActiveRole } from '@/lib/useActiveRole'
 
 export default function Nav() {
   const router = useRouter()
@@ -15,7 +17,9 @@ export default function Nav() {
   const [userId, setUserId] = useState<string | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const activeRole = useActiveRole()
   const notifCount = useNotifications(userId)
+  useFcmToken(userId)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
@@ -128,7 +132,7 @@ export default function Nav() {
                 {t('explore')}
               </Link>
               <Link href="/dashboard" style={{ padding: '8px 18px', border: '1px solid var(--line-2)', borderRadius: 8, fontSize: 14, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                {t('dashboard')}
+                {activeRole === 'provider' ? t('missions') : t('sos')}
                 {notifCount > 0 && (
                   <span style={{ background: 'var(--red)', color: '#fff', borderRadius: '50%', width: 18, height: 18, fontSize: 11, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{notifCount}</span>
                 )}
@@ -188,7 +192,7 @@ export default function Nav() {
               )}
               <Link href="/explore" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>{t('explore')}</Link>
               <Link href="/dashboard" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                {t('dashboard')}
+                {activeRole === 'provider' ? t('missions') : t('sos')}
                 {notifCount > 0 && <span style={{ background: 'var(--red)', color: '#fff', borderRadius: '50%', width: 20, height: 20, fontSize: 11, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{notifCount}</span>}
               </Link>
               <Link href="/conversations" onClick={() => setMenuOpen(false)} style={{ padding: '12px 16px', border: '1px solid var(--line)', borderRadius: 8, fontSize: 15, color: 'var(--text-dim)' }}>{t('messages')}</Link>

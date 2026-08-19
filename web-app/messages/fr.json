@@ -3,6 +3,8 @@
     "home": "Accueil",
     "explore": "Explorer",
     "dashboard": "Tableau de bord",
+    "sos": "SOS",
+    "missions": "Missions",
     "login": "Connexion",
     "register": "S'inscrire",
     "logout": "Déconnexion",
@@ -36,7 +38,8 @@
     "detail_provider": "Prestataire",
     "detail_amount": "Montant total",
     "detail_provider_amount": "Montant prestataire",
-    "detail_paid_at": "Payée le"
+    "detail_paid_at": "Payée le",
+    "download_pdf": "Télécharger le PDF"
   },
   "common": {
     "loading": "Chargement...",
@@ -395,6 +398,16 @@
     "custom_category_new": "Ou créez-en une nouvelle",
     "custom_category_hint": "Ex: Plomberie, Jardinage...",
     "custom_category_add_btn": "Ajouter cette catégorie"
+  },
+  "payment": {
+    "title": "Paiement sécurisé",
+    "loading": "Préparation du paiement...",
+    "total_label": "Total à payer",
+    "pay_btn": "Payer",
+    "processing": "Traitement...",
+    "cancel_btn": "Annuler",
+    "escrow_note": "Paiement séquestré — le prestataire n'est payé qu'après votre validation.",
+    "error_generic": "Une erreur est survenue. Veuillez réessayer."
   },
   "report": {
     "tag": "·SIGNALEMENT·",

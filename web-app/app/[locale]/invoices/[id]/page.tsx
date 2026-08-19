@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
+import { downloadInvoicePdf } from '@/lib/invoicePdf'
 
 export default function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -111,11 +112,34 @@ export default function InvoiceDetailPage() {
               <span style={{ ...valueStyle, color: 'var(--cyan)' }}>{invoice.provider_amount}$</span>
             </div>
             {invoice.paid_at && (
-              <div style={{ ...rowStyle, borderBottom: 'none' }}>
+              <div style={rowStyle}>
                 <span style={labelStyle}>{t('detail_paid_at')}</span>
                 <span style={valueStyle}>{new Date(invoice.paid_at).toLocaleDateString('fr-CA')}</span>
               </div>
             )}
+
+            <button
+              onClick={() => downloadInvoicePdf({
+                invoiceNumber: invoice.invoice_number,
+                status: invoice.status,
+                clientName,
+                providerName,
+                requestTitle,
+                requestCategory: invoice.request_category ?? '',
+                createdAt: invoice.created_at,
+                amount: invoice.amount,
+                platformFee: invoice.platform_fee,
+                providerAmount: invoice.provider_amount,
+              })}
+              style={{
+                marginTop: 20, width: '100%', padding: '12px',
+                background: 'var(--amber)', color: '#000', border: 'none',
+                borderRadius: 10, fontWeight: 700, fontSize: 14,
+                cursor: 'pointer', fontFamily: 'var(--font-sans)',
+              }}
+            >
+              ⬇ {t('download_pdf')}
+            </button>
           </div>
         </div>
       </main>

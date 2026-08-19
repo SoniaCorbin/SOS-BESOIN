@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import RatingForm from '@/components/RatingForm'
+import PaymentModal from '@/components/PaymentModal'
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -25,6 +26,7 @@ export default function RequestDetailPage() {
   const [editingOfferId, setEditingOfferId] = useState<string | null>(null)
   const [editOfferForm, setEditOfferForm] = useState({ price: '', availability: '', message: '' })
   const [ratingOffer, setRatingOffer] = useState<{ offerId: string; providerId: string } | null>(null)
+  const [paymentOffer, setPaymentOffer] = useState<any>(null)
 
   const fetchRequest = useCallback(async () => {
     const { data } = await supabase.from('requests').select('*').eq('id', id).single()
@@ -133,34 +135,28 @@ export default function RequestDetailPage() {
     setSubmitting(false)
   }
 
-  async function acceptOffer(offerId: string) {
+
+
+
+  async function validateMission(offer: any) {
+    if (!confirm(t('validate_confirm'))) return
+    await supabase.from('offers').update({ status: 'completed' }).eq('id', offer.id)
+    await supabase.from('requests').update({ status: 'completed' }).eq('id', id)
+
     try {
-      await supabase.from('offers').update({ status: 'accepted' }).eq('id', offerId)
-      await supabase.from('requests').update({ status: 'in_progress' }).eq('id', id)
-      alert(t('payment_success'))
-      await fetchRequest(); await fetchOffers()
-    } catch (e) { console.error(e) }
+      await supabase.functions.invoke('send-notification', {
+        body: {
+          userId: offer.provider_id,
+          title: t('notif_mission_validated_title'),
+          body: t('notif_mission_validated_body', { title: request?.title ?? '' }),
+          data: { request_id: id },
+        },
+      })
+    } catch {}
+
+    await fetchRequest(); await fetchOffers()
+    setRatingOffer({ offerId: offer.id, providerId: offer.provider_id })
   }
-
-    async function validateMission(offer: any) {
-      if (!confirm(t('validate_confirm'))) return
-      await supabase.from('offers').update({ status: 'completed' }).eq('id', offer.id)
-      await supabase.from('requests').update({ status: 'completed' }).eq('id', id)
-
-      try {
-        await supabase.functions.invoke('send-notification', {
-          body: {
-            userId: offer.provider_id,
-            title: t('notif_mission_validated_title'),
-            body: t('notif_mission_validated_body', { title: request?.title ?? '' }),
-            data: { request_id: id },
-          },
-        })
-      } catch {}
-
-      await fetchRequest(); await fetchOffers()
-      setRatingOffer({ offerId: offer.id, providerId: offer.provider_id })
-    }
 
   async function cancelRequest() {
     if (!confirm(t('cancel_confirm'))) return
@@ -381,7 +377,7 @@ export default function RequestDetailPage() {
 
                       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                         {isClient && offer.status === 'pending' && request.status === 'open' && (
-                          <button onClick={() => acceptOffer(offer.id)} style={btnAmber}>
+                          <button onClick={() => setPaymentOffer(offer)} style={btnAmber}>
                             {t('offer_accept_pay', { price: offer.price })}
                           </button>
                         )}
@@ -468,6 +464,16 @@ export default function RequestDetailPage() {
           )}
         </div>
       </main>
+
+      {paymentOffer && (
+        <PaymentModal
+          offerId={paymentOffer.id}
+          requestId={id}
+          price={paymentOffer.price}
+          onClose={() => setPaymentOffer(null)}
+          onSuccess={() => { fetchRequest(); fetchOffers(); fetchInvoice(); }}
+        />
+      )}
     </>
   )
 }

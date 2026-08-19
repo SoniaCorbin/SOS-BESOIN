@@ -3,6 +3,8 @@
     "home": "Home",
     "explore": "Explore",
     "dashboard": "Dashboard",
+    "sos": "SOS",
+    "missions": "Missions",
     "login": "Sign in",
     "register": "Sign up",
     "logout": "Sign out",
@@ -36,7 +38,8 @@
     "detail_provider": "Provider",
     "detail_amount": "Total amount",
     "detail_provider_amount": "Provider amount",
-    "detail_paid_at": "Paid on"
+    "detail_paid_at": "Paid on",
+    "download_pdf": "Download PDF"
   },
   "common": {
     "loading": "Loading...",
@@ -395,6 +398,16 @@
     "custom_category_new": "Or create a new one",
     "custom_category_hint": "Ex: Plumbing, Gardening...",
     "custom_category_add_btn": "Add this category"
+  },
+  "payment": {
+    "title": "Secure payment",
+    "loading": "Preparing payment...",
+    "total_label": "Total to pay",
+    "pay_btn": "Pay",
+    "processing": "Processing...",
+    "cancel_btn": "Cancel",
+    "escrow_note": "Payment held in escrow — the provider is only paid after your validation.",
+    "error_generic": "Something went wrong. Please try again."
   },
   "report": {
     "tag": "·REPORT·",
