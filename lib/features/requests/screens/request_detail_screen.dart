@@ -75,6 +75,16 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Ces StreamProvider.family ne sont pas autoDispose : s'ils ont déjà été
+    // ouverts ailleurs (ex: badge d'offres sur le Home), l'instance mise en
+    // cache peut dater d'avant l'arrivée d'une nouvelle offre reçue pendant
+    // que l'app était en arrière-plan. On force un flux frais à l'ouverture
+    // de l'écran plutôt que d'attendre un cycle resume de l'app.
+    if (!Supabase.instance.client.realtime.isConnected) {
+      Supabase.instance.client.realtime.connect();
+    }
+    ref.invalidate(requestDetailProvider(widget.requestId));
+    ref.invalidate(requestOffersProvider(widget.requestId));
   }
 
   @override

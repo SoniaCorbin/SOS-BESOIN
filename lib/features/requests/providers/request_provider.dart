@@ -193,34 +193,41 @@ final pendingOffersCountProvider = StreamProvider<int>((ref) {
 // ── Toggle "Actifs / Archivés" pour la liste du prestataire ────
 final showArchivedMissionsProvider = StateProvider<bool>((ref) => false);
 
-final myProviderRequestsProvider = FutureProvider<List<RequestModel>>((ref) async {
+// StreamProvider: la liste "Mes missions" du prestataire se met à jour en
+// temps réel (ex: le client valide la mission -> statut 'completed') sans
+// qu'il ait besoin de rafraîchir sa page. Le flux écoute ses propres
+// offres (colonne 'status' incluse) et recharge les 'requests' liées à
+// chaque changement.
+// (auparavant FutureProvider = un seul chargement au montage de l'écran)
+final myProviderRequestsProvider = StreamProvider<List<RequestModel>>((ref) {
   ref.watch(authProvider);
   final showArchived = ref.watch(showArchivedMissionsProvider);
 
   final userId = _client.auth.currentUser?.id;
-  if (userId == null) return [];
+  if (userId == null) return Stream.value(<RequestModel>[]);
 
-  final offersData = await _client
+  return _client
       .from('offers')
-      .select('request_id')
-      .eq('provider_id', userId);
+      .stream(primaryKey: ['id'])
+      .eq('provider_id', userId)
+      .asyncMap((offersData) async {
+    final requestIds = offersData
+        .map((o) => o['request_id'] as String)
+        .toList();
 
-  final requestIds = (offersData as List)
-      .map((o) => o['request_id'] as String)
-      .toList();
+    if (requestIds.isEmpty) return <RequestModel>[];
 
-  if (requestIds.isEmpty) return [];
+    final data = await _client
+        .from('requests')
+        .select()
+        .inFilter('id', requestIds)
+        .eq('archived_by_provider', showArchived)
+        .order('created_at', ascending: false);
 
-  final data = await _client
-      .from('requests')
-      .select()
-      .inFilter('id', requestIds)
-      .eq('archived_by_provider', showArchived)
-      .order('created_at', ascending: false);
-
-  return (data as List)
-      .map((e) => RequestModel.fromMap(e))
-      .toList();
+    return (data as List)
+        .map((e) => RequestModel.fromMap(e))
+        .toList();
+  });
 });
 
 // ── Archiver / désarchiver une mission (côté prestataire) ─

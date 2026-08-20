@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import Nav from '@/components/Nav'
 import RatingForm from '@/components/RatingForm'
 import PaymentModal from '@/components/PaymentModal'
+import { useActiveRole } from '@/lib/useActiveRole'
 
 export default function RequestDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -16,7 +17,7 @@ export default function RequestDetailPage() {
   const [offers, setOffers] = useState<any[]>([])
   const [invoice, setInvoice] = useState<any>(null)
   const [userId, setUserId] = useState<string | null>(null)
-  const [userRole, setUserRole] = useState<string>('client')
+  const activeRole = useActiveRole()
   const [loading, setLoading] = useState(true)
   const [showOfferForm, setShowOfferForm] = useState(false)
   const [offerForm, setOfferForm] = useState({ price: '', availability: '', message: '' })
@@ -79,13 +80,6 @@ export default function RequestDetailPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/login'); return }
       setUserId(session.user.id)
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-      setUserRole(profile?.role ?? 'client')
 
       await Promise.all([fetchRequest(), fetchOffers(), fetchInvoice()])
       setLoading(false)
@@ -217,7 +211,7 @@ export default function RequestDetailPage() {
   )
 
   const isClient = userId === request.client_id
-  const isProvider = userRole === 'provider' && !isClient
+  const isProvider = activeRole === 'provider' && !isClient
   const canManage = isClient && request.status === 'open'
 
   const statusLabel = { open: t('status_open'), in_progress: t('status_in_progress'), completed: t('status_completed'), cancelled: t('status_cancelled') }[request.status as string] ?? request.status
