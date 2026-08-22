@@ -16,46 +16,46 @@ import '../../../../core/notifications/notification_service.dart';
 final _client = Supabase.instance.client;
 
 final requestDetailProvider =
-StreamProvider.family<RequestModel, String>((ref, id) {
+    StreamProvider.family<RequestModel, String>((ref, id) {
   return _client
       .from('requests')
       .stream(primaryKey: ['id'])
       .eq('id', id)
       .map((rows) {
-    if (rows.isEmpty) throw Exception('Request not found');
-    return RequestModel.fromMap(rows.first);
-  });
+        if (rows.isEmpty) throw Exception('Request not found');
+        return RequestModel.fromMap(rows.first);
+      });
 });
 
 // StreamProvider: le client voit les offres apparaître (et leur statut
 // changer) en temps réel, sans avoir à quitter/revenir sur l'écran.
 // (auparavant FutureProvider = un seul chargement au montage de l'écran)
 final requestOffersProvider =
-StreamProvider.family<List<Map<String, dynamic>>, String>((ref, id) {
+    StreamProvider.family<List<Map<String, dynamic>>, String>((ref, id) {
   return _client
       .from('offers')
       .stream(primaryKey: ['id'])
       .eq('request_id', id)
       .asyncMap((offersData) async {
-    final offers = List<Map<String, dynamic>>.from(offersData)
-      ..sort((a, b) => (b['created_at'] as String)
-          .compareTo(a['created_at'] as String));
+        final offers = List<Map<String, dynamic>>.from(offersData)
+          ..sort((a, b) =>
+              (b['created_at'] as String).compareTo(a['created_at'] as String));
 
-    for (int i = 0; i < offers.length; i++) {
-      final providerId = offers[i]['provider_id'] as String;
-      try {
-        final profile = await _client
-            .from('public_profiles')
-            .select('full_name, rating, total_missions, is_kyc_verified')
-            .eq('id', providerId)
-            .single();
-        offers[i] = {...offers[i], 'profiles': profile};
-      } catch (_) {
-        offers[i] = {...offers[i], 'profiles': null};
-      }
-    }
-    return offers;
-  });
+        for (int i = 0; i < offers.length; i++) {
+          final providerId = offers[i]['provider_id'] as String;
+          try {
+            final profile = await _client
+                .from('public_profiles')
+                .select('full_name, rating, total_missions, is_kyc_verified')
+                .eq('id', providerId)
+                .single();
+            offers[i] = {...offers[i], 'profiles': profile};
+          } catch (_) {
+            offers[i] = {...offers[i], 'profiles': null};
+          }
+        }
+        return offers;
+      });
 });
 
 class RequestDetailScreen extends ConsumerStatefulWidget {
@@ -70,7 +70,6 @@ class RequestDetailScreen extends ConsumerStatefulWidget {
 
 class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen>
     with WidgetsBindingObserver {
-
   @override
   void initState() {
     super.initState();
@@ -80,11 +79,16 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen>
     // cache peut dater d'avant l'arrivée d'une nouvelle offre reçue pendant
     // que l'app était en arrière-plan. On force un flux frais à l'ouverture
     // de l'écran plutôt que d'attendre un cycle resume de l'app.
-    if (!Supabase.instance.client.realtime.isConnected) {
-      Supabase.instance.client.realtime.connect();
-    }
-    ref.invalidate(requestDetailProvider(widget.requestId));
-    ref.invalidate(requestOffersProvider(widget.requestId));
+    // (post-frame callback: invalider pendant initState() accède à
+    // l'InheritedWidget de Riverpod avant que le widget soit monté)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!Supabase.instance.client.realtime.isConnected) {
+        Supabase.instance.client.realtime.connect();
+      }
+      ref.invalidate(requestDetailProvider(widget.requestId));
+      ref.invalidate(requestOffersProvider(widget.requestId));
+    });
   }
 
   @override
@@ -109,9 +113,9 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen>
     final requestId = widget.requestId;
     final ref = this.ref;
     final requestAsync = ref.watch(requestDetailProvider(requestId));
-    final offersAsync  = ref.watch(requestOffersProvider(requestId));
-    final authState    = ref.watch(authProvider);
-    final isProvider   = authState.activeRole == UserRole.provider;
+    final offersAsync = ref.watch(requestOffersProvider(requestId));
+    final authState = ref.watch(authProvider);
+    final isProvider = authState.activeRole == UserRole.provider;
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -193,61 +197,60 @@ class _RequestDetailScreenState extends ConsumerState<RequestDetailScreen>
                   ),
                 ),
               ),
-              error: (_, __) =>
-              const SliverToBoxAdapter(child: SizedBox()),
+              error: (_, __) => const SliverToBoxAdapter(child: SizedBox()),
               data: (offers) => offers.isEmpty
                   ? SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Container(
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.line2),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.hourglass_empty_rounded,
-                            size: 40, color: AppColors.textMute),
-                        const SizedBox(height: 12),
-                        Text(
-                          'request_waiting_offers'.tr(),
-                          style: const TextStyle(
-                            color: AppColors.textMute,
-                            fontSize: 14,
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Container(
+                          padding: const EdgeInsets.all(32),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.line2),
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.hourglass_empty_rounded,
+                                  size: 40, color: AppColors.textMute),
+                              const SizedBox(height: 12),
+                              Text(
+                                'request_waiting_offers'.tr(),
+                                style: const TextStyle(
+                                  color: AppColors.textMute,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'request_pros_will_respond'.tr(),
+                                style: const TextStyle(
+                                  color: AppColors.textMute,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'request_pros_will_respond'.tr(),
-                          style: const TextStyle(
-                            color: AppColors.textMute,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
+                      ),
+                    )
                   : SliverList(
-                delegate: SliverChildBuilderDelegate(
-                      (context, i) => _OfferCard(
-                    offer: offers[i],
-                    isClient: !isProvider,
-                    requestId: requestId,
-                    onAccepted: () {
-                      ref.invalidate(requestOffersProvider(requestId));
-                      ref.invalidate(requestDetailProvider(requestId));
-                    },
-                    onWithdrawn: () {
-                      ref.invalidate(requestOffersProvider(requestId));
-                    },
-                  ),
-                  childCount: offers.length,
-                ),
-              ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, i) => _OfferCard(
+                          offer: offers[i],
+                          isClient: !isProvider,
+                          requestId: requestId,
+                          onAccepted: () {
+                            ref.invalidate(requestOffersProvider(requestId));
+                            ref.invalidate(requestDetailProvider(requestId));
+                          },
+                          onWithdrawn: () {
+                            ref.invalidate(requestOffersProvider(requestId));
+                          },
+                        ),
+                        childCount: offers.length,
+                      ),
+                    ),
             ),
             if (isProvider &&
                 request.status == 'open' &&
@@ -322,8 +325,8 @@ class _RequestCard extends ConsumerWidget {
             children: [
               Flexible(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.amberSoft,
                     borderRadius: BorderRadius.circular(20),
@@ -343,30 +346,30 @@ class _RequestCard extends ConsumerWidget {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: request.status == 'open'
                       ? AppColors.greenSoft
                       : request.status == 'cancelled'
-                      ? AppColors.redSoft
-                      : AppColors.surface2,
+                          ? AppColors.redSoft
+                          : AppColors.surface2,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   request.status == 'open'
                       ? 'request_status_open'.tr()
                       : request.status == 'cancelled'
-                      ? 'request_status_cancelled'.tr()
-                      : request.status,
+                          ? 'request_status_cancelled'.tr()
+                          : request.status,
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: request.status == 'open'
                         ? AppColors.green
                         : request.status == 'cancelled'
-                        ? AppColors.red
-                        : AppColors.textMute,
+                            ? AppColors.red
+                            : AppColors.textMute,
                   ),
                 ),
               ),
@@ -392,8 +395,7 @@ class _RequestCard extends ConsumerWidget {
                               size: 16, color: AppColors.textDim),
                           const SizedBox(width: 8),
                           Text('request_edit_btn'.tr(),
-                              style:
-                              const TextStyle(color: AppColors.text)),
+                              style: const TextStyle(color: AppColors.text)),
                         ],
                       ),
                     ),
@@ -465,25 +467,25 @@ class _RequestCard extends ConsumerWidget {
           Consumer(
             builder: (context, ref, _) {
               final invoiceAsync =
-              ref.watch(invoiceForRequestProvider(request.id));
+                  ref.watch(invoiceForRequestProvider(request.id));
               return invoiceAsync.maybeWhen(
                 data: (invoice) => invoice == null
                     ? const SizedBox()
                     : Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () =>
-                          context.push('/invoices/${invoice.id}'),
-                      icon: const Icon(Icons.receipt_long_outlined,
-                          size: 16),
-                      label: Text('request_view_invoice_btn'.tr()),
-                      style: TextButton.styleFrom(
-                          foregroundColor: AppColors.amber),
-                    ),
-                  ),
-                ),
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () =>
+                                context.push('/invoices/${invoice.id}'),
+                            icon: const Icon(Icons.receipt_long_outlined,
+                                size: 16),
+                            label: Text('request_view_invoice_btn'.tr()),
+                            style: TextButton.styleFrom(
+                                foregroundColor: AppColors.amber),
+                          ),
+                        ),
+                      ),
                 orElse: () => const SizedBox(),
               );
             },
@@ -547,8 +549,7 @@ class _RequestCard extends ConsumerWidget {
           .from('requests')
           .update({'status': 'cancelled'}).eq('id', request.id);
 
-      ref.invalidate
-        (requestDetailProvider(request.id));
+      ref.invalidate(requestDetailProvider(request.id));
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -569,11 +570,16 @@ class _RequestCard extends ConsumerWidget {
 
   String _urgencyLabel(String urgency) {
     switch (urgency) {
-      case 'asap':     return 'request_urgency_asap'.tr();
-      case 'today':    return 'request_urgency_today'.tr();
-      case 'tomorrow': return 'request_urgency_tomorrow'.tr();
-      case 'week':     return 'request_urgency_week'.tr();
-      default:         return urgency;
+      case 'asap':
+        return 'request_urgency_asap'.tr();
+      case 'today':
+        return 'request_urgency_today'.tr();
+      case 'tomorrow':
+        return 'request_urgency_tomorrow'.tr();
+      case 'week':
+        return 'request_urgency_week'.tr();
+      default:
+        return urgency;
     }
   }
 }
@@ -616,10 +622,9 @@ class _EditRequestSheet extends ConsumerStatefulWidget {
 }
 
 class _EditRequestSheetState extends ConsumerState<_EditRequestSheet> {
-  late final _titleCtrl =
-  TextEditingController(text: widget.request.title);
+  late final _titleCtrl = TextEditingController(text: widget.request.title);
   late final _descCtrl =
-  TextEditingController(text: widget.request.description);
+      TextEditingController(text: widget.request.description);
   late final _budgetCtrl = TextEditingController(
       text: widget.request.budget?.toStringAsFixed(0) ?? '');
   late String _urgency = widget.request.urgency;
@@ -661,10 +666,10 @@ class _EditRequestSheetState extends ConsumerState<_EditRequestSheet> {
       }
 
       await _client.from('requests').update({
-        'title':       _titleCtrl.text.trim(),
+        'title': _titleCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
-        'budget':      budget,
-        'urgency':     _urgency,
+        'budget': budget,
+        'urgency': _urgency,
       }).eq('id', widget.request.id);
 
       if (mounted) {
@@ -702,7 +707,8 @@ class _EditRequestSheetState extends ConsumerState<_EditRequestSheet> {
             children: [
               Center(
                 child: Container(
-                  width: 40, height: 4,
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.line2,
                     borderRadius: BorderRadius.circular(2),
@@ -778,9 +784,8 @@ class _EditRequestSheetState extends ConsumerState<_EditRequestSheet> {
                               : AppColors.surface2,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: isSelected
-                                ? AppColors.amber
-                                : AppColors.line2,
+                            color:
+                                isSelected ? AppColors.amber : AppColors.line2,
                             width: isSelected ? 1.5 : 1,
                           ),
                         ),
@@ -817,12 +822,13 @@ class _EditRequestSheetState extends ConsumerState<_EditRequestSheet> {
                   },
                   child: _loading
                       ? const SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.bg,
-                    ),
-                  )
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.bg,
+                          ),
+                        )
                       : Text('request_edit_save_btn'.tr()),
                 ),
               ),
@@ -852,12 +858,13 @@ class _OfferCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final profile  = offer['profiles'] as Map<String, dynamic>?;
-    final name     = profile?['full_name'] as String? ?? 'conv_provider_default'.tr();
+    final profile = offer['profiles'] as Map<String, dynamic>?;
+    final name =
+        profile?['full_name'] as String? ?? 'conv_provider_default'.tr();
     final missions = profile?['total_missions'] as int? ?? 0;
-    final price    = (offer['price'] as num).toDouble();
-    final message  = offer['message'] as String;
-    final status   = offer['status'] as String;
+    final price = (offer['price'] as num).toDouble();
+    final message = offer['message'] as String;
+    final status = offer['status'] as String;
     final createdAt = DateTime.parse(offer['created_at'] as String);
 
     final initials = name.split(' ').length >= 2
@@ -883,7 +890,8 @@ class _OfferCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 40, height: 40,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: AppColors.surface2,
@@ -920,7 +928,8 @@ class _OfferCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'offer_missions'.tr(namedArgs: {'count': '$missions'}),
+                          'offer_missions'
+                              .tr(namedArgs: {'count': '$missions'}),
                           style: const TextStyle(
                             fontSize: 12,
                             color: AppColors.textMute,
@@ -1044,9 +1053,8 @@ class _OfferCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.lock_rounded, size: 16),
                     const SizedBox(width: 8),
-                    Text('offer_pay_accept'.tr(namedArgs: {
-                      'price': price.toStringAsFixed(0)
-                    })),
+                    Text('offer_pay_accept'
+                        .tr(namedArgs: {'price': price.toStringAsFixed(0)})),
                   ],
                 ),
               ),
@@ -1177,9 +1185,9 @@ class _OfferCard extends StatelessWidget {
 
   Future<void> _payAndAccept(BuildContext context) async {
     final result = await PaymentService.processPayment(
-      amount:     (offer['price'] as num).toDouble(),
-      offerId:    offer['id'] as String,
-      requestId:  requestId,
+      amount: (offer['price'] as num).toDouble(),
+      offerId: offer['id'] as String,
+      requestId: requestId,
       providerId: offer['provider_id'] as String,
     );
 
@@ -1188,8 +1196,8 @@ class _OfferCard extends StatelessWidget {
     if (result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('payment_success'.tr(
-              namedArgs: {'invoice': result.invoiceNumber ?? ''})),
+          content: Text('payment_success'
+              .tr(namedArgs: {'invoice': result.invoiceNumber ?? ''})),
           backgroundColor: AppColors.green,
         ),
       );
@@ -1256,8 +1264,7 @@ class _OfferCard extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style:
-            ElevatedButton.styleFrom(backgroundColor: AppColors.green),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.green),
             child: Text('validate_confirm_btn'.tr()),
           ),
         ],
@@ -1305,8 +1312,8 @@ class _OfferCard extends StatelessWidget {
   }
 
   Future<void> _showRatingDialog(BuildContext context) async {
-    int selectedRating    = 0;
-    final commentCtrl     = TextEditingController();
+    int selectedRating = 0;
+    final commentCtrl = TextEditingController();
 
     await showDialog(
       context: context,
@@ -1319,43 +1326,44 @@ class _OfferCard extends StatelessWidget {
             style: const TextStyle(
                 color: AppColors.text, fontFamily: 'SpaceGrotesk'),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'rating_dialog_content'.tr(),
-                style:
-                const TextStyle(color: AppColors.textDim, fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (i) {
-                  final star = i + 1;
-                  return GestureDetector(
-                    onTap: () => setState(() => selectedRating = star),
-                    child: Icon(
-                      Icons.star_rounded,
-                      size: 40,
-                      color: star <= selectedRating
-                          ? AppColors.amber
-                          : AppColors.line2,
-                    ),
-                  );
-                }),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: commentCtrl,
-                style: const TextStyle(color: AppColors.text),
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'rating_comment_hint'.tr(),
-                  hintStyle:
-                  const TextStyle(color: AppColors.textMute),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'rating_dialog_content'.tr(),
+                  style:
+                      const TextStyle(color: AppColors.textDim, fontSize: 14),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(5, (i) {
+                    final star = i + 1;
+                    return GestureDetector(
+                      onTap: () => setState(() => selectedRating = star),
+                      child: Icon(
+                        Icons.star_rounded,
+                        size: 40,
+                        color: star <= selectedRating
+                            ? AppColors.amber
+                            : AppColors.line2,
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: commentCtrl,
+                  style: const TextStyle(color: AppColors.text),
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'rating_comment_hint'.tr(),
+                    hintStyle: const TextStyle(color: AppColors.textMute),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -1367,22 +1375,21 @@ class _OfferCard extends StatelessWidget {
               onPressed: selectedRating == 0
                   ? null
                   : () async {
-                await _submitRating(
-                  rating: selectedRating,
-                  comment: commentCtrl.text.trim(),
-                );
-                if (ctx.mounted) Navigator.pop(ctx);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('rating_success'.tr()),
-                      backgroundColor: AppColors.green,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.amber),
+                      await _submitRating(
+                        rating: selectedRating,
+                        comment: commentCtrl.text.trim(),
+                      );
+                      if (ctx.mounted) Navigator.pop(ctx);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('rating_success'.tr()),
+                            backgroundColor: AppColors.green,
+                          ),
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.amber),
               child: Text('rating_submit_btn'.tr()),
             ),
           ],
@@ -1398,9 +1405,9 @@ class _OfferCard extends StatelessWidget {
     try {
       await _client.rpc('submit_rating', params: {
         'p_request_id': requestId,
-        'p_offer_id':   offer['id'],
-        'p_rating':     rating,
-        'p_comment':    comment.isEmpty ? null : comment,
+        'p_offer_id': offer['id'],
+        'p_rating': rating,
+        'p_comment': comment.isEmpty ? null : comment,
       });
     } catch (e) {
       debugPrint('Erreur notation: $e');
@@ -1425,9 +1432,9 @@ class _EditOfferSheetState extends ConsumerState<_EditOfferSheet> {
   late final _priceCtrl = TextEditingController(
       text: (widget.offer['price'] as num).toDouble().toStringAsFixed(0));
   late final _messageCtrl =
-  TextEditingController(text: widget.offer['message'] as String);
+      TextEditingController(text: widget.offer['message'] as String);
   late final _availCtrl =
-  TextEditingController(text: widget.offer['availability'] as String);
+      TextEditingController(text: widget.offer['availability'] as String);
   bool _loading = false;
 
   @override
@@ -1460,8 +1467,8 @@ class _EditOfferSheetState extends ConsumerState<_EditOfferSheet> {
 
     try {
       await _client.from('offers').update({
-        'price':        price,
-        'message':      _messageCtrl.text.trim(),
+        'price': price,
+        'message': _messageCtrl.text.trim(),
         'availability': _availCtrl.text.trim(),
       }).eq('id', widget.offer['id'] as String);
 
@@ -1500,7 +1507,8 @@ class _EditOfferSheetState extends ConsumerState<_EditOfferSheet> {
             children: [
               Center(
                 child: Container(
-                  width: 40, height: 4,
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.line2,
                     borderRadius: BorderRadius.circular(2),
@@ -1563,12 +1571,13 @@ class _EditOfferSheetState extends ConsumerState<_EditOfferSheet> {
                   },
                   child: _loading
                       ? const SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.bg,
-                    ),
-                  )
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.bg,
+                          ),
+                        )
                       : Text('offer_edit_save_btn'.tr()),
                 ),
               ),
@@ -1595,10 +1604,10 @@ class _OfferSheet extends ConsumerStatefulWidget {
 }
 
 class _OfferSheetState extends ConsumerState<_OfferSheet> {
-  final _priceCtrl   = TextEditingController();
+  final _priceCtrl = TextEditingController();
   final _messageCtrl = TextEditingController();
-  final _availCtrl   = TextEditingController();
-  bool _loading      = false;
+  final _availCtrl = TextEditingController();
+  bool _loading = false;
 
   @override
   void dispose() {
@@ -1624,12 +1633,12 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
       final userId = _client.auth.currentUser?.id;
 
       await _client.from('offers').insert({
-        'request_id':   widget.requestId,
-        'provider_id':  userId,
-        'price':        double.parse(_priceCtrl.text),
-        'message':      _messageCtrl.text.trim(),
+        'request_id': widget.requestId,
+        'provider_id': userId,
+        'price': double.parse(_priceCtrl.text),
+        'message': _messageCtrl.text.trim(),
         'availability': _availCtrl.text.trim(),
-        'status':       'pending',
+        'status': 'pending',
       });
 
       // La notification au client est déjà envoyée automatiquement
@@ -1675,7 +1684,8 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
             children: [
               Center(
                 child: Container(
-                  width: 40, height: 4,
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.line2,
                     borderRadius: BorderRadius.circular(2),
@@ -1738,12 +1748,13 @@ class _OfferSheetState extends ConsumerState<_OfferSheet> {
                   },
                   child: _loading
                       ? const SizedBox(
-                    width: 20, height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.bg,
-                    ),
-                  )
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.bg,
+                          ),
+                        )
                       : Text('offer_send_btn'.tr()),
                 ),
               ),
